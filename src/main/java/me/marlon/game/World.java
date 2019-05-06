@@ -1,19 +1,24 @@
 package me.marlon.game;
 
+import me.marlon.ecs.*;
 import org.joml.Vector2f;
 
 public class World implements IKeyListener, IMouseListener {
-    EntityManager entities;
-    CameraSystem cameraSystem;
-    MeshSystem meshSystem;
-    PlayerSystem playerSystem;
-    TerrainSystem terrainSystem;
+    private EntityManager entities;
+    private CameraSystem cameraSystem;
+    private DirectionalLightSystem dLightSystem;
+    private MeshSystem meshSystem;
+    private ParticleSystem particleSystem;
+    private PlayerSystem playerSystem;
+    private TerrainSystem terrainSystem;
 
     public World(Engine engine) {
         entities = new EntityManager();
         cameraSystem = new CameraSystem(entities, engine.getRenderer());
+        dLightSystem = new DirectionalLightSystem(entities, engine.getRenderer());
         meshSystem = new MeshSystem(entities, engine.getRenderer());
         playerSystem = new PlayerSystem(entities, engine.getDeltaTime());
+        particleSystem = new ParticleSystem(entities, engine.getDeltaTime());
         terrainSystem = new TerrainSystem(entities, engine.getRenderer());
     }
 
@@ -39,20 +44,14 @@ public class World implements IKeyListener, IMouseListener {
 
     public void onUpdate() {
         playerSystem.onUpdate();
+        particleSystem.onUpdate();
         cameraSystem.onUpdate();
+        dLightSystem.onUpdate();
         meshSystem.onUpdate();
         terrainSystem.onUpdate();
     }
 
     public EntityManager getEntities() {
         return entities;
-    }
-
-    public CameraSystem getCameraSystem() {
-        return cameraSystem;
-    }
-
-    public MeshSystem getMeshSystem() {
-        return meshSystem;
     }
 }

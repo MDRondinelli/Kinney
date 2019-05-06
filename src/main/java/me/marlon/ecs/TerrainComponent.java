@@ -1,4 +1,4 @@
-package me.marlon.game;
+package me.marlon.ecs;
 
 import me.marlon.gfx.Terrain;
 

@@ -1,4 +1,4 @@
-package me.marlon.game;
+package me.marlon.ecs;
 
 import me.marlon.gfx.Renderer;
 import org.joml.Matrix4f;
@@ -19,7 +19,7 @@ public class CameraSystem {
             if (!entities.match(i, BITS))
                 continue;
 
-            CameraComponent camera = entities.getCamera(i);
+            Camera camera = entities.getCamera(i);
             TransformComponent transform = entities.getTransform(i);
 
             Matrix4f view = transform.getInvMatrix();

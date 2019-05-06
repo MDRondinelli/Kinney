@@ -18,7 +18,7 @@ public class Terrain implements AutoCloseable {
     public Terrain(int size) {
         count = (size - 1) * (size - 1) * 6;
 
-        OpenSimplexOctaves noise = new OpenSimplexOctaves(40.0f, 0.5f, 2.0f,  8);
+        OpenSimplexOctaves noise = new OpenSimplexOctaves(42.0f, 0.5f, 1.9f,  6);
 
         float[][] heightmap = new float[size][size];
         float minHeight = Float.MAX_VALUE;
@@ -34,15 +34,11 @@ public class Terrain implements AutoCloseable {
         for (int i = 0; i < size; ++i) {
             for (int j = 0; j < size; ++j) {
                 heightmap[i][j] = (heightmap[i][j] - minHeight) / (maxHeight - minHeight);
-                heightmap[i][j] = (float) Math.pow(heightmap[i][j], 2.4f);
-
-                // island "mask"
+                heightmap[i][j] = (float) Math.pow(heightmap[i][j], 2.0f);
                 float distance = Vector2f.distance(size * 0.5f, size * 0.5f, i, j);
                 float mask = 1.0f - (float) Math.pow(Math.min(1.5f * distance / (size * 0.5f), 1.0f), 3.0f);
                 heightmap[i][j] *= mask;
-
                 heightmap[i][j] *= 40.0f;
-
                 heightmap[i][j] = Math.max(heightmap[i][j], 3.0f);
             }
         }
@@ -65,13 +61,18 @@ public class Terrain implements AutoCloseable {
                 if (y > 3.0f)
                     y += layerNoise.eval(i, j) * 2.0f;
 
+                float maxY = Math.max(Math.max(Math.max(p0.y, p1.y), p2.y), p3.y);
+                float minY = Math.min(Math.min(Math.min(p0.y, p1.y), p2.y), p3.y);
+
+                Vector3f avgNormal = n0.add(n1, new Vector3f()).normalize();
+
                 Vector3f c = new Vector3f();
                 if (y > 20.0f)
                     c.set(1.0f, 0.95f, 0.95f);
-                else if (y > 15.0f)
-                    c.set(0.5f, 0.3f, 0.3f);
-                else if (y > 4.5f)
-                    c.set(0.3f, 0.6f, 0.1f);
+                else if (y > 16.0f || avgNormal.y < 0.7f)
+                    c.set(0.4f, 0.35f, 0.35f);
+                else if (y > 5.0f)
+                    c.set(0.4f, 0.6f, 0.1f);
                 else if (y > 3.0f)
                     c.set(0.76f, 0.7f, 0.5f);
                 else

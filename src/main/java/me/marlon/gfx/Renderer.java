@@ -2,6 +2,7 @@ package me.marlon.gfx;
 
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 import static org.lwjgl.opengl.GL45.*;
 import static org.lwjgl.system.MemoryUtil.*;
@@ -25,9 +26,10 @@ public class Renderer implements AutoCloseable {
     private Matrix4f viewInv;
     private Matrix4f proj;
     private Matrix4f projInv;
+    private DirectionalLight dLight;
 
     public Renderer() {
-        frameBlock = new UniformBuffer(256);
+        frameBlock = new UniformBuffer(288);
         frameData = memAlloc(frameBlock.getSize());
 
         meshShader = new Shader();
@@ -83,10 +85,17 @@ public class Renderer implements AutoCloseable {
         viewInv.get(64, frameData);
         proj.get(128, frameData);
         projInv.get(192, frameData);
+
+        if (dLight == null) {
+            new Vector4f(0.0f).get(256, frameData);
+            new Vector4f(0.0f).get(272, frameData);
+        } else {
+            dLight.color.get(256, frameData);
+            dLight.direction.get(272, frameData);
+        }
+
         frameBlock.buffer(frameData);
         frameBlock.bind(0);
-
-        // terrainShader.set("camera", viewInv.getTranslation(new Vector3f()));
     }
 
     public void submitDraw() {
@@ -114,35 +123,23 @@ public class Renderer implements AutoCloseable {
         this.terrain = terrain;
     }
 
-    public Matrix4f getView() {
-        return view;
-    }
-
     public void setView(Matrix4f m) {
         view.set(m);
-    }
-
-    public Matrix4f getViewInv() {
-        return viewInv;
     }
 
     public void setViewInv(Matrix4f m) {
         viewInv.set(m);
     }
 
-    public Matrix4f getProj() {
-        return proj;
-    }
-
     public void setProj(Matrix4f m) {
         proj.set(m);
     }
 
-    public Matrix4f getProjInv() {
-        return projInv;
-    }
-
     public void setProjInv(Matrix4f m) {
         projInv.set(m);
+    }
+
+    public void setDLight(DirectionalLight light) {
+        this.dLight = light;
     }
 }

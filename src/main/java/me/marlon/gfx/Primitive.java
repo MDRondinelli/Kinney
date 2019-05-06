@@ -8,10 +8,9 @@ import java.nio.IntBuffer;
 public class Primitive implements AutoCloseable {
     private int vao;
     private int vbo;
-    private int ibo;
     private int count;
 
-    public Primitive(FloatBuffer vertices, IntBuffer indices) {
+    public Primitive(FloatBuffer vertices) {
         vao = glCreateVertexArrays();
 
         vbo = glCreateBuffers();
@@ -26,21 +25,16 @@ public class Primitive implements AutoCloseable {
         glVertexArrayAttribFormat(vao, 1, 3, GL_FLOAT, false, 12);
         glVertexArrayAttribBinding(vao, 1, 0);
 
-        ibo = glCreateBuffers();
-        glNamedBufferStorage(ibo, indices, 0);
-        glVertexArrayElementBuffer(vbo, ibo);
-
-        count = indices.capacity();
+        count = vertices.capacity() / 6;
     }
 
     public void close() {
         glDeleteVertexArrays(vao);
         glDeleteBuffers(vbo);
-        glDeleteBuffers(vao);
     }
 
     public void draw() {
         glBindVertexArray(vao);
-        glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, 0);
+        glDrawArrays(GL_TRIANGLES, 0, count);
     }
 }

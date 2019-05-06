@@ -1,14 +1,14 @@
-package me.marlon.game;
+package me.marlon.ecs;
 
 import me.marlon.gfx.Renderer;
 
-public class TerrainSystem {
-    public static final short BITS = EntityManager.TERRAIN_BIT;
+public class DirectionalLightSystem {
+    public static final short BITS = EntityManager.DLIGHT_BIT;
 
     private EntityManager entities;
     private Renderer renderer;
 
-    public TerrainSystem(EntityManager entities, Renderer renderer) {
+    public DirectionalLightSystem(EntityManager entities, Renderer renderer) {
         this.entities = entities;
         this.renderer = renderer;
     }
@@ -18,7 +18,7 @@ public class TerrainSystem {
             if (!entities.match(i, BITS))
                 continue;
 
-            renderer.setTerrain(entities.getTerrain(i).terrain);
+            renderer.setDLight(entities.getDLight(i));
         }
     }
 }

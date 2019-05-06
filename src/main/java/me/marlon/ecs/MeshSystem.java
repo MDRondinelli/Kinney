@@ -1,4 +1,4 @@
-package me.marlon.game;
+package me.marlon.ecs;
 
 import me.marlon.gfx.Mesh;
 import me.marlon.gfx.MeshInstance;
@@ -21,7 +21,7 @@ public class MeshSystem {
             if (!entities.match(i, BITS))
                 continue;
 
-            MeshComponent mesh = entities.getMesh(i);
+            Mesh mesh = entities.getMesh(i);
             TransformComponent transform = entities.getTransform(i);
 
             int parent = transform.parent;
@@ -33,7 +33,7 @@ public class MeshSystem {
                 transform.getMatrix().mul(matrix, matrix);
             }
 
-            renderer.draw(new MeshInstance(mesh.mesh, matrix));
+            renderer.draw(new MeshInstance(mesh, matrix));
         }
     }
 }
