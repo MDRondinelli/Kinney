@@ -11,7 +11,7 @@ in Vertex {
 layout(location = 0) out vec4 color;
 
 struct DirectionalLight {
-    vec3 color;
+    vec4 color;
     vec4 direction;
 };
 
@@ -29,8 +29,10 @@ void main() {
 
     vec3 albedo = vec3(0.5);
 
-    vec3 indirect = albedo * vec3(0.7, 0.5, 0.5) * 0.03;
-    vec3 direct = albedo * clamp(dot(n, l), 0.0, 1.0) * dLight.color;
+    vec3 ambient = clamp(n.y * 0.5 + 0.5, 0.0, 1.0) * vec3(0.14, 0.1, 0.1);
+
+    vec3 indirect = albedo * ambient;
+    vec3 direct = albedo * clamp(dot(n, l), 0.0, 1.0) * dLight.color.rgb;
 
     vec3 camera = viewInv[3].xyz;
     float distance = length(camera - vertex.position);

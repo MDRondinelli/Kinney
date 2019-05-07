@@ -11,7 +11,7 @@ out Vertex {
 } vertex;
 
 struct DirectionalLight {
-    vec3 color;
+    vec4 color;
     vec4 direction;
 };
 
