@@ -16,14 +16,10 @@ public class Mesh implements AutoCloseable {
     public Mesh(String path) throws IOException {
         primitives = new Primitive[1];
 
-        BufferedReader in = null;
-
         ArrayList<Vector3f> vertices = new ArrayList<>();
         ArrayList<Vector3f> vertexData = new ArrayList<>();
 
-        try {
-            in = new BufferedReader(new FileReader(path));
-
+        try (BufferedReader in = new BufferedReader(new FileReader(path))) {
             String line;
             while ((line = in.readLine()) != null) {
                 if (line.startsWith("v")) {
@@ -50,9 +46,6 @@ public class Mesh implements AutoCloseable {
                     vertexData.add(n);
                 }
             }
-        } finally {
-            if (in != null)
-                in.close();
         }
 
         FloatBuffer buffer = memAllocFloat(vertexData.size() * 3);
@@ -62,6 +55,11 @@ public class Mesh implements AutoCloseable {
 
         primitives[0] = new Primitive(buffer);
         memFree(buffer);
+    }
+
+    public Mesh(Primitive primitive) {
+        this.primitives = new Primitive[1];
+        this.primitives[0] = primitive;
     }
 
     public Mesh(Primitive[] primitives) {
