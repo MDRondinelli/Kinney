@@ -11,7 +11,7 @@ public class ErosionParticle {
     public static final float EVAPORATION = 0.05f;
     public static final float RADIUS = 4.0f;
     public static final float MIN_SLOPE = 0.01f;
-    public static final float GRAVITY = -4.0f;
+    public static final float GRAVITY = -6.0f;
 
     private Vector2f position;
     private Vector2f direction;
@@ -51,11 +51,11 @@ public class ErosionParticle {
 
         if (hDif > 0.0f) {
             if (sediment >= hDif) {
-                terrain.deposit(oldPosition.x, oldPosition.y, hDif * 0.25f);
-                sediment -= hDif;
+                terrain.deposit(oldPosition.x, oldPosition.y, hDif * 0.2f);
+                sediment -= hDif * 0.2f;
             } else {
-                terrain.deposit(oldPosition.x, oldPosition.y, sediment * 0.25f);
-                sediment = 0.0f;
+                terrain.deposit(oldPosition.x, oldPosition.y, sediment * 0.2f);
+                sediment *= 0.8f;
             }
         } else if (hDif < 0.0f) {
             float c = Math.max(-hDif, MIN_SLOPE) * speed * water * CAPACITY;

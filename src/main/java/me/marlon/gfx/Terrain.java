@@ -12,6 +12,8 @@ import java.nio.FloatBuffer;
 import java.util.ArrayList;
 
 public class Terrain implements AutoCloseable {
+    public static final int TILE_SIZE = 2;
+
     private int size;
     private float[][] heightmap;
 
@@ -41,51 +43,31 @@ public class Terrain implements AutoCloseable {
                 float distance = Vector2f.distance(size * 0.5f, size * 0.5f, i, j);
                 float mask = 1.0f - (float) Math.pow(Math.min(1.5f * distance / (size * 0.5f), 1.0f), 2.0f);
                 heightmap[i][j] *= mask;
-                // heightmap[i][j] *= 48.0f;
-//                heightmap[i][j] = (float) Math.pow(heightmap[i][j], 2.3f);
             }
         }
 
         for (int i = 0; i < size * size * 8; ++i) {
             ErosionParticle erosionParticle = new ErosionParticle(new Vector2f((float) Math.random() * size, (float) Math.random() * size), 1.0f);
-            for (int j = 0; j < 30; ++j) {
+            for (int j = 0; j < 30; ++j)
                 erosionParticle.update(this);
-            }
         }
 
         for (int i = 0; i < size; ++i) {
             for (int j = 0; j < size; ++j) {
                  heightmap[i][j] *= 48.0f;
                  heightmap[i][j] = Math.max(heightmap[i][j], 4.0f);
-//                heightmap[i][j] = (float) Math.pow(heightmap[i][j], 2.3f);
             }
         }
-
-//        float[][] blurred = new float[size][size];
-//        for (int i = 0; i < size; ++i)
-//            for (int j = 0; j < size; ++j)
-//                blurred[i][j] = blurSample(i, j, (1.0f - heightmap[i][j]) * 0.5f);
-
-//        for (int i = 0; i < size; ++i) {
-//            for (int j = 0; j < size; ++j) {
-//                heightmap[i][j] = blurred[i][j];
-//                float distance = Vector2f.distance(size * 0.5f, size * 0.5f, i, j);
-//                float mask = 1.0f - (float) Math.pow(Math.min(1.5f * distance / (size * 0.5f), 1.0f), 3.0f);
-//                heightmap[i][j] *= mask;
-//                heightmap[i][j] *= 40.0f;
-//                heightmap[i][j] = Math.max(heightmap[i][j], 3.0f);
-//            }
-//        }
 
         OpenSimplexOctaves layerNoise = new OpenSimplexOctaves(24.0f, 0.5f, 2.0f, 4);
         ArrayList<Vector3f> vertices = new ArrayList<>();
 
-        for (int i = 0; i < size - 1; ++i) {
-            for (int j = 0; j < size - 1; ++j) {
+        for (int i = 0; i < size - TILE_SIZE; i += TILE_SIZE) {
+            for (int j = 0; j < size - TILE_SIZE; j += TILE_SIZE) {
                 Vector3f p0 = new Vector3f(i, heightmap[i][j], -j);
-                Vector3f p1 = new Vector3f(i + 1, heightmap[i + 1][j], -j);
-                Vector3f p2 = new Vector3f(i + 1, heightmap[i + 1][j + 1], -(j + 1));
-                Vector3f p3 = new Vector3f(i, heightmap[i][j + 1], -(j + 1));
+                Vector3f p1 = new Vector3f(i + TILE_SIZE, heightmap[i + TILE_SIZE][j], -j);
+                Vector3f p2 = new Vector3f(i + TILE_SIZE, heightmap[i + TILE_SIZE][j + TILE_SIZE], -(j + TILE_SIZE));
+                Vector3f p3 = new Vector3f(i, heightmap[i][j + TILE_SIZE], -(j + TILE_SIZE));
 
                 Vector3f n0 = p1.sub(p0, new Vector3f()).cross(p2.sub(p0, new Vector3f())).normalize();
                 Vector3f n1 = p2.sub(p0, new Vector3f()).cross(p3.sub(p0, new Vector3f())).normalize();
@@ -461,20 +443,6 @@ public class Terrain implements AutoCloseable {
                 heightmap[i][j] -= amt * w / normalizationFactor;
             }
         }
-    }
-
-    private float blurSample(float x, float y, float r) {
-        float sum = 0.0f;
-        sum += sample(x - r, y - r) / 9.0f;
-        sum += sample(x - r, y) / 9.0f;
-        sum += sample(x - r, y + r) / 9.0f;
-        sum += sample(x, y - r) / 9.0f;
-        sum += sample(x, y) / 9.0f;
-        sum += sample(x, y + r) / 9.0f;
-        sum += sample(x + r, y - r) / 9.0f;
-        sum += sample(x + r, y) / 9.0f;
-        sum += sample(x + r, y + r) / 9.0f;
-        return sum;
     }
 
     public void draw() {

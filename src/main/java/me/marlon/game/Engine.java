@@ -18,7 +18,7 @@ public class Engine implements AutoCloseable {
 
     public Engine(int width, int height, String title, float deltaTime) {
         this.window = new Window(width, height, title);
-        this.renderer = new Renderer();
+        this.renderer = new Renderer(width, height);
         this.deltaTime = deltaTime;
         this.world = new World(this);
 

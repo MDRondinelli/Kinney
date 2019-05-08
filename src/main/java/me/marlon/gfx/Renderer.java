@@ -3,20 +3,26 @@ package me.marlon.gfx;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import org.lwjgl.system.MemoryStack;
 
 import static org.lwjgl.opengl.GL45.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
 public class Renderer implements AutoCloseable {
+    private Framebuffer gbuffer;
+    private Primitive gbufferMesh;
+
     private UniformBuffer frameBlock;
     private ByteBuffer frameData;
 
+    private Shader lightShader;
     private Shader meshShader;
     private Shader terrainShader;
 
@@ -28,14 +34,50 @@ public class Renderer implements AutoCloseable {
     private Matrix4f projInv;
     private DirectionalLight dLight;
 
-    public Renderer() {
+    public Renderer(int width, int height) {
+        gbuffer = new Framebuffer(width, height, new int[] { GL_RGB10, GL_RGB10 });
+
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            FloatBuffer vertices = stack.mallocFloat(3 * 6);
+
+            vertices.put(-1.0f);
+            vertices.put(-1.0f);
+            vertices.put(0.0f);
+
+            vertices.put(0.0f);
+            vertices.put(0.0f);
+            vertices.put(0.0f);
+
+            vertices.put(3.0f);
+            vertices.put(-1.0f);
+            vertices.put(0.0f);
+
+            vertices.put(0.0f);
+            vertices.put(0.0f);
+            vertices.put(0.0f);
+
+            vertices.put(-1.0f);
+            vertices.put(3.0f);
+            vertices.put(0.0f);
+
+            vertices.put(0.0f);
+            vertices.put(0.0f);
+            vertices.put(0.0f);
+
+            gbufferMesh = new Primitive(vertices.rewind());
+        }
+
         frameBlock = new UniformBuffer(288);
         frameData = memAlloc(frameBlock.getSize());
 
+        lightShader = new Shader();
         meshShader = new Shader();
         terrainShader = new Shader();
 
         try {
+            lightShader.setVertText(Files.readString(Paths.get("res/shaders/light.vert")));
+            lightShader.setFragText(Files.readString(Paths.get("res/shaders/light.frag")));
+
             meshShader.setVertText(Files.readString(Paths.get("res/shaders/shader.vert")));
             meshShader.setFragText(Files.readString(Paths.get("res/shaders/shader.frag")));
 
@@ -45,6 +87,7 @@ public class Renderer implements AutoCloseable {
             e.printStackTrace();
         }
 
+        lightShader.compile();
         meshShader.compile();
         terrainShader.compile();
 
@@ -60,9 +103,13 @@ public class Renderer implements AutoCloseable {
     }
 
     public void close() {
+        gbuffer.close();
+        gbufferMesh.close();
+
         frameBlock.close();
         memFree(frameData);
 
+        lightShader.close();
         meshShader.close();
         terrainShader.close();
     }
@@ -99,7 +146,7 @@ public class Renderer implements AutoCloseable {
     }
 
     public void submitDraw() {
-        glClearColor(0.7f, 0.5f, 0.5f, 0.0f);
+        gbuffer.bind(GL_FRAMEBUFFER);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         meshShader.bind();
@@ -117,6 +164,15 @@ public class Renderer implements AutoCloseable {
             terrainShader.bind();
             terrain.draw();
         }
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        lightShader.bind();
+        gbuffer.bindTexture(0, 0);
+        gbuffer.bindTexture(1, 1);
+        gbuffer.bindTexture(2, 2);
+        gbufferMesh.draw();
     }
 
     public void setTerrain(Terrain terrain) {
