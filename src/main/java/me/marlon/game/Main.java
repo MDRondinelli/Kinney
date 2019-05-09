@@ -2,7 +2,8 @@ package me.marlon.game;
 
 import me.marlon.ecs.*;
 import me.marlon.gfx.DirectionalLight;
-import me.marlon.gfx.Terrain;
+import me.marlon.gfx.TerrainMesh;
+import me.marlon.gfx.WaterMesh;
 import org.joml.Vector3f;
 
 public class Main {
@@ -19,7 +20,10 @@ public class Main {
         entities.add(player, new TransformComponent()).translate(new Vector3f(128.0f, 2.0f, -128.0f));
 
         int terrain = entities.create();
-        entities.add(terrain, new Terrain(512));
+        entities.add(terrain, new TerrainMesh(512));
+
+        int water = entities.create();
+        entities.add(water, new WaterMesh(512));
 
         int sun = entities.create();
         entities.add(sun, new DirectionalLight(new Vector3f(1.0f), new Vector3f(1.0f, -2.0f, -1.0f).normalize()));

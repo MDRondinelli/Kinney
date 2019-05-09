@@ -2,13 +2,13 @@ package me.marlon.ecs;
 
 import me.marlon.gfx.Renderer;
 
-public class TerrainSystem {
-    public static final short BITS = EntityManager.TERRAIN_MESH_BIT;
+public class WaterSystem {
+    public static final short BITS = EntityManager.WATER_MESH_BIT;
 
     private EntityManager entities;
     private Renderer renderer;
 
-    public TerrainSystem(EntityManager entities, Renderer renderer) {
+    public WaterSystem(EntityManager entities, Renderer renderer) {
         this.entities = entities;
         this.renderer = renderer;
     }
@@ -18,7 +18,7 @@ public class TerrainSystem {
             if (!entities.match(i, BITS))
                 continue;
 
-            renderer.setTerrainMesh(entities.getTerrainMesh(i));
+            renderer.setWaterMesh(entities.getWaterMesh(i));
         }
     }
 }

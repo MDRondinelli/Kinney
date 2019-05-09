@@ -11,8 +11,9 @@ import org.joml.Vector3f;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 
-public class Terrain implements AutoCloseable {
+public class TerrainMesh implements AutoCloseable {
     public static final int TILE_SIZE = 2;
+    public static final float WATER_ALTITUDE = 4.0f;
 
     private int size;
     private float[][] heightmap;
@@ -21,7 +22,7 @@ public class Terrain implements AutoCloseable {
     private int vbo;
     private int count;
 
-    public Terrain(int size) {
+    public TerrainMesh(int size) {
         this.size = size;
         heightmap = new float[size][size];
 
@@ -41,8 +42,16 @@ public class Terrain implements AutoCloseable {
             for (int j = 0; j < size; ++j) {
                 heightmap[i][j] = (heightmap[i][j] - minHeight) / (maxHeight - minHeight);
                 float distance = Vector2f.distance(size * 0.5f, size * 0.5f, i, j);
-                float mask = 1.0f - (float) Math.pow(Math.min(1.5f * distance / (size * 0.5f), 1.0f), 2.0f);
+//                float mask = (float) Math.pow(Math.min(1.5f * distance / (size * 0.5f), 1.0f), 10.0f);
+//                heightmap[i][j] -= mask;
+                distance *= 3.0;
+                distance /= size;
+
+                float mask = 1.0f - (float) Math.pow(Math.min(distance, 1.0f), 2.0f);
                 heightmap[i][j] *= mask;
+
+                if (distance > 1.0f)
+                    heightmap[i][j] -= (distance - 1.0f) * 0.5f;
             }
         }
 
@@ -55,7 +64,7 @@ public class Terrain implements AutoCloseable {
         for (int i = 0; i < size; ++i) {
             for (int j = 0; j < size; ++j) {
                  heightmap[i][j] *= 48.0f;
-                 heightmap[i][j] = Math.max(heightmap[i][j], 4.0f);
+                 // heightmap[i][j] = Math.max(heightmap[i][j], 4.0f);
             }
         }
 
@@ -300,10 +309,10 @@ public class Terrain implements AutoCloseable {
                     vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
                     vertices.add(c);
                 }
-                else if (y != 4.0f)
+                else //if (y != 4.0f)
                     c.set(0.76f, 0.7f, 0.5f);
-                else
-                    c.set(0.0f, 0.4f, 1.0f);
+//                else
+//                    c.set(0.0f, 0.4f, 1.0f);
 
                 vertices.add(p0);
                 vertices.add(n0);

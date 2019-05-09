@@ -11,6 +11,7 @@ public class World implements IKeyListener, IMouseListener {
     private ParticleSystem particleSystem;
     private PlayerSystem playerSystem;
     private TerrainSystem terrainSystem;
+    private WaterSystem waterSystem;
 
     public World(Engine engine) {
         entities = new EntityManager();
@@ -20,6 +21,7 @@ public class World implements IKeyListener, IMouseListener {
         playerSystem = new PlayerSystem(entities, engine.getDeltaTime());
         particleSystem = new ParticleSystem(entities, engine.getDeltaTime());
         terrainSystem = new TerrainSystem(entities, engine.getRenderer());
+        waterSystem = new WaterSystem(entities, engine.getRenderer());
     }
 
     public void onKeyPressed(int key) {
@@ -49,6 +51,7 @@ public class World implements IKeyListener, IMouseListener {
         dLightSystem.onUpdate();
         meshSystem.onUpdate();
         terrainSystem.onUpdate();
+        waterSystem.onUpdate();
     }
 
     public EntityManager getEntities() {

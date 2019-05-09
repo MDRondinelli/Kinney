@@ -77,4 +77,8 @@ public class Framebuffer implements AutoCloseable {
     public int getTexture(int index) {
         return textures.get(index);
     }
+
+    public int getHandle() {
+        return framebuffer;
+    }
 }

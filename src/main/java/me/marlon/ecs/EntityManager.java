@@ -2,7 +2,8 @@ package me.marlon.ecs;
 
 import me.marlon.gfx.DirectionalLight;
 import me.marlon.gfx.Mesh;
-import me.marlon.gfx.Terrain;
+import me.marlon.gfx.TerrainMesh;
+import me.marlon.gfx.WaterMesh;
 import me.marlon.physics.Particle;
 
 import java.util.ArrayList;
@@ -16,8 +17,9 @@ public class EntityManager {
     public static final short MESH_BIT = 0x0004;
     public static final short PARTICLE_BIT = 0x0008;
     public static final short PLAYER_BIT = 0x0010;
-    public static final short TERRAIN_BIT = 0x0020;
+    public static final short TERRAIN_MESH_BIT = 0x0020;
     public static final short TRANSFORM_BIT = 0x0040;
+    public static final short WATER_MESH_BIT = 0x0080;
 
     private ArrayList<Integer> freeList;
 
@@ -27,8 +29,9 @@ public class EntityManager {
     private Mesh[] meshes;
     private Particle[] particles;
     private Player[] players;
-    private Terrain[] terrains;
+    private TerrainMesh[] terrainMeshes;
     private TransformComponent[] transforms;
+    private WaterMesh[] waterMeshes;
 
     public EntityManager() {
         freeList = new ArrayList<>(MAX_ENTITIES);
@@ -41,8 +44,9 @@ public class EntityManager {
         meshes = new Mesh[MAX_ENTITIES];
         particles = new Particle[MAX_ENTITIES];
         players = new Player[MAX_ENTITIES];
-        terrains = new Terrain[MAX_ENTITIES];
+        terrainMeshes = new TerrainMesh[MAX_ENTITIES];
         transforms = new TransformComponent[MAX_ENTITIES];
+        waterMeshes = new WaterMesh[MAX_ENTITIES];
     }
 
     public int create() {
@@ -106,14 +110,14 @@ public class EntityManager {
         return players[i];
     }
 
-    public Terrain add(int i, Terrain component) {
-        terrains[i] = component;
-        entities[i] |= TERRAIN_BIT;
+    public TerrainMesh add(int i, TerrainMesh component) {
+        terrainMeshes[i] = component;
+        entities[i] |= TERRAIN_MESH_BIT;
         return component;
     }
 
-    public Terrain getTerrain(int i) {
-        return terrains[i];
+    public TerrainMesh getTerrainMesh(int i) {
+        return terrainMeshes[i];
     }
 
     public TransformComponent add(int i, TransformComponent component) {
@@ -124,6 +128,16 @@ public class EntityManager {
 
     public TransformComponent getTransform(int i) {
         return transforms[i];
+    }
+
+    public WaterMesh add(int i, WaterMesh component) {
+        waterMeshes[i] = component;
+        entities[i] |= WATER_MESH_BIT;
+        return component;
+    }
+
+    public WaterMesh getWaterMesh(int i) {
+        return waterMeshes[i];
     }
 
     public boolean match(int i, short bits) {

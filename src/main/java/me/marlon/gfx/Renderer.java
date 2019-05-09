@@ -1,10 +1,10 @@
 package me.marlon.gfx;
 
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.lwjgl.system.MemoryStack;
 
+import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL45.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
@@ -17,7 +17,8 @@ import java.util.ArrayList;
 
 public class Renderer implements AutoCloseable {
     private Framebuffer gbuffer;
-    private Primitive gbufferMesh;
+    private Framebuffer pbuffer;
+    private Primitive screenMesh;
 
     private UniformBuffer frameBlock;
     private ByteBuffer frameData;
@@ -25,9 +26,11 @@ public class Renderer implements AutoCloseable {
     private Shader lightShader;
     private Shader meshShader;
     private Shader terrainShader;
+    private Shader waterShader;
 
     private ArrayList<MeshInstance> queue;
-    private Terrain terrain;
+    private TerrainMesh terrainMesh;
+    private WaterMesh waterMesh;
     private Matrix4f view;
     private Matrix4f viewInv;
     private Matrix4f proj;
@@ -35,14 +38,15 @@ public class Renderer implements AutoCloseable {
     private DirectionalLight dLight;
 
     public Renderer(int width, int height) {
-        gbuffer = new Framebuffer(width, height, new int[] { GL_RGB10, GL_RGB10 });
+        gbuffer = new Framebuffer(width, height, new int[] { GL_RGB8, GL_RGB10 });
+        pbuffer = new Framebuffer(width, height, new int[] { GL_RGB8 });
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
             FloatBuffer vertices = stack.mallocFloat(3 * 6);
 
             vertices.put(-1.0f);
             vertices.put(-1.0f);
-            vertices.put(0.0f);
+            vertices.put(1.0f);
 
             vertices.put(0.0f);
             vertices.put(0.0f);
@@ -50,7 +54,7 @@ public class Renderer implements AutoCloseable {
 
             vertices.put(3.0f);
             vertices.put(-1.0f);
-            vertices.put(0.0f);
+            vertices.put(1.0f);
 
             vertices.put(0.0f);
             vertices.put(0.0f);
@@ -58,13 +62,13 @@ public class Renderer implements AutoCloseable {
 
             vertices.put(-1.0f);
             vertices.put(3.0f);
-            vertices.put(0.0f);
+            vertices.put(1.0f);
 
             vertices.put(0.0f);
             vertices.put(0.0f);
             vertices.put(0.0f);
 
-            gbufferMesh = new Primitive(vertices.rewind());
+            screenMesh = new Primitive(vertices.rewind());
         }
 
         frameBlock = new UniformBuffer(288);
@@ -73,6 +77,7 @@ public class Renderer implements AutoCloseable {
         lightShader = new Shader();
         meshShader = new Shader();
         terrainShader = new Shader();
+        waterShader = new Shader();
 
         try {
             lightShader.setVertText(Files.readString(Paths.get("res/shaders/light.vert")));
@@ -83,6 +88,9 @@ public class Renderer implements AutoCloseable {
 
             terrainShader.setVertText(Files.readString(Paths.get("res/shaders/terrain.vert")));
             terrainShader.setFragText(Files.readString(Paths.get("res/shaders/terrain.frag")));
+
+            waterShader.setVertText(Files.readString(Paths.get("res/shaders/water.vert")));
+            waterShader.setFragText(Files.readString(Paths.get("res/shaders/water.frag")));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -90,6 +98,7 @@ public class Renderer implements AutoCloseable {
         lightShader.compile();
         meshShader.compile();
         terrainShader.compile();
+        waterShader.compile();
 
         queue = new ArrayList<>();
         view = new Matrix4f();
@@ -104,7 +113,7 @@ public class Renderer implements AutoCloseable {
 
     public void close() {
         gbuffer.close();
-        gbufferMesh.close();
+        screenMesh.close();
 
         frameBlock.close();
         memFree(frameData);
@@ -112,11 +121,12 @@ public class Renderer implements AutoCloseable {
         lightShader.close();
         meshShader.close();
         terrainShader.close();
+        waterShader.close();
     }
 
     public void clear() {
         queue.clear();
-        terrain = null;
+        terrainMesh = null;
         view.identity();
         viewInv.identity();
         proj.identity();
@@ -143,10 +153,13 @@ public class Renderer implements AutoCloseable {
 
         frameBlock.buffer(frameData);
         frameBlock.bind(0);
+
+        waterShader.set("time", (float) glfwGetTime());
     }
 
     public void submitDraw() {
         gbuffer.bind(GL_FRAMEBUFFER);
+        glEnable(GL_DEPTH_TEST);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         meshShader.bind();
@@ -160,23 +173,50 @@ public class Renderer implements AutoCloseable {
                 primitives[j].draw();
         }
 
-        if (terrain != null) {
+        if (terrainMesh != null) {
             terrainShader.bind();
-            terrain.draw();
+            terrainMesh.draw();
         }
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        pbuffer.bind(GL_FRAMEBUFFER);
+        glDisable(GL_DEPTH_TEST);
+        glClear(GL_COLOR_BUFFER_BIT);
 
         lightShader.bind();
         gbuffer.bindTexture(0, 0);
         gbuffer.bindTexture(1, 1);
         gbuffer.bindTexture(2, 2);
-        gbufferMesh.draw();
+        screenMesh.draw();
+
+        if (waterMesh != null) {
+            glBlitNamedFramebuffer(gbuffer.getHandle(), pbuffer.getHandle(),
+                    0, 0, pbuffer.getWidth(), pbuffer.getHeight(),
+                    0, 0, pbuffer.getWidth(), pbuffer.getHeight(),
+                    GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glEnable(GL_DEPTH_TEST);
+
+            waterShader.bind();
+            waterMesh.draw();
+
+            glDisable(GL_BLEND);
+        }
+
+        glBlitNamedFramebuffer(pbuffer.getHandle(), 0,
+                0, 0, pbuffer.getWidth(), pbuffer.getHeight(),
+                0, 0, pbuffer.getWidth(), pbuffer.getHeight(),
+                GL_COLOR_BUFFER_BIT, GL_NEAREST);
     }
 
-    public void setTerrain(Terrain terrain) {
-        this.terrain = terrain;
+    public void setTerrainMesh(TerrainMesh terrainMesh) {
+        this.terrainMesh = terrainMesh;
+    }
+
+    public void setWaterMesh(WaterMesh waterMesh) {
+        this.waterMesh = waterMesh;
     }
 
     public void setView(Matrix4f m) {

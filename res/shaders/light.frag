@@ -1,7 +1,8 @@
 #version 450 core
 
-const float FOG_BEGIN = 20.0;
+const float FOG_BEGIN = 120.0;
 const float FOG_END = 200.0;
+const vec3 SKY = vec3(0.2, 0.5, 1.0);
 
 in vec2 texcoord;
 
@@ -25,7 +26,7 @@ layout(binding = 1) uniform sampler2D normalTexture;
 layout(binding = 2) uniform sampler2D albedoTexture;
 
 vec3 decodePosition(vec2 uv) {
-    float z = texture(depthTexture, uv).r;
+    float z = texture(depthTexture, uv).r * 2.0 - 1.0;
     vec4 projected = vec4(uv.xy * 2.0 - 1.0, z, 1.0);
     vec4 view = projInv * projected;
     view /= view.w;
@@ -48,13 +49,13 @@ void main() {
 
     vec3 l = normalize(-dLight.direction.xyz);
 
-    vec3 ambient = clamp(n.y * 0.5 + 0.5, 0.0, 1.0) * vec3(0.14, 0.1, 0.1);
+    vec3 ambient = clamp(n.y * 0.5 + 0.5, 0.0, 1.0) * SKY * 0.1;
     vec3 indirect = albedo * ambient;
     vec3 direct = albedo * dLight.color.rgb * clamp(dot(n, l), 0.0, 1.0);
 
     vec3 camera = viewInv[3].xyz;
     float distance = length(camera - p);
-    float fogFactor = clamp((distance - FOG_BEGIN) / (FOG_END - FOG_BEGIN), 0.0, 1.0);
+    float fogFactor = smoothstep(FOG_BEGIN, FOG_END, distance);
 
-    color = vec4(mix(direct + indirect, vec3(0.7, 0.5, 0.5), fogFactor), 1.0);
+    color = vec4(mix(direct + indirect, SKY, fogFactor), 1.0);
 }

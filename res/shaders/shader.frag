@@ -1,8 +1,5 @@
 #version 450 core
 
-const float FOG_BEGIN = 20.0;
-const float FOG_END = 200.0;
-
 in Vertex {
     vec3 position;
     vec3 normal;
