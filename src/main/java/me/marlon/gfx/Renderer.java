@@ -83,8 +83,8 @@ public class Renderer implements AutoCloseable {
             lightShader.setVertText(Files.readString(Paths.get("res/shaders/light.vert")));
             lightShader.setFragText(Files.readString(Paths.get("res/shaders/light.frag")));
 
-            meshShader.setVertText(Files.readString(Paths.get("res/shaders/shader.vert")));
-            meshShader.setFragText(Files.readString(Paths.get("res/shaders/shader.frag")));
+            meshShader.setVertText(Files.readString(Paths.get("res/shaders/mesh.vert")));
+            meshShader.setFragText(Files.readString(Paths.get("res/shaders/mesh.frag")));
 
             terrainShader.setVertText(Files.readString(Paths.get("res/shaders/terrain.vert")));
             terrainShader.setFragText(Files.readString(Paths.get("res/shaders/terrain.frag")));
