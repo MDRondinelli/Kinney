@@ -29,7 +29,7 @@ public class EntityManager {
     private Mesh[] meshes;
     private Particle[] particles;
     private Player[] players;
-    private TerrainMesh[] terrainMeshes;
+    private Terrain[] terrains;
     private TransformComponent[] transforms;
     private WaterMesh[] waterMeshes;
 
@@ -44,7 +44,7 @@ public class EntityManager {
         meshes = new Mesh[MAX_ENTITIES];
         particles = new Particle[MAX_ENTITIES];
         players = new Player[MAX_ENTITIES];
-        terrainMeshes = new TerrainMesh[MAX_ENTITIES];
+        terrains = new Terrain[MAX_ENTITIES];
         transforms = new TransformComponent[MAX_ENTITIES];
         waterMeshes = new WaterMesh[MAX_ENTITIES];
     }
@@ -110,14 +110,14 @@ public class EntityManager {
         return players[i];
     }
 
-    public TerrainMesh add(int i, TerrainMesh component) {
-        terrainMeshes[i] = component;
+    public Terrain add(int i, Terrain component) {
+        terrains[i] = component;
         entities[i] |= TERRAIN_MESH_BIT;
         return component;
     }
 
-    public TerrainMesh getTerrainMesh(int i) {
-        return terrainMeshes[i];
+    public Terrain getTerrain(int i) {
+        return terrains[i];
     }
 
     public TransformComponent add(int i, TransformComponent component) {

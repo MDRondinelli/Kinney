@@ -22,6 +22,7 @@ layout(std140, binding = 0) uniform FrameBlock {
     DirectionalLight dLight;
 };
 
+uniform mat4 model;
 uniform float time;
 
 float rand(vec2 co){
@@ -34,16 +35,17 @@ vec3 getWave(vec2 pos) {
 }
 
 void main() {
-    vec3 pos0 = vec3(inPosition.x, 4.0, inPosition.y) + getWave(inPosition);
+    vec3 pos0 = vec3(inPosition.x, 0.0, inPosition.y) + getWave(inPosition);
+    vec4 worldPos0 = model * vec4(pos0, 1.0);
 
-    gl_Position = proj * view * vec4(pos0, 1.0);
-    vertex.position = pos0;
+    gl_Position = proj * view * worldPos0;
+    vertex.position = worldPos0.xyz;
 
     vec2 pos1xy = inPosition + inOffs0;
     vec2 pos2xy = inPosition + inOffs1;
 
-    vec3 pos1 = vec3(pos1xy.x, 4.0, pos1xy.y) + getWave(pos1xy);
-    vec3 pos2 = vec3(pos2xy.x, 4.0, pos2xy.y) + getWave(pos2xy);
+    vec3 pos1 = vec3(pos1xy.x, 0.0, pos1xy.y) + getWave(pos1xy);
+    vec3 pos2 = vec3(pos2xy.x, 0.0, pos2xy.y) + getWave(pos2xy);
 
     vertex.normal = normalize(cross(pos1 - pos0, pos2 - pos0));
 }

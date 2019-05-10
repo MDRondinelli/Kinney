@@ -5,8 +5,9 @@ in Vertex {
     vec3 normal;
 } vertex;
 
-layout (location = 0) out vec3 normal;
-layout (location = 1) out vec3 albedo;
+layout(location = 0) out vec3 outNormal;
+layout(location = 1) out vec3 outAlbedo;
+layout(location = 2) out vec2 outMetallicRoughness;
 
 struct DirectionalLight {
     vec4 color;
@@ -21,10 +22,13 @@ layout(std140, binding = 0) uniform FrameBlock {
     DirectionalLight dLight;
 };
 
+uniform vec3 albedo;
+
 void main() {
 //    vec3 n = normalize(vertex.normal);
-    normal = normalize(vertex.normal) * 0.5 + 0.5;
-    albedo = vec3(0.5);
+    outNormal = normalize(vertex.normal) * 0.5 + 0.5;
+    outAlbedo = albedo;
+    outMetallicRoughness = vec2(0.0, 0.5);
 
 //    vec3 l = normalize(-dLight.direction.xyz);
 //

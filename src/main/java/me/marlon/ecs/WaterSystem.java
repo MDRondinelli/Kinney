@@ -3,7 +3,7 @@ package me.marlon.ecs;
 import me.marlon.gfx.Renderer;
 
 public class WaterSystem {
-    public static final short BITS = EntityManager.WATER_MESH_BIT;
+    public static final short BITS = EntityManager.TRANSFORM_BIT | EntityManager.WATER_MESH_BIT;
 
     private EntityManager entities;
     private Renderer renderer;
@@ -18,7 +18,7 @@ public class WaterSystem {
             if (!entities.match(i, BITS))
                 continue;
 
-            renderer.setWaterMesh(entities.getWaterMesh(i));
+            renderer.setWaterMesh(entities.getWaterMesh(i), entities.getTransform(i).getMatrix());
         }
     }
 }

@@ -1,6 +1,6 @@
 package me.marlon.game;
 
-import me.marlon.gfx.TerrainMesh;
+import me.marlon.ecs.Terrain;
 import org.joml.Vector2f;
 
 public class ErosionParticle {
@@ -27,15 +27,15 @@ public class ErosionParticle {
         this.sediment = 0.0f;
     }
 
-    public void update(TerrainMesh terrainMesh) {
+    public void update(Terrain terrain) {
         if (water <= 0.0f)
             return;
 
         Vector2f oldPosition = new Vector2f(position);
 
-        float hOld = terrainMesh.sample(position.x, position.y);
+        float hOld = terrain.sampleHeight(position.x, position.y);
 
-        Vector2f gradient = terrainMesh.gradient(position.x, position.y);
+        Vector2f gradient = terrain.gradient(position.x, position.y);
         direction.mul(INERTIA).sub(gradient.mul(1.0f - INERTIA));
         if (direction.x == 0.0f && direction.y == 0.0f) {
             float angle = (float) (2.0f * Math.PI * Math.random());
@@ -46,15 +46,15 @@ public class ErosionParticle {
         direction.normalize();
         position.add(direction);
 
-        float hNew = terrainMesh.sample(position.x, position.y);
+        float hNew = terrain.sampleHeight(position.x, position.y);
         float hDif = hNew - hOld;
 
         if (hDif > 0.0f) {
             if (sediment >= hDif) {
-                terrainMesh.deposit(oldPosition.x, oldPosition.y, hDif * 0.2f);
+                terrain.deposit(oldPosition.x, oldPosition.y, hDif * 0.2f);
                 sediment -= hDif * 0.2f;
             } else {
-                terrainMesh.deposit(oldPosition.x, oldPosition.y, sediment * 0.2f);
+                terrain.deposit(oldPosition.x, oldPosition.y, sediment * 0.2f);
                 sediment *= 0.8f;
             }
         } else if (hDif < 0.0f) {
@@ -64,16 +64,20 @@ public class ErosionParticle {
                 float amt = (sediment - c) * DEPOSITION;
                 sediment -= amt;
 
-                terrainMesh.deposit(oldPosition.x, oldPosition.y, amt);
+                terrain.deposit(oldPosition.x, oldPosition.y, amt);
             } else if (sediment < c) {
                 float amt = Math.min((c - sediment) * EROSION, -hDif);
                 sediment += amt;
 
-                terrainMesh.erode(oldPosition.x, oldPosition.y, RADIUS, amt);
+                terrain.erode(oldPosition.x, oldPosition.y, RADIUS, amt);
             }
         }
 
         speed = (float) Math.sqrt(Math.max(speed * speed + hDif * GRAVITY, 0.0f));
         water *= 1.0f - EVAPORATION;
+    }
+
+    public float getWater() {
+        return water;
     }
 }

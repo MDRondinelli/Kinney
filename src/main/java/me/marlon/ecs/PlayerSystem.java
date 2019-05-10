@@ -5,6 +5,7 @@ import static org.lwjgl.glfw.GLFW.*;
 import me.marlon.game.IKeyListener;
 import me.marlon.game.IMouseListener;
 import me.marlon.gfx.Mesh;
+import me.marlon.gfx.Primitive;
 import me.marlon.physics.Particle;
 import org.joml.AxisAngle4f;
 import org.joml.Quaternionf;
@@ -26,7 +27,7 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
         this.deltaTime = deltaTime;
 
         try {
-            ballMesh = new Mesh("res/meshes/ball.obj");
+            ballMesh = new Mesh(new Primitive("res/meshes/pine.obj", new Vector3f(1.0f)));
         } catch (IOException e) {
             e.printStackTrace();
         }

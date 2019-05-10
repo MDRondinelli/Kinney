@@ -26,16 +26,19 @@ public class TransformComponent {
         this.transform = transform;
     }
 
-    public void translate(Vector3f v) {
+    public TransformComponent translate(Vector3f v) {
         transform.translate(v);
+        return this;
     }
 
-    public void rotate(Quaternionf q) {
+    public TransformComponent rotate(Quaternionf q) {
         transform.rotate(q);
+        return this;
     }
 
-    public void scale(float x) {
+    public TransformComponent scale(float x) {
         transform.scale(x);
+        return this;
     }
 
     public Matrix4f getMatrix() {

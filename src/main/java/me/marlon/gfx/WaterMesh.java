@@ -23,31 +23,31 @@ public class WaterMesh implements AutoCloseable {
         for (int i = 0; i < size / TILE_SIZE; ++i) {
             for (int j = 0; j < size / TILE_SIZE; ++j) {
                 float x = i * TILE_SIZE;
-                float z = -j * TILE_SIZE;
+                float z = j * TILE_SIZE;
 
                 int startingIdx = vertices.size();
 
-                vertices.add(new Vector2f(x, z));
+                vertices.add(new Vector2f(x, z + TILE_SIZE));
                 vertices.add(new Vector2f(TILE_SIZE, 0.0f));
                 vertices.add(new Vector2f(TILE_SIZE, -TILE_SIZE));
 
-                vertices.add(new Vector2f(x + TILE_SIZE, z));
+                vertices.add(new Vector2f(x + TILE_SIZE, z + TILE_SIZE));
                 vertices.add(new Vector2f(0.0f, -TILE_SIZE));
                 vertices.add(new Vector2f(-TILE_SIZE, 0.0f));
 
-                vertices.add(new Vector2f(x + TILE_SIZE, z - TILE_SIZE));
+                vertices.add(new Vector2f(x + TILE_SIZE, z));
                 vertices.add(new Vector2f(-TILE_SIZE, TILE_SIZE));
                 vertices.add(new Vector2f(0.0f, TILE_SIZE));
 
-                vertices.add(new Vector2f(x + TILE_SIZE, z - TILE_SIZE));
+                vertices.add(new Vector2f(x + TILE_SIZE, z));
                 vertices.add(new Vector2f(-TILE_SIZE, 0.0f));
                 vertices.add(new Vector2f(-TILE_SIZE, TILE_SIZE));
 
-                vertices.add(new Vector2f(x, z - TILE_SIZE));
+                vertices.add(new Vector2f(x, z));
                 vertices.add(new Vector2f(0.0f, TILE_SIZE));
                 vertices.add(new Vector2f(TILE_SIZE, TILE_SIZE));
 
-                vertices.add(new Vector2f(x, z));
+                vertices.add(new Vector2f(x, z + TILE_SIZE));
                 vertices.add(new Vector2f(TILE_SIZE, -TILE_SIZE));
                 vertices.add(new Vector2f(0.0f, -TILE_SIZE));
             }

@@ -1,6 +1,7 @@
 package me.marlon.gfx;
 
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.lwjgl.system.MemoryStack;
 
@@ -23,14 +24,18 @@ public class Renderer implements AutoCloseable {
     private UniformBuffer frameBlock;
     private ByteBuffer frameData;
 
-    private Shader lightShader;
     private Shader meshShader;
     private Shader terrainShader;
     private Shader waterShader;
 
+    private Shader lightShader;
+    private Shader postProcessShader;
+
     private ArrayList<MeshInstance> queue;
     private TerrainMesh terrainMesh;
+    private Matrix4f terrainTransform;
     private WaterMesh waterMesh;
+    private Matrix4f waterTransform;
     private Matrix4f view;
     private Matrix4f viewInv;
     private Matrix4f proj;
@@ -38,7 +43,7 @@ public class Renderer implements AutoCloseable {
     private DirectionalLight dLight;
 
     public Renderer(int width, int height) {
-        gbuffer = new Framebuffer(width, height, new int[] { GL_RGB8, GL_RGB10 });
+        gbuffer = new Framebuffer(width, height, new int[] { GL_RGB8, GL_RGB10, GL_RG8 });
         pbuffer = new Framebuffer(width, height, new int[] { GL_RGB8 });
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
@@ -68,21 +73,19 @@ public class Renderer implements AutoCloseable {
             vertices.put(0.0f);
             vertices.put(0.0f);
 
-            screenMesh = new Primitive(vertices.rewind());
+            screenMesh = new Primitive(vertices.rewind(), null);
         }
 
         frameBlock = new UniformBuffer(288);
         frameData = memAlloc(frameBlock.getSize());
 
-        lightShader = new Shader();
         meshShader = new Shader();
         terrainShader = new Shader();
         waterShader = new Shader();
+        lightShader = new Shader();
+        postProcessShader = new Shader();
 
         try {
-            lightShader.setVertText(Files.readString(Paths.get("res/shaders/light.vert")));
-            lightShader.setFragText(Files.readString(Paths.get("res/shaders/light.frag")));
-
             meshShader.setVertText(Files.readString(Paths.get("res/shaders/mesh.vert")));
             meshShader.setFragText(Files.readString(Paths.get("res/shaders/mesh.frag")));
 
@@ -91,14 +94,21 @@ public class Renderer implements AutoCloseable {
 
             waterShader.setVertText(Files.readString(Paths.get("res/shaders/water.vert")));
             waterShader.setFragText(Files.readString(Paths.get("res/shaders/water.frag")));
+
+            lightShader.setVertText(Files.readString(Paths.get("res/shaders/light.vert")));
+            lightShader.setFragText(Files.readString(Paths.get("res/shaders/light.frag")));
+
+            postProcessShader.setVertText(Files.readString(Paths.get("res/shaders/postprocess.vert")));
+            postProcessShader.setFragText(Files.readString(Paths.get("res/shaders/postprocess.frag")));
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        lightShader.compile();
         meshShader.compile();
         terrainShader.compile();
         waterShader.compile();
+        lightShader.compile();
+        postProcessShader.compile();
 
         queue = new ArrayList<>();
         view = new Matrix4f();
@@ -118,10 +128,11 @@ public class Renderer implements AutoCloseable {
         frameBlock.close();
         memFree(frameData);
 
-        lightShader.close();
         meshShader.close();
         terrainShader.close();
         waterShader.close();
+        lightShader.close();
+        postProcessShader.close();
     }
 
     public void clear() {
@@ -154,6 +165,9 @@ public class Renderer implements AutoCloseable {
         frameBlock.buffer(frameData);
         frameBlock.bind(0);
 
+        terrainShader.set("model", terrainTransform);
+        waterShader.set("model", waterTransform);
+
         waterShader.set("time", (float) glfwGetTime());
     }
 
@@ -169,8 +183,10 @@ public class Renderer implements AutoCloseable {
             meshShader.set("model", instance.matrix);
 
             Primitive[] primitives = instance.mesh.getPrimitives();
-            for (int j = 0; j < primitives.length; ++j)
+            for (int j = 0; j < primitives.length; ++j) {
+                meshShader.set("albedo", primitives[j].getAlbedo());
                 primitives[j].draw();
+            }
         }
 
         if (terrainMesh != null) {
@@ -178,7 +194,6 @@ public class Renderer implements AutoCloseable {
             terrainMesh.draw();
         }
 
-//        glBindFramebuffer(GL_FRAMEBUFFER, 0);
         pbuffer.bind(GL_FRAMEBUFFER);
         glDisable(GL_DEPTH_TEST);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -187,6 +202,7 @@ public class Renderer implements AutoCloseable {
         gbuffer.bindTexture(0, 0);
         gbuffer.bindTexture(1, 1);
         gbuffer.bindTexture(2, 2);
+        gbuffer.bindTexture(3, 3);
         screenMesh.draw();
 
         if (waterMesh != null) {
@@ -205,18 +221,24 @@ public class Renderer implements AutoCloseable {
             glDisable(GL_BLEND);
         }
 
-        glBlitNamedFramebuffer(pbuffer.getHandle(), 0,
-                0, 0, pbuffer.getWidth(), pbuffer.getHeight(),
-                0, 0, pbuffer.getWidth(), pbuffer.getHeight(),
-                GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glDisable(GL_DEPTH_TEST);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        postProcessShader.bind();
+        pbuffer.bindTexture(0, 0);
+        pbuffer.bindTexture(1, 1);
+        screenMesh.draw();
     }
 
-    public void setTerrainMesh(TerrainMesh terrainMesh) {
-        this.terrainMesh = terrainMesh;
+    public void setTerrainMesh(TerrainMesh mesh, Matrix4f transform) {
+        terrainMesh = mesh;
+        terrainTransform = transform;
     }
 
-    public void setWaterMesh(WaterMesh waterMesh) {
-        this.waterMesh = waterMesh;
+    public void setWaterMesh(WaterMesh mesh, Matrix4f transform) {
+        waterMesh = mesh;
+        waterTransform = transform;
     }
 
     public void setView(Matrix4f m) {

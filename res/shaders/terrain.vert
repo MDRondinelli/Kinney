@@ -23,9 +23,13 @@ layout(std140, binding = 0) uniform FrameBlock {
     DirectionalLight dLight;
 };
 
+uniform mat4 model;
+
 void main() {
-    gl_Position = proj * view * vec4(inPosition, 1.0);
-    vertex.position = inPosition;
+    vec4 worldSpace = model * vec4(inPosition, 1.0);
+
+    gl_Position = proj * view * model * worldSpace;
+    vertex.position = worldSpace.xyz;
     vertex.normal = inNormal;
     vertex.color = inColor;
 }

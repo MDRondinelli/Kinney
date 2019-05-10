@@ -1,8 +1,6 @@
 #version 450 core
 
-const float FOG_BEGIN = 120.0;
-const float FOG_END = 200.0;
-const vec3 SKY = vec3(0.2, 0.5, 1.0);
+const vec3 SKY = vec3(0.2, 0.7, 1.0);
 
 in vec2 texcoord;
 
@@ -24,6 +22,7 @@ layout(std140, binding = 0) uniform FrameBlock {
 layout(binding = 0) uniform sampler2D depthTexture;
 layout(binding = 1) uniform sampler2D normalTexture;
 layout(binding = 2) uniform sampler2D albedoTexture;
+layout(binding = 3) uniform sampler2D metallicRoughnessTexture;
 
 vec3 decodePosition(vec2 uv) {
     float z = texture(depthTexture, uv).r * 2.0 - 1.0;
@@ -42,20 +41,63 @@ vec3 decodeAlbedo(vec2 uv) {
     return texture(albedoTexture, uv).rgb;
 }
 
+vec2 decodeMetallicRoughness(vec2 uv) {
+    return texture(metallicRoughnessTexture, uv).rg;
+}
+
+vec3 f(vec3 h, vec3 l, vec3 f0) {
+    float base = 1.0 - clamp(dot(h, l), 0.0, 1.0);
+    float pow5 = base * base;
+    pow5 *= pow5;
+    pow5 *= base;
+    return f0 + (1.0 - f0) * pow5;
+}
+
+float g(vec3 n, vec3 l, vec3 v, float a) {
+    float nDotL = abs(dot(n, l));
+    float nDotV = abs(dot(n, v));
+    return 0.5 / mix(2.0f * nDotL * nDotV, nDotL + nDotV, a);
+}
+
+float d(vec3 n, vec3 h, float a) {
+    float a2 = a * a;
+
+    float nDotM = dot(n, h);
+    float denom = 1.0f + nDotM * nDotM * (a2 - 1.0f);
+
+    return a2 / (denom * denom);
+}
+
+vec3 brdf(vec3 n, vec3 l, vec3 v, vec3 albedo, vec2 params) {
+    float a = max(params.x * params.x, 0.016f);
+
+    vec3 h = normalize(l + v);
+    vec3 f0 = mix(vec3(0.04f), albedo, params.y);
+
+    vec3 fresnel = f(h, l, f0);
+    float geometry = g(n, l, v, a);
+    float ndf = d(n, h, a);
+
+    vec3 specular = fresnel * geometry * ndf;
+
+    vec3 kD = (1.0f - fresnel) * (1.0f - params.yyy);
+    vec3 diffuse = kD * albedo;
+
+    return specular + diffuse;
+}
+
 void main() {
     vec3 p = decodePosition(texcoord);
     vec3 n = decodeNormal(texcoord);
     vec3 albedo = decodeAlbedo(texcoord);
+    vec2 params = decodeMetallicRoughness(texcoord).yx;
 
+    vec3 v = normalize(viewInv[3].xyz - p);
     vec3 l = normalize(-dLight.direction.xyz);
 
-    vec3 ambient = clamp(n.y * 0.5 + 0.5, 0.0, 1.0) * SKY * 0.1;
+    vec3 ambient = albedo * clamp(n.y * 0.5 + 0.5, 0.0, 1.0) * SKY * 0.2;
     vec3 indirect = albedo * ambient;
-    vec3 direct = albedo * dLight.color.rgb * clamp(dot(n, l), 0.0, 1.0);
+    vec3 direct = dLight.color.rgb * brdf(n, l, v, albedo, params) * clamp(dot(n, l), 0.0, 1.0);
 
-    vec3 camera = viewInv[3].xyz;
-    float distance = length(camera - p);
-    float fogFactor = smoothstep(FOG_BEGIN, FOG_END, distance);
-
-    color = vec4(mix(direct + indirect, SKY, fogFactor), 1.0);
+    color = vec4(direct + indirect, 1.0);
 }

@@ -15,16 +15,19 @@ public class Transform {
         scale = 1.0f;
     }
 
-    public void translate(Vector3f v) {
+    public Transform translate(Vector3f v) {
         position.add(v);
+        return this;
     }
 
-    public void rotate(Quaternionf q) {
+    public Transform rotate(Quaternionf q) {
         rotation.mul(q);
+        return this;
     }
 
-    public void scale(float x) {
+    public Transform scale(float x) {
         scale *= x;
+        return this;
     }
 
     public Matrix4f getMatrix() {
