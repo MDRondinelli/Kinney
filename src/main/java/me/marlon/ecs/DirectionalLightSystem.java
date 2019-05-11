@@ -3,7 +3,7 @@ package me.marlon.ecs;
 import me.marlon.gfx.Renderer;
 
 public class DirectionalLightSystem {
-    public static final short BITS = EntityManager.DLIGHT_BIT;
+    private static final short BITS = EntityManager.DLIGHT_BIT;
 
     private EntityManager entities;
     private Renderer renderer;

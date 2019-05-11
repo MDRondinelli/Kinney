@@ -8,17 +8,11 @@ out Vertex {
     vec3 normal;
 } vertex;
 
-struct DirectionalLight {
-    vec4 color;
-    vec4 direction;
-};
-
-layout(std140, binding = 0) uniform FrameBlock {
+layout(std140, binding = 0) uniform CameraBlock {
     mat4 view;
     mat4 viewInv;
     mat4 proj;
     mat4 projInv;
-    DirectionalLight dLight;
 };
 
 uniform mat4 model;

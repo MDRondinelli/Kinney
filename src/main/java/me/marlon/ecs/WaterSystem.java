@@ -3,7 +3,7 @@ package me.marlon.ecs;
 import me.marlon.gfx.Renderer;
 
 public class WaterSystem {
-    public static final short BITS = EntityManager.TRANSFORM_BIT | EntityManager.WATER_MESH_BIT;
+    private static final short BITS = EntityManager.TRANSFORM_BIT | EntityManager.WATER_MESH_BIT;
 
     private EntityManager entities;
     private Renderer renderer;

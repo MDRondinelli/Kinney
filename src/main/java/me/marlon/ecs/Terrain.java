@@ -56,9 +56,12 @@ public class Terrain implements AutoCloseable {
                 particle.update(this);
         }
 
-        for (int i = 0; i < size; ++i)
-            for (int j = 0; j < size; ++j)
+        for (int i = 0; i < size; ++i) {
+            for (int j = 0; j < size; ++j) {
                 heightmap[i][j] *= 48.0f;
+                heightmap[i][j] += Math.random() * 0.25f - 0.125f;
+            }
+        }
 
         OpenSimplexOctaves layerNoise = new OpenSimplexOctaves(24.0f, 0.5f, 2.0f, 4);
 
@@ -101,16 +104,28 @@ public class Terrain implements AutoCloseable {
         int y1 = Math.min(Math.max((int) Math.ceil(y), 0), size - 1);
 
         float u = Math.min(x - x0, 1.0f);
-        float v = Math.min(x - x0, 1.0f);
+        float v = Math.min(y - y0, 1.0f);
 
         float l = (1.0f - v) * heightmap[x0][y0] + v * heightmap[x0][y1];
         float r = (1.0f - v) * heightmap[x1][y0] + v * heightmap[x1][y1];
         return (1.0f - u) * l + u * r;
     }
 
-    public int sampleTile(float x, float y) {
-        return tilemap[(int) (x / TILE_SIZE)][(int) (y / TILE_SIZE)];
+    public int sampleTile(int i, int j) {
+        i = Math.min(Math.max(i, 0), size / TILE_SIZE - 1);
+        j = Math.min(Math.max(j, 0), size / TILE_SIZE - 1);
+        return tilemap[i][j];
     }
+
+//    public int sampleTile(float x, float y) {
+//        int i = (int) (x / TILE_SIZE);
+//        i = Math.min(Math.max(i, 0), size / TILE_SIZE);
+//
+//        int j = (int) (y / TILE_SIZE);
+//        j = Math.min(Math.max(j, 0), size / TILE_SIZE);
+//
+//        return tilemap[i][j];
+//    }
 
     public Vector2f gradient(float x, float y) {
         int x0 = Math.min(Math.max((int) Math.floor(x), 0), size - 1);
@@ -172,6 +187,10 @@ public class Terrain implements AutoCloseable {
 
     public int getSize() {
         return size;
+    }
+
+    public int getSizeTiles() {
+        return size / TILE_SIZE;
     }
 
     public TerrainMesh getMesh() {

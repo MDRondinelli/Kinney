@@ -17,8 +17,8 @@ public class Framebuffer implements AutoCloseable {
     public Framebuffer(int width, int height, int[] formats) {
         this.width = width;
         this.height = height;
-        framebuffer = glCreateFramebuffers();
-        textures = new ArrayList<>(formats.length + 1);
+        this.framebuffer = glCreateFramebuffers();
+        this.textures = new ArrayList<>(formats.length + 1);
 
         int depth = glCreateTextures(GL_TEXTURE_2D);
         glTextureStorage2D(depth, 1, GL_DEPTH_COMPONENT32F, width, height);
@@ -64,6 +64,10 @@ public class Framebuffer implements AutoCloseable {
 
     public void bindTexture(int index, int unit) {
         glBindTextureUnit(unit, textures.get(index));
+    }
+
+    public void bindImage(int index, int unit, int access, int format) {
+        glBindImageTexture(unit, textures.get(index), 0, false, 0, access, format);
     }
 
     public int getWidth() {

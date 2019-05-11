@@ -3,7 +3,7 @@ package me.marlon.ecs;
 import me.marlon.physics.Particle;
 
 public class ParticleSystem {
-    public static final short BITS = EntityManager.PARTICLE_BIT | EntityManager.TRANSFORM_BIT;
+    private static final short BITS = EntityManager.PARTICLE_BIT | EntityManager.TRANSFORM_BIT;
 
     private EntityManager entities;
     private float deltaTime;

@@ -15,7 +15,7 @@ import org.joml.Vector3f;
 import java.io.IOException;
 
 public class PlayerSystem implements IKeyListener, IMouseListener {
-    public static final short BITS = EntityManager.PLAYER_BIT | EntityManager.TRANSFORM_BIT;
+    private static final short BITS = EntityManager.PLAYER_BIT | EntityManager.TRANSFORM_BIT;
 
     private EntityManager entities;
     private float deltaTime;

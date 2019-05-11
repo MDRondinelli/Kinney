@@ -4,14 +4,14 @@ import me.marlon.ecs.Terrain;
 import org.joml.Vector2f;
 
 public class ErosionParticle {
-    public static final float INERTIA = 0.1f;
-    public static final float CAPACITY = 1.0f;
-    public static final float DEPOSITION = 0.01f;
-    public static final float EROSION = 0.8f;
-    public static final float EVAPORATION = 0.05f;
-    public static final float RADIUS = 4.0f;
-    public static final float MIN_SLOPE = 0.01f;
-    public static final float GRAVITY = -6.0f;
+    private static final float INERTIA = 0.1f;
+    private static final float CAPACITY = 1.0f;
+    private static final float DEPOSITION = 0.1f;
+    private static final float EROSION = 0.8f;
+    private static final float EVAPORATION = 0.05f;
+    private static final float RADIUS = 4.0f;
+    private static final float MIN_SLOPE = 0.03f;
+    private static final float GRAVITY = -6.0f;
 
     private Vector2f position;
     private Vector2f direction;
@@ -51,11 +51,11 @@ public class ErosionParticle {
 
         if (hDif > 0.0f) {
             if (sediment >= hDif) {
-                terrain.deposit(oldPosition.x, oldPosition.y, hDif * 0.2f);
-                sediment -= hDif * 0.2f;
+                terrain.deposit(oldPosition.x, oldPosition.y, hDif);
+                sediment -= hDif;
             } else {
-                terrain.deposit(oldPosition.x, oldPosition.y, sediment * 0.2f);
-                sediment *= 0.8f;
+                terrain.deposit(oldPosition.x, oldPosition.y, sediment);
+                sediment = 0.0f;
             }
         } else if (hDif < 0.0f) {
             float c = Math.max(-hDif, MIN_SLOPE) * speed * water * CAPACITY;

@@ -4,7 +4,7 @@ import me.marlon.gfx.Renderer;
 import org.joml.Matrix4f;
 
 public class CameraSystem {
-    public static final short BITS = EntityManager.CAMERA_BIT | EntityManager.TRANSFORM_BIT;
+    private static final short BITS = EntityManager.CAMERA_BIT | EntityManager.TRANSFORM_BIT;
 
     private EntityManager entities;
     private Renderer renderer;

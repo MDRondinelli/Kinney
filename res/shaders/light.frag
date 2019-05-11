@@ -11,21 +11,23 @@ struct DirectionalLight {
     vec4 direction;
 };
 
-layout(std140, binding = 0) uniform FrameBlock {
+layout(std140, binding = 0) uniform CameraBlock {
     mat4 view;
     mat4 viewInv;
     mat4 proj;
     mat4 projInv;
+};
+
+layout(std140, binding = 1) uniform LightBlock {
     DirectionalLight dLight;
 };
 
-layout(binding = 0) uniform sampler2D depthTexture;
-layout(binding = 1) uniform sampler2D normalTexture;
-layout(binding = 2) uniform sampler2D albedoTexture;
-layout(binding = 3) uniform sampler2D metallicRoughnessTexture;
+layout(binding = 0) uniform sampler2D gbufferTexture0; // depth
+layout(binding = 1) uniform sampler2D gbufferTexture1; // rgb: normal, a: metallic
+layout(binding = 2) uniform sampler2D gbufferTexture2; // rgb: albedo, a: roughness
 
 vec3 decodePosition(vec2 uv) {
-    float z = texture(depthTexture, uv).r * 2.0 - 1.0;
+    float z = texture(gbufferTexture0, uv).r * 2.0 - 1.0;
     vec4 projected = vec4(uv.xy * 2.0 - 1.0, z, 1.0);
     vec4 view = projInv * projected;
     view /= view.w;
@@ -33,17 +35,17 @@ vec3 decodePosition(vec2 uv) {
     return world.xyz;
 }
 
-vec3 decodeNormal(vec2 uv) {
-    return texture(normalTexture, uv).rgb * 2.0 - 1.0;
-}
+//vec3 decodeNormal(vec2 uv) {
+//    return texture(normalTexture, uv).rgb * 2.0 - 1.0;
+//}
+//
+//vec3 decodeAlbedo(vec2 uv) {
+//    return texture(albedoTexture, uv).rgb;
+//}
 
-vec3 decodeAlbedo(vec2 uv) {
-    return texture(albedoTexture, uv).rgb;
-}
-
-vec2 decodeMetallicRoughness(vec2 uv) {
-    return texture(metallicRoughnessTexture, uv).rg;
-}
+//vec2 decodeMetallicRoughness(vec) {
+//    return texture(metallicRoughnessTexture, uv).rg;
+//}
 
 vec3 f(vec3 h, vec3 l, vec3 f0) {
     float base = 1.0 - clamp(dot(h, l), 0.0, 1.0);
@@ -87,15 +89,17 @@ vec3 brdf(vec3 n, vec3 l, vec3 v, vec3 albedo, vec2 params) {
 }
 
 void main() {
+    vec4 gbuffer1 = texture(gbufferTexture1, texcoord);
+    vec4 gbuffer2 = texture(gbufferTexture2, texcoord);
     vec3 p = decodePosition(texcoord);
-    vec3 n = decodeNormal(texcoord);
-    vec3 albedo = decodeAlbedo(texcoord);
-    vec2 params = decodeMetallicRoughness(texcoord).yx;
+    vec3 n = normalize(gbuffer1.xyz * 2.0 - 1.0);
+    vec3 albedo = gbuffer2.xyz;
+    vec2 params = vec2(gbuffer2.w, gbuffer1.w);
 
     vec3 v = normalize(viewInv[3].xyz - p);
     vec3 l = normalize(-dLight.direction.xyz);
 
-    vec3 ambient = albedo * clamp(n.y * 0.5 + 0.5, 0.0, 1.0) * SKY * 0.2;
+    vec3 ambient = albedo * clamp(n.y * 0.5 + 0.5, 0.0, 1.0) * SKY * 0.15;
     vec3 indirect = albedo * ambient;
     vec3 direct = dLight.color.rgb * brdf(n, l, v, albedo, params) * clamp(dot(n, l), 0.0, 1.0);
 

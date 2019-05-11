@@ -14,11 +14,14 @@ struct DirectionalLight {
     vec4 direction;
 };
 
-layout(std140, binding = 0) uniform FrameBlock {
+layout(std140, binding = 0) uniform CameraBlock {
     mat4 view;
     mat4 viewInv;
     mat4 proj;
     mat4 projInv;
+};
+
+layout(std140, binding = 1) uniform LightBlock {
     DirectionalLight dLight;
 };
 
@@ -85,10 +88,10 @@ void main() {
     vec3 l = normalize(-dLight.direction.xyz);
 
     vec3 foamAlbedo = vec3(1.0);
-    float foamAlpha = 1.0 - clamp(depth * 0.5, 0.0, 1.0);
+    float foamFactor = 1.0 - clamp(depth * 0.5, 0.0, 1.0);
 
-    vec3 albedo = mix(WATER_ALBEDO, foamAlbedo, foamAlpha);
+    vec3 albedo = mix(WATER_ALBEDO, foamAlbedo, foamFactor);
     vec3 direct = dLight.color.rgb * brdf(n, l, v, albedo, vec2(0.4, 0.0)) * clamp(dot(n, l), 0.0, 1.0);
 
-    outColor = vec4(direct, mix(alpha, 1.0, foamAlpha));
+    outColor = vec4(direct, mix(alpha, 1.0, foamFactor));
 }

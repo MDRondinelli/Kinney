@@ -3,7 +3,7 @@ package me.marlon.ecs;
 import me.marlon.gfx.Renderer;
 
 public class TerrainSystem {
-    public static final short BITS = EntityManager.TERRAIN_MESH_BIT | EntityManager.TRANSFORM_BIT;
+    private static final short BITS = EntityManager.TERRAIN_MESH_BIT | EntityManager.TRANSFORM_BIT;
 
     private EntityManager entities;
     private Renderer renderer;

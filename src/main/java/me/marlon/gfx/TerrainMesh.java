@@ -17,8 +17,8 @@ public class TerrainMesh implements AutoCloseable {
     public TerrainMesh(Terrain terrain) {
         ArrayList<Vector3f> vertices = new ArrayList<>();
 
-        for (int i = 0; i < terrain.getSize() / Terrain.TILE_SIZE - 1; ++i) {
-            for (int j = 0; j < terrain.getSize() / Terrain.TILE_SIZE - 1; ++j) {
+        for (int i = 0; i < terrain.getSizeTiles() - 1; ++i) {
+            for (int j = 0; j < terrain.getSizeTiles() - 1; ++j) {
                 Vector3f p0 = new Vector3f(i * Terrain.TILE_SIZE, 0.0f, j * Terrain.TILE_SIZE + Terrain.TILE_SIZE);
                 Vector3f p1 = new Vector3f(i * Terrain.TILE_SIZE + Terrain.TILE_SIZE, 0.0f, j * Terrain.TILE_SIZE + Terrain.TILE_SIZE);
                 Vector3f p2 = new Vector3f(i * Terrain.TILE_SIZE + Terrain.TILE_SIZE, 0.0f, j * Terrain.TILE_SIZE);
@@ -29,12 +29,14 @@ public class TerrainMesh implements AutoCloseable {
                 p2.y = terrain.sampleHeight(p2.x, p2.z);
                 p3.y = terrain.sampleHeight(p3.x, p3.z);
 
-                Vector3f n0 = p1.sub(p0, new Vector3f()).cross(p2.sub(p0, new Vector3f())).normalize();
-                Vector3f n1 = p2.sub(p0, new Vector3f()).cross(p3.sub(p0, new Vector3f())).normalize();
-
                 Vector3f c = new Vector3f(1.0f);
 
-                int tile = terrain.sampleTile((i + 0.5f) * Terrain.TILE_SIZE, (j + 0.5f) * Terrain.TILE_SIZE);
+                int tile = terrain.sampleTile(i, j);
+                int tileLeft = terrain.sampleTile(i - 1, j);
+                int tileRight = terrain.sampleTile(i + 1, j);
+                int tileUp = terrain.sampleTile(i, j - 1);
+                int tileDown = terrain.sampleTile(i, j + 1);
+
                 if (tile == Terrain.TILE_SNOW) {
                     c.set(1.0f, 0.95f, 0.95f);
 
@@ -48,106 +50,114 @@ public class TerrainMesh implements AutoCloseable {
                     p2.y += 0.25f;
                     p3.y += 0.25f;
 
-                    vertices.add(p4);
-                    vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
-                    vertices.add(c);
+                    if (tile != tileDown) {
+                        vertices.add(p4);
+                        vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
+                        vertices.add(c);
 
-                    vertices.add(p5);
-                    vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
-                    vertices.add(c);
+                        vertices.add(p5);
+                        vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
+                        vertices.add(c);
 
-                    vertices.add(p1);
-                    vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
-                    vertices.add(c);
+                        vertices.add(p1);
+                        vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
+                        vertices.add(c);
 
-                    vertices.add(p1);
-                    vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
-                    vertices.add(c);
+                        vertices.add(p1);
+                        vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
+                        vertices.add(c);
 
-                    vertices.add(p0);
-                    vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
-                    vertices.add(c);
+                        vertices.add(p0);
+                        vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
+                        vertices.add(c);
 
-                    vertices.add(p4);
-                    vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
-                    vertices.add(c);
+                        vertices.add(p4);
+                        vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
+                        vertices.add(c);
+                    }
 
-                    vertices.add(p5);
-                    vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
-                    vertices.add(c);
+                    if (tile != tileRight) {
+                        vertices.add(p5);
+                        vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
+                        vertices.add(c);
 
-                    vertices.add(p6);
-                    vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
-                    vertices.add(c);
+                        vertices.add(p6);
+                        vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
+                        vertices.add(c);
 
-                    vertices.add(p2);
-                    vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
-                    vertices.add(c);
+                        vertices.add(p2);
+                        vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
+                        vertices.add(c);
 
-                    vertices.add(p2);
-                    vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
-                    vertices.add(c);
+                        vertices.add(p2);
+                        vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
+                        vertices.add(c);
 
-                    vertices.add(p1);
-                    vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
-                    vertices.add(c);
+                        vertices.add(p1);
+                        vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
+                        vertices.add(c);
 
-                    vertices.add(p5);
-                    vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
-                    vertices.add(c);
+                        vertices.add(p5);
+                        vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
+                        vertices.add(c);
+                    }
 
-                    vertices.add(p6);
-                    vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
-                    vertices.add(c);
+                    if (tile != tileUp) {
+                        vertices.add(p6);
+                        vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
+                        vertices.add(c);
 
-                    vertices.add(p7);
-                    vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
-                    vertices.add(c);
+                        vertices.add(p7);
+                        vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
+                        vertices.add(c);
 
-                    vertices.add(p3);
-                    vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
-                    vertices.add(c);
+                        vertices.add(p3);
+                        vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
+                        vertices.add(c);
 
-                    vertices.add(p3);
-                    vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
-                    vertices.add(c);
+                        vertices.add(p3);
+                        vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
+                        vertices.add(c);
 
-                    vertices.add(p2);
-                    vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
-                    vertices.add(c);
+                        vertices.add(p2);
+                        vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
+                        vertices.add(c);
 
-                    vertices.add(p6);
-                    vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
-                    vertices.add(c);
+                        vertices.add(p6);
+                        vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
+                        vertices.add(c);
+                    }
 
-                    vertices.add(p7);
-                    vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
-                    vertices.add(c);
+                    if (tile != tileLeft) {
+                        vertices.add(p7);
+                        vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
+                        vertices.add(c);
 
-                    vertices.add(p4);
-                    vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
-                    vertices.add(c);
+                        vertices.add(p4);
+                        vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
+                        vertices.add(c);
 
-                    vertices.add(p0);
-                    vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
-                    vertices.add(c);
+                        vertices.add(p0);
+                        vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
+                        vertices.add(c);
 
-                    vertices.add(p0);
-                    vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
-                    vertices.add(c);
+                        vertices.add(p0);
+                        vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
+                        vertices.add(c);
 
-                    vertices.add(p3);
-                    vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
-                    vertices.add(c);
+                        vertices.add(p3);
+                        vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
+                        vertices.add(c);
 
-                    vertices.add(p7);
-                    vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
-                    vertices.add(c);
+                        vertices.add(p7);
+                        vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
+                        vertices.add(c);
+                    }
                 }
                 else if (tile == Terrain.TILE_STONE)
-                    c.set(0.4f, 0.35f, 0.35f);
+                    c.set(0.35f, 0.35f, 0.35f);
                 else if (tile == Terrain.TILE_GRASS) {
-                    c.set(0.4f, 0.6f, 0.05f);
+                    c.set(0.4f, 0.6f, 0.1f);
 
                     Vector3f p4 = new Vector3f(p0);
                     Vector3f p5 = new Vector3f(p1);
@@ -159,128 +169,170 @@ public class TerrainMesh implements AutoCloseable {
                     p2.y += 0.25f;
                     p3.y += 0.25f;
 
-                    vertices.add(p4);
-                    vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
-                    vertices.add(c);
+                    if (tile != tileDown) {
+                        vertices.add(p4);
+                        vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
+                        vertices.add(c);
 
-                    vertices.add(p5);
-                    vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
-                    vertices.add(c);
+                        vertices.add(p5);
+                        vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
+                        vertices.add(c);
 
-                    vertices.add(p1);
-                    vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
-                    vertices.add(c);
+                        vertices.add(p1);
+                        vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
+                        vertices.add(c);
 
-                    vertices.add(p1);
-                    vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
-                    vertices.add(c);
+                        vertices.add(p1);
+                        vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
+                        vertices.add(c);
 
-                    vertices.add(p0);
-                    vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
-                    vertices.add(c);
+                        vertices.add(p0);
+                        vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
+                        vertices.add(c);
 
-                    vertices.add(p4);
-                    vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
-                    vertices.add(c);
+                        vertices.add(p4);
+                        vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
+                        vertices.add(c);
+                    }
 
-                    vertices.add(p5);
-                    vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
-                    vertices.add(c);
+                    if (tile != tileRight) {
+                        vertices.add(p5);
+                        vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
+                        vertices.add(c);
 
-                    vertices.add(p6);
-                    vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
-                    vertices.add(c);
+                        vertices.add(p6);
+                        vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
+                        vertices.add(c);
 
-                    vertices.add(p2);
-                    vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
-                    vertices.add(c);
+                        vertices.add(p2);
+                        vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
+                        vertices.add(c);
 
-                    vertices.add(p2);
-                    vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
-                    vertices.add(c);
+                        vertices.add(p2);
+                        vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
+                        vertices.add(c);
 
-                    vertices.add(p1);
-                    vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
-                    vertices.add(c);
+                        vertices.add(p1);
+                        vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
+                        vertices.add(c);
 
-                    vertices.add(p5);
-                    vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
-                    vertices.add(c);
+                        vertices.add(p5);
+                        vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
+                        vertices.add(c);
+                    }
 
-                    vertices.add(p6);
-                    vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
-                    vertices.add(c);
+                    if (tile != tileUp) {
+                        vertices.add(p6);
+                        vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
+                        vertices.add(c);
 
-                    vertices.add(p7);
-                    vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
-                    vertices.add(c);
+                        vertices.add(p7);
+                        vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
+                        vertices.add(c);
 
-                    vertices.add(p3);
-                    vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
-                    vertices.add(c);
+                        vertices.add(p3);
+                        vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
+                        vertices.add(c);
 
-                    vertices.add(p3);
-                    vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
-                    vertices.add(c);
+                        vertices.add(p3);
+                        vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
+                        vertices.add(c);
 
-                    vertices.add(p2);
-                    vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
-                    vertices.add(c);
+                        vertices.add(p2);
+                        vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
+                        vertices.add(c);
 
-                    vertices.add(p6);
-                    vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
-                    vertices.add(c);
+                        vertices.add(p6);
+                        vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
+                        vertices.add(c);
+                    }
 
-                    vertices.add(p7);
-                    vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
-                    vertices.add(c);
+                    if (tile != tileLeft) {
+                        vertices.add(p7);
+                        vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
+                        vertices.add(c);
 
-                    vertices.add(p4);
-                    vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
-                    vertices.add(c);
+                        vertices.add(p4);
+                        vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
+                        vertices.add(c);
 
-                    vertices.add(p0);
-                    vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
-                    vertices.add(c);
+                        vertices.add(p0);
+                        vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
+                        vertices.add(c);
 
-                    vertices.add(p0);
-                    vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
-                    vertices.add(c);
+                        vertices.add(p0);
+                        vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
+                        vertices.add(c);
 
-                    vertices.add(p3);
-                    vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
-                    vertices.add(c);
+                        vertices.add(p3);
+                        vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
+                        vertices.add(c);
 
-                    vertices.add(p7);
-                    vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
-                    vertices.add(c);
+                        vertices.add(p7);
+                        vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
+                        vertices.add(c);
+                    }
                 }
                 else
                     c.set(0.76f, 0.7f, 0.5f);
 
-                vertices.add(p0);
-                vertices.add(n0);
-                vertices.add(c);
+                float y = (p0.y + p1.y + p2.y + p3.y) / 4.0f;
 
-                vertices.add(p1);
-                vertices.add(n0);
-                vertices.add(c);
+                if (Math.abs((p0.y + p2.y) / 2.0f - y) < Math.abs((p1.y + p3.y) / 2.0f - y)) {
+                    Vector3f n0 = p1.sub(p0, new Vector3f()).cross(p2.sub(p0, new Vector3f())).normalize();
+                    Vector3f n1 = p2.sub(p0, new Vector3f()).cross(p3.sub(p0, new Vector3f())).normalize();
 
-                vertices.add(p2);
-                vertices.add(n0);
-                vertices.add(c);
+                    vertices.add(p0);
+                    vertices.add(n0);
+                    vertices.add(c);
 
-                vertices.add(p2);
-                vertices.add(n1);
-                vertices.add(c);
+                    vertices.add(p1);
+                    vertices.add(n0);
+                    vertices.add(c);
 
-                vertices.add(p3);
-                vertices.add(n1);
-                vertices.add(c);
+                    vertices.add(p2);
+                    vertices.add(n0);
+                    vertices.add(c);
 
-                vertices.add(p0);
-                vertices.add(n1);
-                vertices.add(c);
+                    vertices.add(p2);
+                    vertices.add(n1);
+                    vertices.add(c);
+
+                    vertices.add(p3);
+                    vertices.add(n1);
+                    vertices.add(c);
+
+                    vertices.add(p0);
+                    vertices.add(n1);
+                    vertices.add(c);
+                } else {
+                    Vector3f n0 = p0.sub(p3, new Vector3f()).cross(p1.sub(p3, new Vector3f())).normalize();
+                    Vector3f n1 = p2.sub(p1, new Vector3f()).cross(p3.sub(p1, new Vector3f())).normalize();
+
+                    vertices.add(p3);
+                    vertices.add(n0);
+                    vertices.add(c);
+
+                    vertices.add(p0);
+                    vertices.add(n0);
+                    vertices.add(c);
+
+                    vertices.add(p1);
+                    vertices.add(n0);
+                    vertices.add(c);
+
+                    vertices.add(p1);
+                    vertices.add(n1);
+                    vertices.add(c);
+
+                    vertices.add(p2);
+                    vertices.add(n1);
+                    vertices.add(c);
+
+                    vertices.add(p3);
+                    vertices.add(n1);
+                    vertices.add(c);
+                }
             }
         }
 

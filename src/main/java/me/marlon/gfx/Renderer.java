@@ -1,7 +1,6 @@
 package me.marlon.gfx;
 
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.lwjgl.system.MemoryStack;
 
@@ -21,8 +20,11 @@ public class Renderer implements AutoCloseable {
     private Framebuffer pbuffer;
     private Primitive screenMesh;
 
-    private UniformBuffer frameBlock;
-    private ByteBuffer frameData;
+    private UniformBuffer cameraBlock;
+    private ByteBuffer cameraData;
+
+    private UniformBuffer lightBlock;
+    private ByteBuffer lightData;
 
     private Shader meshShader;
     private Shader terrainShader;
@@ -43,8 +45,8 @@ public class Renderer implements AutoCloseable {
     private DirectionalLight dLight;
 
     public Renderer(int width, int height) {
-        gbuffer = new Framebuffer(width, height, new int[] { GL_RGB8, GL_RGB10, GL_RG8 });
-        pbuffer = new Framebuffer(width, height, new int[] { GL_RGB8 });
+        gbuffer = new Framebuffer(width, height, new int[] { GL_RGBA8, GL_RGBA8 });
+        pbuffer = new Framebuffer(width, height, new int[] { GL_RGBA16F });
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
             FloatBuffer vertices = stack.mallocFloat(3 * 6);
@@ -76,8 +78,11 @@ public class Renderer implements AutoCloseable {
             screenMesh = new Primitive(vertices.rewind(), null);
         }
 
-        frameBlock = new UniformBuffer(288);
-        frameData = memAlloc(frameBlock.getSize());
+        cameraBlock = new UniformBuffer(256);
+        cameraData = memAlloc(cameraBlock.getSize());
+
+        lightBlock = new UniformBuffer(32);
+        lightData = memAlloc(lightBlock.getSize());
 
         meshShader = new Shader();
         terrainShader = new Shader();
@@ -125,8 +130,11 @@ public class Renderer implements AutoCloseable {
         gbuffer.close();
         screenMesh.close();
 
-        frameBlock.close();
-        memFree(frameData);
+        cameraBlock.close();
+        memFree(cameraData);
+
+        lightBlock.close();
+        memFree(lightData);
 
         meshShader.close();
         terrainShader.close();
@@ -149,21 +157,23 @@ public class Renderer implements AutoCloseable {
     }
 
     public void submitData() {
-        view.get(0, frameData);
-        viewInv.get(64, frameData);
-        proj.get(128, frameData);
-        projInv.get(192, frameData);
+        view.get(0, cameraData);
+        viewInv.get(64, cameraData);
+        proj.get(128, cameraData);
+        projInv.get(192, cameraData);
+        cameraBlock.buffer(cameraData);
+        cameraBlock.bind(0);
 
         if (dLight == null) {
-            new Vector4f(0.0f).get(256, frameData);
-            new Vector4f(0.0f).get(272, frameData);
+            new Vector4f(0.0f).get(0, lightData);
+            new Vector4f(0.0f).get(16, lightData);
         } else {
-            dLight.color.get(256, frameData);
-            dLight.direction.get(272, frameData);
+            dLight.color.get(0, lightData);
+            dLight.direction.get(16, lightData);
         }
 
-        frameBlock.buffer(frameData);
-        frameBlock.bind(0);
+        lightBlock.buffer(lightData);
+        lightBlock.bind(1);
 
         terrainShader.set("model", terrainTransform);
         waterShader.set("model", waterTransform);
@@ -196,34 +206,31 @@ public class Renderer implements AutoCloseable {
 
         pbuffer.bind(GL_FRAMEBUFFER);
         glDisable(GL_DEPTH_TEST);
-        glClear(GL_COLOR_BUFFER_BIT);
 
         lightShader.bind();
         gbuffer.bindTexture(0, 0);
         gbuffer.bindTexture(1, 1);
         gbuffer.bindTexture(2, 2);
-        gbuffer.bindTexture(3, 3);
         screenMesh.draw();
 
         if (waterMesh != null) {
-            glBlitNamedFramebuffer(gbuffer.getHandle(), pbuffer.getHandle(),
-                    0, 0, pbuffer.getWidth(), pbuffer.getHeight(),
-                    0, 0, pbuffer.getWidth(), pbuffer.getHeight(),
-                    GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             glEnable(GL_DEPTH_TEST);
+
+            glBlitNamedFramebuffer(gbuffer.getHandle(), pbuffer.getHandle(),
+                    0, 0, gbuffer.getWidth(), gbuffer.getHeight(),
+                    0, 0, pbuffer.getWidth(), pbuffer.getHeight(),
+                    GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
             waterShader.bind();
             waterMesh.draw();
 
             glDisable(GL_BLEND);
+            glDisable(GL_DEPTH_TEST);
         }
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glDisable(GL_DEPTH_TEST);
-        glClear(GL_COLOR_BUFFER_BIT);
 
         postProcessShader.bind();
         pbuffer.bindTexture(0, 0);
