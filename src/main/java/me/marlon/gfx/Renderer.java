@@ -1,5 +1,8 @@
 package me.marlon.gfx;
 
+import me.marlon.ecs.Terrain;
+import org.joml.AABBf;
+import org.joml.FrustumIntersection;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
 import org.lwjgl.system.MemoryStack;
@@ -14,6 +17,7 @@ import java.nio.FloatBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Renderer implements AutoCloseable {
     private Framebuffer gbuffer;
@@ -33,7 +37,7 @@ public class Renderer implements AutoCloseable {
     private Shader lightShader;
     private Shader postProcessShader;
 
-    private ArrayList<MeshInstance> queue;
+    private List<MeshInstance> queue;
     private TerrainMesh terrainMesh;
     private Matrix4f terrainTransform;
     private WaterMesh waterMesh;
@@ -201,7 +205,21 @@ public class Renderer implements AutoCloseable {
 
         if (terrainMesh != null) {
             terrainShader.bind();
-            terrainMesh.draw();
+
+            Matrix4f matrix = new Matrix4f().mul(proj).mul(view).mul(terrainTransform);
+            FrustumIntersection frustum = new FrustumIntersection(matrix);
+
+            List<TerrainChunk> chunks = terrainMesh.getChunks();
+
+            for (int i = 0; i < chunks.size(); ++i) {
+                TerrainChunk chunk = chunks.get(i);
+                AABBf bounds = chunk.getBounds();
+
+                if (frustum.testAab(bounds.minX, bounds.minY, bounds.minZ, bounds.maxX, bounds.maxY, bounds.maxZ))
+                    chunk.draw();
+            }
+
+//            terrainMesh.draw();
         }
 
         pbuffer.bind(GL_FRAMEBUFFER);
