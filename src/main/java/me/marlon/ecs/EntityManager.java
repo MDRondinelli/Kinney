@@ -2,21 +2,20 @@ package me.marlon.ecs;
 
 import me.marlon.gfx.DirectionalLight;
 import me.marlon.gfx.Mesh;
-import me.marlon.gfx.TerrainMesh;
 import me.marlon.gfx.WaterMesh;
-import me.marlon.physics.Particle;
+import me.marlon.physics.RigidBody;
 
 import java.util.ArrayList;
 
 public class EntityManager {
     public static final int MAX_ENTITIES = 1024;
-    public static final int MAX_COMPONENTS = 16;
+//    public static final int MAX_COMPONENTS = 16;
 
     public static final short CAMERA_BIT = 0x0001;
     public static final short DLIGHT_BIT = 0x0002;
     public static final short MESH_BIT = 0x0004;
-    public static final short PARTICLE_BIT = 0x0008;
-    public static final short PLAYER_BIT = 0x0010;
+    public static final short PLAYER_BIT = 0x0008;
+    public static final short RIGID_BODY_BIT = 0x0010;
     public static final short TERRAIN_MESH_BIT = 0x0020;
     public static final short TRANSFORM_BIT = 0x0040;
     public static final short WATER_MESH_BIT = 0x0080;
@@ -27,8 +26,8 @@ public class EntityManager {
     private Camera[] cameras;
     private DirectionalLight[] dLights;
     private Mesh[] meshes;
-    private Particle[] particles;
     private Player[] players;
+    private RigidBody[] rigidBodies;
     private Terrain[] terrains;
     private TransformComponent[] transforms;
     private WaterMesh[] waterMeshes;
@@ -42,8 +41,8 @@ public class EntityManager {
         cameras = new Camera[MAX_ENTITIES];
         dLights = new DirectionalLight[MAX_ENTITIES];
         meshes = new Mesh[MAX_ENTITIES];
-        particles = new Particle[MAX_ENTITIES];
         players = new Player[MAX_ENTITIES];
+        rigidBodies = new RigidBody[MAX_ENTITIES];
         terrains = new Terrain[MAX_ENTITIES];
         transforms = new TransformComponent[MAX_ENTITIES];
         waterMeshes = new WaterMesh[MAX_ENTITIES];
@@ -90,16 +89,6 @@ public class EntityManager {
         return meshes[i];
     }
 
-    public Particle add(int i, Particle component) {
-        particles[i] = component;
-        entities[i] |= PARTICLE_BIT;
-        return component;
-    }
-
-    public Particle getParticle(int i) {
-        return particles[i];
-    }
-
     public Player add(int i, Player component) {
         players[i] = component;
         entities[i] |= PLAYER_BIT;
@@ -108,6 +97,16 @@ public class EntityManager {
 
     public Player getPlayer(int i) {
         return players[i];
+    }
+
+    public RigidBody add(int i, RigidBody component) {
+        rigidBodies[i] = component;
+        entities[i] |= RIGID_BODY_BIT;
+        return component;
+    }
+
+    public RigidBody getRigidBody(int i) {
+        return rigidBodies[i];
     }
 
     public Terrain add(int i, Terrain component) {

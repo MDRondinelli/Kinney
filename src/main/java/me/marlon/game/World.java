@@ -8,7 +8,7 @@ public class World implements IKeyListener, IMouseListener {
     private CameraSystem cameraSystem;
     private DirectionalLightSystem dLightSystem;
     private MeshSystem meshSystem;
-    private ParticleSystem particleSystem;
+    private PhysicsSystem physicsSystem;
     private PlayerSystem playerSystem;
     private TerrainSystem terrainSystem;
     private WaterSystem waterSystem;
@@ -18,8 +18,8 @@ public class World implements IKeyListener, IMouseListener {
         cameraSystem = new CameraSystem(entities, engine.getRenderer());
         dLightSystem = new DirectionalLightSystem(entities, engine.getRenderer());
         meshSystem = new MeshSystem(entities, engine.getRenderer());
-        playerSystem = new PlayerSystem(entities, engine.getDeltaTime());
-        particleSystem = new ParticleSystem(entities, engine.getDeltaTime());
+        physicsSystem = new PhysicsSystem(entities, engine.getDeltaTime());
+        playerSystem = new PlayerSystem(entities, physicsSystem, engine.getDeltaTime());
         terrainSystem = new TerrainSystem(entities, engine.getRenderer());
         waterSystem = new WaterSystem(entities, engine.getRenderer());
     }
@@ -46,7 +46,7 @@ public class World implements IKeyListener, IMouseListener {
 
     public void onUpdate() {
         playerSystem.onUpdate();
-        particleSystem.onUpdate();
+        physicsSystem.onUpdate();
         cameraSystem.onUpdate();
         dLightSystem.onUpdate();
         meshSystem.onUpdate();
@@ -57,4 +57,6 @@ public class World implements IKeyListener, IMouseListener {
     public EntityManager getEntities() {
         return entities;
     }
+
+
 }
