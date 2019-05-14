@@ -30,7 +30,7 @@ float rand(vec2 co){
 
 vec3 getWave(vec2 pos) {
     float offs = rand(pos) * 128.0;
-    return vec3(sin(time * 0.5 + offs + 123.0), sin(time * 0.75 + offs), cos(time * 0.5 + offs + 456.0)) * vec3(0.75, 0.5, 0.75);
+    return vec3(sin(time * 0.5 + offs + 123.0), sin(time * 0.75 + offs), cos(time * 0.5 + offs + 456.0)) * vec3(0.75, 0.25, 0.75);
 }
 
 void main() {

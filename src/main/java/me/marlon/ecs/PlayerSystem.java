@@ -137,10 +137,10 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
             int ball = entities.create();
             TransformComponent ballTransform = new TransformComponent();
             RigidBody ballBody = new RigidBody(1.0f / 200.0f, RigidBody.getSphereInverseTensor(1.0f, 1.0f), playerPosition);
-            ballBody.getPosition().add(playerDirection.x * 2.0f, playerDirection.y * 2.0f, playerDirection.z * 2.0f);
+            ballBody.getPosition().add(playerDirection.mul(2.0f, new Vector3f()));
+            ballBody.setVelocity(playerDirection.mul(20.0f, new Vector3f()));
             ballBody.setAcceleration(new Vector3f(0.0f, -10.0f, 0.0f));
-//            ballBody.setLinearDamping(0.5f);
-            physics.register(new BuoyancyGenerator(new Vector3f(), 1.0f, 4.0f / 3.0f * (float) Math.PI, 4.0f), ballBody);
+            physics.register(new BuoyancyGenerator(new Vector3f(), 1.0f, 4.0f / 3.0f * (float) Math.PI, 0.47f, 0.0f, 4.0f), ballBody);
 
             entities.add(ball, ballMesh);
             entities.add(ball, ballTransform);
