@@ -123,9 +123,13 @@ public class RigidBody {
         torque.add(p.sub(position, new Vector3f()).cross(f));
     }
 
+    public void addTorque(Vector3f t) {
+        torque.add(t);
+    }
+
     public void integrate(float dt) {
-        Vector3f linearAcceleration = acceleration.add(force.x * invMass, force.y * invMass, force.z * invMass, new Vector3f());
-        Vector3f angularAcceleration = transformInvInertiaTensor.transform(torque, new Vector3f());
+        Vector3f linearAcceleration = new Vector3f(acceleration).add(force.x * invMass, force.y * invMass, force.z * invMass);
+        Vector3f angularAcceleration = transformInvInertiaTensor.transform(new Vector3f(torque));
 
         velocity.add(linearAcceleration.x * dt, linearAcceleration.y * dt, linearAcceleration.z * dt).mul((float) Math.pow(linearDamping, dt));
         rotation.add(angularAcceleration.x * dt, angularAcceleration.y * dt, angularAcceleration.z * dt).mul((float) Math.pow(angularDamping, dt));
@@ -133,6 +137,7 @@ public class RigidBody {
         position.add(velocity.x * dt, velocity.y * dt, velocity.z * dt);
         Quaternionf q = new Quaternionf(rotation.x * dt, rotation.y * dt, rotation.z * dt, 0.0f).mul(orientation);
         orientation.add(q.x * 0.5f, q.y * 0.5f, q.z * 0.5f, q.w * 0.5f);
+        orientation.normalize();
 
         updateDerivedData();
         clearAccumulators();

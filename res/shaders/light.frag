@@ -103,5 +103,8 @@ void main() {
     vec3 indirect = albedo * ambient;
     vec3 direct = dLight.color.rgb * brdf(n, l, v, albedo, params) * clamp(dot(n, l), 0.0, 1.0);
 
-    color = vec4(direct + indirect, 1.0);
+    float depth = max(4.0 - p.y, 0.0);
+    vec3 extinction = exp(-depth * vec3(1.0, 0.6, 0.4));
+
+    color = vec4((direct + indirect) * extinction, 1.0);
 }

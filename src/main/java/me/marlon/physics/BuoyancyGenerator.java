@@ -6,23 +6,23 @@ public class BuoyancyGenerator implements ForceGenerator {
     private Vector3f center;
     private float maxDepth;
     private float volume;
-    private float k1;
-    private float k2;
+    private float cd;
+    private float gravity;
     private float fluidHeight;
     private float fluidDensity;
 
-    public BuoyancyGenerator(Vector3f center, float maxDepth, float volume, float k1, float k2, float fluidHeight, float fluidDensity) {
+    public BuoyancyGenerator(Vector3f center, float maxDepth, float volume, float cd, float gravity, float fluidHeight, float fluidDensity) {
         this.center = center;
         this.maxDepth = maxDepth;
         this.volume = volume;
-        this.k1 = k1;
-        this.k2 = k2;
+        this.cd = cd;
+        this.gravity = gravity;
         this.fluidHeight = fluidHeight;
         this.fluidDensity = fluidDensity;
     }
 
-    public BuoyancyGenerator(Vector3f center, float maxDepth, float volume, float k1, float k2, float fluidHeight) {
-        this(center, maxDepth, volume, k1, k2, fluidHeight, 1000.0f);
+    public BuoyancyGenerator(Vector3f center, float maxDepth, float volume, float cd, float gravity, float fluidHeight) {
+        this(center, maxDepth, volume, cd, gravity, fluidHeight, 1000.0f);
     }
 
     public void updateForce(RigidBody body, float dt) {
@@ -36,16 +36,22 @@ public class BuoyancyGenerator implements ForceGenerator {
             return;
 
         Vector3f force = new Vector3f();
+        float factor;
 
-        if (depth <= fluidHeight - maxDepth)
-            force.y = fluidDensity * volume;
-        else
-            force.y = fluidDensity * volume * (depth - maxDepth - fluidHeight) / (-2.0f * maxDepth);
+        if (depth <= fluidHeight - maxDepth) {
+            factor = 1.0f;
+            force.y = fluidDensity * volume * gravity;
+        } else {
+            factor = (depth - maxDepth - fluidHeight) / (-2.0f * maxDepth);
+            force.y = fluidDensity * volume * gravity * factor;
+        }
 
-        float dragCoeff = body.getVelocity().length();
-        dragCoeff = fluidDensity * k1 * dragCoeff + k2 * dragCoeff * dragCoeff;
+        Vector3f rotation = new Vector3f(body.getRotation());
+        if (rotation.lengthSquared() != 0.0f)
+            body.addTorque(rotation.normalize(0.5f * fluidDensity * -rotation.lengthSquared() * cd * factor));
 
-        force.add(body.getVelocity().normalize(-dragCoeff, new Vector3f()));
+        Vector3f velocity = new Vector3f(body.getVelocity());
+        force.add(velocity.normalize(0.5f * fluidDensity * -velocity.lengthSquared() * cd * factor));
         body.addForceAtBodyPoint(force, center);
     }
 }

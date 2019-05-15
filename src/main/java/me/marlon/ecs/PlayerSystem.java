@@ -30,7 +30,7 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
         this.deltaTime = deltaTime;
 
         try {
-            ballMesh = new Mesh(new Primitive("res/meshes/ball.obj", new Vector3f(1.0f, 0.0f, 0.0f)));
+            ballMesh = new Mesh(new Primitive("res/meshes/planks.obj", new Vector3f(1.0f, 0.0f, 0.0f)));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -136,11 +136,25 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
 
             int ball = entities.create();
             TransformComponent ballTransform = new TransformComponent();
-            RigidBody ballBody = new RigidBody(1.0f / 200.0f, RigidBody.getSphereInverseTensor(1.0f, 1.0f), playerPosition);
-            ballBody.getPosition().add(playerDirection.mul(2.0f, new Vector3f()));
-            ballBody.setVelocity(playerDirection.mul(20.0f, new Vector3f()));
+            RigidBody ballBody = new RigidBody(1.0f / (600.0f * 16.0f), RigidBody.getCuboidInverseTensor(1600.0f * 16.0f, 4.0f, 1.0f, 4.0f), playerPosition);
+            ballBody.getPosition().add(new Vector3f(playerDirection).mul(2.0f));
+            ballBody.getOrientation().rotateX((float) Math.random() * 6.28f);
+            ballBody.setVelocity(new Vector3f(playerDirection).mul(20.0f));
             ballBody.setAcceleration(new Vector3f(0.0f, -10.0f, 0.0f));
-            physics.register(new BuoyancyGenerator(new Vector3f(), 1.0f, 4.0f / 3.0f * (float) Math.PI, 0.47f, 0.0f, 4.0f), ballBody);
+
+            physics.register(new BuoyancyGenerator(new Vector3f(1.0f, 0.0f, -1.0f), 0.5f, 4.0f, 1.0f, 10.0f, 4.0f), ballBody);
+            physics.register(new BuoyancyGenerator(new Vector3f(-1.0f, 0.0f, -1.0f), 0.5f, 4.0f, 1.0f, 10.0f, 4.0f), ballBody);
+            physics.register(new BuoyancyGenerator(new Vector3f(-1.0f, 0.0f, 1.0f), 0.5f, 4.0f, 1.0f, 10.0f, 4.0f), ballBody);
+            physics.register(new BuoyancyGenerator(new Vector3f(1.0f, 0.0f, 1.0f), 0.5f, 4.0f, 1.0f, 10.0f, 4.0f), ballBody);
+
+//            physics.register(new BuoyancyGenerator(new Vector3f(0.5f, 0.5f, -0.5f), 0.25f, 1.0f, 0.5f, 10.0f, 4.0f), ballBody);
+//            physics.register(new BuoyancyGenerator(new Vector3f(-0.5f, 0.5f, -0.5f), 0.25f, 1.0f, 0.5f, 10.0f, 4.0f), ballBody);
+//            physics.register(new BuoyancyGenerator(new Vector3f(-0.5f, 0.5f, 0.5f), 0.25f, 1.0f, 0.5f, 10.0f, 4.0f), ballBody);
+//            physics.register(new BuoyancyGenerator(new Vector3f(0.5f, 0.5f, 0.5f), 0.25f, 1.0f, 0.5f, 10.0f, 4.0f), ballBody);
+//            physics.register(new BuoyancyGenerator(new Vector3f(0.5f, -0.5f, -0.5f), 0.25f, 1.0f, 0.5f, 10.0f, 4.0f), ballBody);
+//            physics.register(new BuoyancyGenerator(new Vector3f(-0.5f, -0.5f, -0.5f), 0.25f, 1.0f, 0.5f, 10.0f, 4.0f), ballBody);
+//            physics.register(new BuoyancyGenerator(new Vector3f(-0.5f, -0.5f, 0.5f), 0.25f, 1.0f, 0.5f, 10.0f, 4.0f), ballBody);
+//            physics.register(new BuoyancyGenerator(new Vector3f(0.5f, -0.5f, 0.5f), 0.25f, 1.0f, 0.5f, 10.0f, 4.0f), ballBody);
 
             entities.add(ball, ballMesh);
             entities.add(ball, ballTransform);
