@@ -2,8 +2,6 @@ package me.marlon.game;
 
 import me.marlon.ecs.*;
 import me.marlon.gfx.*;
-import org.joml.AxisAngle4f;
-import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.io.IOException;

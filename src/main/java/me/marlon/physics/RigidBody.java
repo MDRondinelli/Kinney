@@ -1,11 +1,38 @@
 package me.marlon.physics;
 
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
+import org.joml.*;
+
+import java.lang.Math;
 
 public class RigidBody {
+    public static RigidBody createCuboid(Vector3f halfExtents, float invMass, Vector3f position, Quaternionf orientation, Vector3f velocity, Vector3f acceleration, Vector3f rotation, float linearDamping, float angularDamping) {
+        return new RigidBody(new AABBf(new Vector3f(halfExtents).negate(), halfExtents), null, invMass, getCuboidInverseTensor(1.0f / invMass, halfExtents.x * 2.0f, halfExtents.y * 2.0f, halfExtents.z * 2.0f), position, orientation, velocity, acceleration, rotation, linearDamping, angularDamping);
+    }
+
+    public static RigidBody createCuboid(Vector3f halfExtents, float invMass, Vector3f position, Quaternionf orientation, Vector3f velocity, Vector3f acceleration, Vector3f rotation) {
+        return createCuboid(halfExtents, invMass, position, orientation, velocity, acceleration, rotation, 0.99f, 0.99f);
+    }
+
+    public static RigidBody createCuboid(Vector3f halfExtents, float invMass, Vector3f position, Quaternionf orientation) {
+        return createCuboid(halfExtents, invMass, position, orientation, new Vector3f(), new Vector3f(), new Vector3f());
+    }
+
+    public static RigidBody createCuboid(Vector3f halfExtents, float invMass, Vector3f position) {
+        return createCuboid(halfExtents, invMass, position, new Quaternionf());
+    }
+
+    public static RigidBody createSphere(float radius, float invMass, Vector3f position, Vector3f velocity, Vector3f acceleration, Vector3f rotation, float linearDamping, float angularDamping) {
+        return new RigidBody(new AABBf(new Vector3f(-1.0f), new Vector3f(1.0f)), new CollisionSphere(null, new Vector3f(), radius), invMass, getSphereInverseTensor(1.0f / invMass, radius), position, new Quaternionf(), velocity, acceleration, rotation, linearDamping, angularDamping);
+    }
+
+    public static RigidBody createSphere(float radius, float invMass, Vector3f position, Vector3f velocity, Vector3f acceleration, Vector3f rotation) {
+        return createSphere(radius, invMass, position, velocity, acceleration, rotation, 0.99f, 0.99f);
+    }
+
+    public static RigidBody createSphere(float radius, float invMass, Vector3f position) {
+        return createSphere(radius, invMass, position, new Vector3f(), new Vector3f(), new Vector3f());
+    }
+
     public static Matrix3f getCuboidInverseTensor(float m, float dx, float dy, float dz) {
         float dx2 = dx * dx;
         float dy2 = dy * dy;
@@ -30,6 +57,9 @@ public class RigidBody {
         return tensor.invert();
     }
 
+    private AABBf volume;
+    private CollisionPrimitive collider;
+
     private float invMass;
     private Matrix3f invInertiaTensor;
 
@@ -48,9 +78,13 @@ public class RigidBody {
 
     private Matrix4f transform;
     private Matrix3f transformInvInertiaTensor;
+    private AABBf transformVolume;
 
-    public RigidBody(float invMass, Matrix3f invInertiaTensor, Vector3f position, Quaternionf orientation,
-                     Vector3f velocity, Vector3f acceleration, Vector3f rotation, float linearDamping, float angularDamping) {
+    public RigidBody(AABBf volume, CollisionPrimitive collider, float invMass, Matrix3f invInertiaTensor,
+                     Vector3f position, Quaternionf orientation, Vector3f velocity, Vector3f acceleration, Vector3f rotation,
+                     float linearDamping, float angularDamping) {
+        this.volume = volume;
+        this.collider = collider;
         this.invMass = invMass;
         this.invInertiaTensor = invInertiaTensor;
         this.position = position;
@@ -61,23 +95,27 @@ public class RigidBody {
         this.linearDamping = linearDamping;
         this.angularDamping = angularDamping;
 
+        this.collider.setBody(this);
+
         force = new Vector3f();
         torque = new Vector3f();
         transform = new Matrix4f();
         transformInvInertiaTensor = new Matrix3f();
+        transformVolume = new AABBf();
     }
 
-    public RigidBody(float invMass, Matrix3f invInertiaTensor, Vector3f position, Quaternionf orientation,
-                     Vector3f velocity, Vector3f acceleration, Vector3f rotation) {
-        this(invMass, invInertiaTensor, position, orientation, velocity, acceleration, rotation, 0.99f, 0.99f);
+    public RigidBody(AABBf volume, CollisionPrimitive collider, float invMass, Matrix3f invInertiaTensor,
+                     Vector3f position, Quaternionf orientation, Vector3f velocity, Vector3f acceleration, Vector3f rotation) {
+        this(volume, collider, invMass, invInertiaTensor, position, orientation, velocity, acceleration, rotation, 0.99f, 0.99f);
     }
 
-    public RigidBody(float invMass, Matrix3f invInertiaTensor, Vector3f position, Quaternionf orientation) {
-        this(invMass, invInertiaTensor, position, orientation, new Vector3f(), new Vector3f(), new Vector3f());
+    public RigidBody(AABBf volume, CollisionPrimitive collider, float invMass, Matrix3f invInertiaTensor,
+                     Vector3f position, Quaternionf orientation) {
+        this(volume, collider, invMass, invInertiaTensor, position, orientation, new Vector3f(), new Vector3f(), new Vector3f());
     }
 
-    public RigidBody(float invMass, Matrix3f invInertiaTensor, Vector3f position) {
-        this(invMass, invInertiaTensor, position, new Quaternionf());
+    public RigidBody(AABBf volume, CollisionPrimitive collider, float invMass, Matrix3f invInertiaTensor, Vector3f position) {
+        this(volume, collider, invMass, invInertiaTensor, position, new Quaternionf());
     }
 
     public void updateDerivedData() {
@@ -102,6 +140,15 @@ public class RigidBody {
         transformInvInertiaTensor.m02(t52 * transform.m00() + t57 * transform.m10() + t62 * transform.m20());
         transformInvInertiaTensor.m12(t52 * transform.m01() + t57 * transform.m11() + t62 * transform.m21());
         transformInvInertiaTensor.m22(t52 * transform.m02() + t57 * transform.m12() + t62 * transform.m22());
+
+        Vector3f min = new Vector3f(volume.minX, volume.minY, volume.minZ);
+        Vector3f max = new Vector3f(volume.maxX, volume.maxY, volume.maxZ);
+
+        transform.transformAab(min, max, min, max);
+        transformVolume.setMin(min);
+        transformVolume.setMax(max);
+
+        collider.updateDerivedData();
     }
 
     public void clearAccumulators() {
@@ -139,8 +186,24 @@ public class RigidBody {
         orientation.add(q.x * 0.5f, q.y * 0.5f, q.z * 0.5f, q.w * 0.5f);
         orientation.normalize();
 
-        updateDerivedData();
         clearAccumulators();
+        updateDerivedData();
+    }
+
+    public AABBf getVolume() {
+        return volume;
+    }
+
+    public void setVolume(AABBf volume) {
+        this.volume = volume;
+    }
+
+    public CollisionPrimitive getCollider() {
+        return collider;
+    }
+
+    public void setCollider(CollisionPrimitive collider) {
+        this.collider = collider;
     }
 
     public boolean hasFiniteMass() {
@@ -257,5 +320,9 @@ public class RigidBody {
 
     public Matrix3f getTransformInvInertiaTensor() {
         return transformInvInertiaTensor;
+    }
+
+    public AABBf getTransformVolume() {
+        return transformVolume;
     }
 }

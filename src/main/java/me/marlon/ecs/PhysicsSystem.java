@@ -1,9 +1,7 @@
 package me.marlon.ecs;
 
-import me.marlon.physics.ForceGenerator;
-import me.marlon.physics.ForceRegistration;
-import me.marlon.physics.GravityGenerator;
-import me.marlon.physics.RigidBody;
+import me.marlon.physics.*;
+import org.joml.AABBf;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -15,25 +13,25 @@ public class PhysicsSystem {
     private EntityManager entities;
     private float deltaTime;
 
-    private GravityGenerator gravity;
     private List<ForceRegistration> registry;
 
     public PhysicsSystem(EntityManager entities, float deltaTime) {
         this.entities = entities;
         this.deltaTime = deltaTime;
 
-        gravity = new GravityGenerator(new Vector3f(0.0f, -12.0f, 0.0f));
         registry = new ArrayList<>();
     }
 
     public void onUpdate() {
+        List<Integer> bodies = new ArrayList<>();
+
         for (int i = 0; i < EntityManager.MAX_ENTITIES; ++i) {
             if (!entities.match(i, BITS))
                 continue;
 
-            RigidBody body = entities.getRigidBody(i);
-            body.clearAccumulators();
-            body.updateDerivedData();
+            entities.getRigidBody(i).clearAccumulators();
+            entities.getRigidBody(i).updateDerivedData();
+            bodies.add(i);
         }
 
         for (int i = 0; i < registry.size(); ++i) {
@@ -41,13 +39,29 @@ public class PhysicsSystem {
             registration.generator.updateForce(registration.body, deltaTime);
         }
 
+        for (int i = 0; i < bodies.size(); ++i)
+            entities.getRigidBody(bodies.get(i)).integrate(deltaTime);
+
+        List<PotentialContact> potentialContacts = new ArrayList<>();
+
+        for (int i = 0; i < bodies.size(); ++i) {
+            RigidBody bodyOne = entities.getRigidBody(bodies.get(i));
+            AABBf aabbOne = bodyOne.getTransformVolume();
+
+            for (int j = i + 1; j < bodies.size(); ++j) {
+                RigidBody bodyTwo = entities.getRigidBody(bodies.get(j));
+                AABBf aabbTwo = bodyTwo.getTransformVolume();
+
+                if (aabbOne.testAABB(aabbTwo))
+                    potentialContacts.add(new PotentialContact(bodyOne, bodyTwo));
+            }
+        }
+
         for (int i = 0; i < EntityManager.MAX_ENTITIES; ++i) {
             if (!entities.match(i, BITS))
                 continue;
 
             RigidBody body = entities.getRigidBody(i);
-            body.integrate(deltaTime);
-
             TransformComponent transform = entities.getTransform(i);
             transform.setPosition(body.getPosition());
             transform.setRotation(body.getOrientation());
@@ -64,9 +78,5 @@ public class PhysicsSystem {
             if (registration.generator == generator && registration.body == body)
                 registry.remove(i--);
         }
-    }
-
-    public GravityGenerator getGravity() {
-        return gravity;
     }
 }

@@ -218,8 +218,6 @@ public class Renderer implements AutoCloseable {
                 if (frustum.testAab(bounds.minX, bounds.minY, bounds.minZ, bounds.maxX, bounds.maxY, bounds.maxZ))
                     chunk.draw();
             }
-
-//            terrainMesh.draw();
         }
 
         pbuffer.bind(GL_FRAMEBUFFER);

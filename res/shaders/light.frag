@@ -99,7 +99,7 @@ void main() {
     vec3 v = normalize(viewInv[3].xyz - p);
     vec3 l = normalize(-dLight.direction.xyz);
 
-    vec3 ambient = albedo * clamp(n.y * 0.5 + 0.5, 0.0, 1.0) * SKY * 0.15;
+    vec3 ambient = albedo * (n.y * 0.5 + 0.5) * SKY * 0.2;
     vec3 indirect = albedo * ambient;
     vec3 direct = dLight.color.rgb * brdf(n, l, v, albedo, params) * clamp(dot(n, l), 0.0, 1.0);
 
