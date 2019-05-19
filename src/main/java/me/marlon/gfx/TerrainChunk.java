@@ -9,6 +9,7 @@ import org.joml.Vector3f;
 
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
+import java.util.List;
 
 public class TerrainChunk implements AutoCloseable {
     private int vao;
@@ -19,340 +20,106 @@ public class TerrainChunk implements AutoCloseable {
     public TerrainChunk(Terrain terrain, int xMin, int yMin, int xMax, int yMax) {
         bounds = new AABBf();
 
-        ArrayList<Vector3f> vertices = new ArrayList<>();
+        List<Vector3f> positions = new ArrayList<>();
+        List<Vector3f> normals = new ArrayList<>();
+        List<Float> altitudes = new ArrayList<>();
 
         for (int i = xMin; i < xMax; ++i) {
             for (int j = yMin; j < yMax; ++j) {
-                Vector3f p0 = new Vector3f(i * Terrain.TILE_SIZE, 0.0f, j * Terrain.TILE_SIZE + Terrain.TILE_SIZE);
+                Vector3f p0 = new Vector3f(i * Terrain.TILE_SIZE,                     0.0f, j * Terrain.TILE_SIZE + Terrain.TILE_SIZE);
                 Vector3f p1 = new Vector3f(i * Terrain.TILE_SIZE + Terrain.TILE_SIZE, 0.0f, j * Terrain.TILE_SIZE + Terrain.TILE_SIZE);
                 Vector3f p2 = new Vector3f(i * Terrain.TILE_SIZE + Terrain.TILE_SIZE, 0.0f, j * Terrain.TILE_SIZE);
-                Vector3f p3 = new Vector3f(i * Terrain.TILE_SIZE, 0.0f, j * Terrain.TILE_SIZE);
+                Vector3f p3 = new Vector3f(i * Terrain.TILE_SIZE,                     0.0f, j * Terrain.TILE_SIZE);
 
                 p0.y = terrain.sampleHeight(p0.x, p0.z);
                 p1.y = terrain.sampleHeight(p1.x, p1.z);
                 p2.y = terrain.sampleHeight(p2.x, p2.z);
                 p3.y = terrain.sampleHeight(p3.x, p3.z);
 
-                Vector3f c = new Vector3f();
-
-                int tile = terrain.sampleTile(i, j);
-                int tileLeft = terrain.sampleTile(i - 1, j);
-                int tileRight = terrain.sampleTile(i + 1, j);
-                int tileUp = terrain.sampleTile(i, j - 1);
-                int tileDown = terrain.sampleTile(i, j + 1);
-                if (tile == Terrain.TILE_SNOW) {
-                    c.set(1.0f, 0.95f, 0.95f);
-
-                    Vector3f p4 = new Vector3f(p0);
-                    Vector3f p5 = new Vector3f(p1);
-                    Vector3f p6 = new Vector3f(p2);
-                    Vector3f p7 = new Vector3f(p3);
-
-                    p0.y += 0.25f;
-                    p1.y += 0.25f;
-                    p2.y += 0.25f;
-                    p3.y += 0.25f;
-
-                    if (tile != tileDown) {
-                        vertices.add(p4);
-                        vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
-                        vertices.add(c);
-
-                        vertices.add(p5);
-                        vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
-                        vertices.add(c);
-
-                        vertices.add(p1);
-                        vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
-                        vertices.add(c);
-
-                        vertices.add(p1);
-                        vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
-                        vertices.add(c);
-
-                        vertices.add(p0);
-                        vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
-                        vertices.add(c);
-
-                        vertices.add(p4);
-                        vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
-                        vertices.add(c);
-                    }
-
-                    if (tile != tileRight) {
-                        vertices.add(p5);
-                        vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
-                        vertices.add(c);
-
-                        vertices.add(p6);
-                        vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
-                        vertices.add(c);
-
-                        vertices.add(p2);
-                        vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
-                        vertices.add(c);
-
-                        vertices.add(p2);
-                        vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
-                        vertices.add(c);
-
-                        vertices.add(p1);
-                        vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
-                        vertices.add(c);
-
-                        vertices.add(p5);
-                        vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
-                        vertices.add(c);
-                    }
-
-                    if (tile != tileUp) {
-                        vertices.add(p6);
-                        vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
-                        vertices.add(c);
-
-                        vertices.add(p7);
-                        vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
-                        vertices.add(c);
-
-                        vertices.add(p3);
-                        vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
-                        vertices.add(c);
-
-                        vertices.add(p3);
-                        vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
-                        vertices.add(c);
-
-                        vertices.add(p2);
-                        vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
-                        vertices.add(c);
-
-                        vertices.add(p6);
-                        vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
-                        vertices.add(c);
-                    }
-
-                    if (tile != tileLeft) {
-                        vertices.add(p7);
-                        vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
-                        vertices.add(c);
-
-                        vertices.add(p4);
-                        vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
-                        vertices.add(c);
-
-                        vertices.add(p0);
-                        vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
-                        vertices.add(c);
-
-                        vertices.add(p0);
-                        vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
-                        vertices.add(c);
-
-                        vertices.add(p3);
-                        vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
-                        vertices.add(c);
-
-                        vertices.add(p7);
-                        vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
-                        vertices.add(c);
-                    }
-                } else if (tile == Terrain.TILE_STONE)
-                    c.set(0.35f, 0.35f, 0.35f);
-                else if (tile == Terrain.TILE_GRASS) {
-                    c.set(0.4f, 0.6f, 0.1f);
-
-                    Vector3f p4 = new Vector3f(p0);
-                    Vector3f p5 = new Vector3f(p1);
-                    Vector3f p6 = new Vector3f(p2);
-                    Vector3f p7 = new Vector3f(p3);
-
-                    p0.y += 0.25f;
-                    p1.y += 0.25f;
-                    p2.y += 0.25f;
-                    p3.y += 0.25f;
-
-                    if (tile != tileDown) {
-                        vertices.add(p4);
-                        vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
-                        vertices.add(c);
-
-                        vertices.add(p5);
-                        vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
-                        vertices.add(c);
-
-                        vertices.add(p1);
-                        vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
-                        vertices.add(c);
-
-                        vertices.add(p1);
-                        vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
-                        vertices.add(c);
-
-                        vertices.add(p0);
-                        vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
-                        vertices.add(c);
-
-                        vertices.add(p4);
-                        vertices.add(new Vector3f(0.0f, 0.0f, 1.0f));
-                        vertices.add(c);
-                    }
-
-                    if (tile != tileRight) {
-                        vertices.add(p5);
-                        vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
-                        vertices.add(c);
-
-                        vertices.add(p6);
-                        vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
-                        vertices.add(c);
-
-                        vertices.add(p2);
-                        vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
-                        vertices.add(c);
-
-                        vertices.add(p2);
-                        vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
-                        vertices.add(c);
-
-                        vertices.add(p1);
-                        vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
-                        vertices.add(c);
-
-                        vertices.add(p5);
-                        vertices.add(new Vector3f(1.0f, 0.0f, 0.0f));
-                        vertices.add(c);
-                    }
-
-                    if (tile != tileUp) {
-                        vertices.add(p6);
-                        vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
-                        vertices.add(c);
-
-                        vertices.add(p7);
-                        vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
-                        vertices.add(c);
-
-                        vertices.add(p3);
-                        vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
-                        vertices.add(c);
-
-                        vertices.add(p3);
-                        vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
-                        vertices.add(c);
-
-                        vertices.add(p2);
-                        vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
-                        vertices.add(c);
-
-                        vertices.add(p6);
-                        vertices.add(new Vector3f(0.0f, 0.0f, -1.0f));
-                        vertices.add(c);
-                    }
-
-                    if (tile != tileLeft) {
-                        vertices.add(p7);
-                        vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
-                        vertices.add(c);
-
-                        vertices.add(p4);
-                        vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
-                        vertices.add(c);
-
-                        vertices.add(p0);
-                        vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
-                        vertices.add(c);
-
-                        vertices.add(p0);
-                        vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
-                        vertices.add(c);
-
-                        vertices.add(p3);
-                        vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
-                        vertices.add(c);
-
-                        vertices.add(p7);
-                        vertices.add(new Vector3f(-1.0f, 0.0f, 0.0f));
-                        vertices.add(c);
-                    }
-                } else
-                    c.set(0.76f, 0.7f, 0.5f);
+                bounds.union(p0);
+                bounds.union(p1);
+                bounds.union(p2);
+                bounds.union(p3);
 
                 float y = (p0.y + p1.y + p2.y + p3.y) / 4.0f;
-
-                if (Math.abs((p0.y + p2.y) / 2.0f - y) < Math.abs((p1.y + p3.y) / 2.0f - y)) {
+                if (Math.abs((p0.y + p2.y) * 0.5f - y) <= Math.abs((p1.y + p3.y) * 0.5f - y)) {
                     Vector3f n0 = p1.sub(p0, new Vector3f()).cross(p2.sub(p0, new Vector3f())).normalize();
                     Vector3f n1 = p2.sub(p0, new Vector3f()).cross(p3.sub(p0, new Vector3f())).normalize();
+                    float a0 = (Math.min(Math.min(p0.y, p1.y), p2.y) + Math.max(Math.max(p0.y, p1.y), p2.y)) * 0.5f;
+                    float a1 = (Math.min(Math.min(p2.y, p3.y), p0.y) + Math.max(Math.max(p2.y, p3.y), p0.y)) * 0.5f;
 
-                    vertices.add(p0);
-                    vertices.add(n0);
-                    vertices.add(c);
+                    positions.add(p0);
+                    positions.add(p1);
+                    positions.add(p2);
 
-                    vertices.add(p1);
-                    vertices.add(n0);
-                    vertices.add(c);
+                    normals.add(n0);
+                    normals.add(n0);
+                    normals.add(n0);
 
-                    vertices.add(p2);
-                    vertices.add(n0);
-                    vertices.add(c);
+                    altitudes.add(a0);
+                    altitudes.add(a0);
+                    altitudes.add(a0);
 
-                    vertices.add(p2);
-                    vertices.add(n1);
-                    vertices.add(c);
+                    positions.add(p2);
+                    positions.add(p3);
+                    positions.add(p0);
 
-                    vertices.add(p3);
-                    vertices.add(n1);
-                    vertices.add(c);
+                    normals.add(n1);
+                    normals.add(n1);
+                    normals.add(n1);
 
-                    vertices.add(p0);
-                    vertices.add(n1);
-                    vertices.add(c);
+                    altitudes.add(a1);
+                    altitudes.add(a1);
+                    altitudes.add(a1);
                 } else {
                     Vector3f n0 = p0.sub(p3, new Vector3f()).cross(p1.sub(p3, new Vector3f())).normalize();
                     Vector3f n1 = p2.sub(p1, new Vector3f()).cross(p3.sub(p1, new Vector3f())).normalize();
+                    float a0 = (Math.min(Math.min(p3.y, p0.y), p1.y) + Math.max(Math.max(p3.y, p0.y), p1.y)) * 0.5f;
+                    float a1 = (Math.min(Math.min(p1.y, p2.y), p3.y) + Math.max(Math.max(p1.y, p2.y), p3.y)) * 0.5f;
+//                    float a0 = (p3.y + p0.y + p1.y) / 3.0f;
+//                    float a1 = (p1.y + p2.y + p3.y) / 3.0f;
 
-                    vertices.add(p3);
-                    vertices.add(n0);
-                    vertices.add(c);
+                    positions.add(p3);
+                    positions.add(p0);
+                    positions.add(p1);
 
-                    vertices.add(p0);
-                    vertices.add(n0);
-                    vertices.add(c);
+                    normals.add(n0);
+                    normals.add(n0);
+                    normals.add(n0);
 
-                    vertices.add(p1);
-                    vertices.add(n0);
-                    vertices.add(c);
+                    altitudes.add(a0);
+                    altitudes.add(a0);
+                    altitudes.add(a0);
 
-                    vertices.add(p1);
-                    vertices.add(n1);
-                    vertices.add(c);
+                    positions.add(p1);
+                    positions.add(p2);
+                    positions.add(p3);
 
-                    vertices.add(p2);
-                    vertices.add(n1);
-                    vertices.add(c);
+                    normals.add(n1);
+                    normals.add(n1);
+                    normals.add(n1);
 
-                    vertices.add(p3);
-                    vertices.add(n1);
-                    vertices.add(c);
-
-                    bounds.union(p0);
-                    bounds.union(p1);
-                    bounds.union(p2);
-                    bounds.union(p3);
+                    altitudes.add(a1);
+                    altitudes.add(a1);
+                    altitudes.add(a1);
                 }
             }
         }
 
-        count = vertices.size() / 3;
-        FloatBuffer buffer = memAllocFloat(vertices.size() * 3);
+        count = positions.size();
+        FloatBuffer buffer = memAllocFloat(positions.size() * 3 + normals.size() * 3 + altitudes.size());
 
-        for (int i = 0; i < vertices.size(); ++i)
-            vertices.get(i).get(i * 3, buffer);
+        for (int i = 0; i < positions.size(); ++i) {
+            positions.get(i).get(i * 7, buffer);
+            normals.get(i).get(i * 7 + 3, buffer);
+            buffer.put(i * 7 + 6, altitudes.get(i));
+        }
 
         vao = glCreateVertexArrays();
 
         vbo = glCreateBuffers();
         glNamedBufferStorage(vbo, buffer, 0);
-        glVertexArrayVertexBuffer(vao, 0, vbo, 0, 36);
+        glVertexArrayVertexBuffer(vao, 0, vbo, 0, 28);
 
         memFree(buffer);
 
@@ -365,7 +132,7 @@ public class TerrainChunk implements AutoCloseable {
         glVertexArrayAttribBinding(vao, 1, 0);
 
         glEnableVertexArrayAttrib(vao, 2);
-        glVertexArrayAttribFormat(vao, 2, 3, GL_FLOAT, false, 24);
+        glVertexArrayAttribFormat(vao, 2, 1, GL_FLOAT, false, 24);
         glVertexArrayAttribBinding(vao, 2, 0);
     }
 

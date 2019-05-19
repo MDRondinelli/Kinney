@@ -2,18 +2,13 @@
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
-layout(location = 2) in vec3 inColor;
+layout(location = 2) in float inAltitude;
 
 out Vertex {
     vec3 position;
     vec3 normal;
-    vec3 color;
+    float altitude;
 } vertex;
-
-struct DirectionalLight {
-    vec4 color;
-    vec4 direction;
-};
 
 layout(std140, binding = 0) uniform CameraBlock {
     mat4 view;
@@ -30,5 +25,5 @@ void main() {
     gl_Position = proj * view * model * worldSpace;
     vertex.position = worldSpace.xyz;
     vertex.normal = inNormal;
-    vertex.color = inColor;
+    vertex.altitude = inAltitude;
 }

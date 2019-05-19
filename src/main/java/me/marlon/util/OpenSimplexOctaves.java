@@ -2,13 +2,13 @@ package me.marlon.util;
 
 public class OpenSimplexOctaves {
     private float scale;
-    private float persistance;
+    private float persistence;
     private float lacunarity;
     private OpenSimplexNoise[] octaves;
 
-    public OpenSimplexOctaves(float scale, float persistance, float lacunarity, int count) {
+    public OpenSimplexOctaves(float scale, float persistence, float lacunarity, int count) {
         this.scale = scale;
-        this.persistance = persistance;
+        this.persistence = persistence;
         this.lacunarity = lacunarity;
 
         octaves = new OpenSimplexNoise[count];
@@ -26,7 +26,7 @@ public class OpenSimplexOctaves {
         for (int i = 0; i < octaves.length; ++i) {
             ret += (float) octaves[i].eval(x / scale * frequency, y / scale * frequency) * amplitude;
 
-            amplitude *= persistance;
+            amplitude *= persistence;
             frequency *= lacunarity;
         }
 

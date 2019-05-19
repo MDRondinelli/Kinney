@@ -1,10 +1,6 @@
 package me.marlon.gfx;
 
-import me.marlon.ecs.Terrain;
-import org.joml.AABBf;
-import org.joml.FrustumIntersection;
-import org.joml.Matrix4f;
-import org.joml.Vector4f;
+import org.joml.*;
 import org.lwjgl.system.MemoryStack;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -12,6 +8,7 @@ import static org.lwjgl.opengl.GL45.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
 import java.io.IOException;
+import java.lang.Math;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.file.Files;
@@ -35,6 +32,7 @@ public class Renderer implements AutoCloseable {
     private Shader waterShader;
 
     private Shader lightShader;
+    private Shader shadowShader;
     private Shader postProcessShader;
 
     private List<MeshInstance> queue;
@@ -47,6 +45,8 @@ public class Renderer implements AutoCloseable {
     private Matrix4f proj;
     private Matrix4f projInv;
     private DirectionalLight dLight;
+    private ShadowCascade dLightShadows;
+//    private ShadowCascade cascade;
 
     public Renderer(int width, int height) {
         gbuffer = new Framebuffer(width, height, new int[] { GL_RGBA8, GL_RGBA8 });
@@ -85,13 +85,14 @@ public class Renderer implements AutoCloseable {
         cameraBlock = new UniformBuffer(256);
         cameraData = memAlloc(cameraBlock.getSize());
 
-        lightBlock = new UniformBuffer(32);
+        lightBlock = new UniformBuffer(304);
         lightData = memAlloc(lightBlock.getSize());
 
         meshShader = new Shader();
         terrainShader = new Shader();
         waterShader = new Shader();
         lightShader = new Shader();
+        shadowShader = new Shader();
         postProcessShader = new Shader();
 
         try {
@@ -107,6 +108,9 @@ public class Renderer implements AutoCloseable {
             lightShader.setVertText(Files.readString(Paths.get("res/shaders/light.vert")));
             lightShader.setFragText(Files.readString(Paths.get("res/shaders/light.frag")));
 
+            shadowShader.setVertText(Files.readString(Paths.get("res/shaders/shadow.vert")));
+            shadowShader.setFragText(Files.readString(Paths.get("res/shaders/shadow.frag")));
+
             postProcessShader.setVertText(Files.readString(Paths.get("res/shaders/postprocess.vert")));
             postProcessShader.setFragText(Files.readString(Paths.get("res/shaders/postprocess.frag")));
         } catch (IOException e) {
@@ -117,6 +121,7 @@ public class Renderer implements AutoCloseable {
         terrainShader.compile();
         waterShader.compile();
         lightShader.compile();
+        shadowShader.compile();
         postProcessShader.compile();
 
         queue = new ArrayList<>();
@@ -125,7 +130,10 @@ public class Renderer implements AutoCloseable {
         proj = new Matrix4f();
         projInv = new Matrix4f();
 
+        dLightShadows = new ShadowCascade(new int[] { 2048, 2048, 2048, 2048 });
+
         glEnable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_CLAMP);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_FRAMEBUFFER_SRGB);
     }
@@ -145,6 +153,8 @@ public class Renderer implements AutoCloseable {
         waterShader.close();
         lightShader.close();
         postProcessShader.close();
+
+        dLightShadows.close();
     }
 
     public void clear() {
@@ -169,11 +179,19 @@ public class Renderer implements AutoCloseable {
         cameraBlock.bind(0);
 
         if (dLight == null) {
-            new Vector4f(0.0f).get(0, lightData);
-            new Vector4f(0.0f).get(16, lightData);
+            new Vector4f(0.0f).get(272, lightData);
+            new Vector4f(0.0f).get(288, lightData);
         } else {
-            dLight.color.get(0, lightData);
-            dLight.direction.get(16, lightData);
+            dLightShadows.update(viewInv, projInv, dLight.direction);
+
+            for (int i = 0; i < dLightShadows.getNumCascades(); ++i)
+                dLightShadows.getMatrix(i).get(i * 64, lightData);
+
+            for (int i = 0; i < dLightShadows.getNumCascades(); ++i)
+                lightData.putFloat(i * 4 + 256, dLightShadows.getFarPlane(i));
+
+            dLight.color.get(272, lightData);
+            dLight.direction.get(288, lightData);
         }
 
         lightBlock.buffer(lightData);
@@ -183,9 +201,38 @@ public class Renderer implements AutoCloseable {
         waterShader.set("model", waterTransform);
 
         waterShader.set("time", (float) glfwGetTime());
+
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_POLYGON_OFFSET_FILL);
+        glPolygonOffset(2, 1);
+
+        shadowShader.bind();
+        shadowShader.set("model", terrainTransform);
+
+        if (terrainMesh != null && dLight != null) {
+            List<TerrainChunk> chunks = terrainMesh.getChunks();
+
+            for (int i = 0; i < dLightShadows.getNumCascades(); ++i) {
+
+                ShadowMap shadowMap = dLightShadows.getShadowMap(i);
+
+                shadowMap.bindFramebuffer(GL_FRAMEBUFFER);
+                glViewport(0, 0, shadowMap.getSize(), shadowMap.getSize());
+                glClear(GL_DEPTH_BUFFER_BIT);
+
+                shadowShader.set("slice", i);
+
+                for (int j = 0; j < chunks.size(); ++j)
+                    chunks.get(j).draw();
+            }
+        }
+
+        glDisable(GL_POLYGON_OFFSET_FILL);
     }
 
     public void submitDraw() {
+        glViewport(0, 0, gbuffer.getWidth(), gbuffer.getHeight());
+
         gbuffer.bind(GL_FRAMEBUFFER);
         glEnable(GL_DEPTH_TEST);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -227,6 +274,10 @@ public class Renderer implements AutoCloseable {
         gbuffer.bindTexture(0, 0);
         gbuffer.bindTexture(1, 1);
         gbuffer.bindTexture(2, 2);
+
+        for (int i = 0; i < dLightShadows.getNumCascades(); ++i)
+            dLightShadows.getShadowMap(i).bindTexture(i + 3);
+
         screenMesh.draw();
 
         if (waterMesh != null) {

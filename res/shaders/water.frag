@@ -1,6 +1,6 @@
 #version 450 core
 
-const vec3 WATER_ALBEDO = vec3(0.0, 0.6, 0.8);
+const vec3 WATER_ALBEDO = vec3(0.05, 0.5, 1.0);
 
 in Vertex {
     vec3 position;
@@ -22,6 +22,8 @@ layout(std140, binding = 0) uniform CameraBlock {
 };
 
 layout(std140, binding = 1) uniform LightBlock {
+    mat4 dLightViewProj[4];
+    vec4 dLightSlices; // 16 bytes each
     DirectionalLight dLight;
 };
 
@@ -79,7 +81,7 @@ vec3 brdf(vec3 n, vec3 l, vec3 v, vec3 albedo, vec2 params) {
 
 void main() {
     float depth = length(vertex.position - decodePosition(gl_FragCoord.xy / textureSize(depthTexture, 0)));
-    float alpha = 1.0 - exp(-depth * 0.25);
+    float alpha = 1.0 - exp(-depth * 0.125);
 
     vec3 p = vertex.position;
     vec3 n = normalize(vertex.normal);

@@ -1,7 +1,5 @@
 #version 450 core
 
-const vec3 SKY = vec3(0.2, 0.7, 1.0);
-
 in vec2 texcoord;
 
 layout(location = 0) out vec4 color;
@@ -19,12 +17,18 @@ layout(std140, binding = 0) uniform CameraBlock {
 };
 
 layout(std140, binding = 1) uniform LightBlock {
+    mat4 dLightViewProj[4];
+    vec4 dLightSlices;//float dLightSlices[3]; // 16 bytes each
     DirectionalLight dLight;
 };
 
 layout(binding = 0) uniform sampler2D gbufferTexture0; // depth
 layout(binding = 1) uniform sampler2D gbufferTexture1; // rgb: normal, a: metallic
 layout(binding = 2) uniform sampler2D gbufferTexture2; // rgb: albedo, a: roughness
+layout(binding = 3) uniform sampler2DShadow dLightCascade0;
+layout(binding = 4) uniform sampler2DShadow dLightCascade1;
+layout(binding = 5) uniform sampler2DShadow dLightCascade2;
+layout(binding = 6) uniform sampler2DShadow dLightCascade3;
 
 vec3 decodePosition(vec2 uv) {
     float z = texture(gbufferTexture0, uv).r * 2.0 - 1.0;
@@ -35,57 +39,65 @@ vec3 decodePosition(vec2 uv) {
     return world.xyz;
 }
 
-//vec3 decodeNormal(vec2 uv) {
-//    return texture(normalTexture, uv).rgb * 2.0 - 1.0;
-//}
-//
-//vec3 decodeAlbedo(vec2 uv) {
-//    return texture(albedoTexture, uv).rgb;
-//}
-
-//vec2 decodeMetallicRoughness(vec) {
-//    return texture(metallicRoughnessTexture, uv).rg;
-//}
-
-vec3 f(vec3 h, vec3 l, vec3 f0) {
-    float base = 1.0 - clamp(dot(h, l), 0.0, 1.0);
-    float pow5 = base * base;
-    pow5 *= pow5;
-    pow5 *= base;
-    return f0 + (1.0 - f0) * pow5;
+float rand(vec2 co){
+    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
 }
 
-float g(vec3 n, vec3 l, vec3 v, float a) {
-    float nDotL = abs(dot(n, l));
-    float nDotV = abs(dot(n, v));
-    return 0.5 / mix(2.0f * nDotL * nDotV, nDotL + nDotV, a);
-}
+float calcShadow(vec3 p, vec3 n, vec3 l) {
+    float dist = -(view * vec4(p, 1.0)).z;
 
-float d(vec3 n, vec3 h, float a) {
-    float a2 = a * a;
+    float ret = 0.0;
+    if (dist < dLightSlices.x) {
+        vec2 texelSize = vec2(1.0) / textureSize(dLightCascade0, 0);
 
-    float nDotM = dot(n, h);
-    float denom = 1.0f + nDotM * nDotM * (a2 - 1.0f);
+        p = (dLightViewProj[0] * vec4(p, 1.0)).xyz;
+        p = p * 0.5 + 0.5;
 
-    return a2 / (denom * denom);
-}
+        for (float x = -1.5; x <= 1.5; x += 1.0) {
+            for (float y = -1.5; y <= 1.5; y += 1.0) {
+                float bias = length(vec2(x, y)) * -0.005;
+                ret += texture(dLightCascade0, p + vec3(vec2(x, y) * texelSize, bias)).r / 16.0;
+            }
+        }
+    } else if (dist < dLightSlices.y) {
+        vec2 texelSize = vec2(1.0 / 1.5) / textureSize(dLightCascade1, 0);
 
-vec3 brdf(vec3 n, vec3 l, vec3 v, vec3 albedo, vec2 params) {
-    float a = max(params.x * params.x, 0.016f);
+        p = (dLightViewProj[1] * vec4(p, 1.0)).xyz;
+        p = p * 0.5 + 0.5;
 
-    vec3 h = normalize(l + v);
-    vec3 f0 = mix(vec3(0.04f), albedo, params.y);
+        for (float x = -1.5; x <= 1.5; x += 1.0) {
+            for (float y = -1.5; y <= 1.5; y += 1.0) {
+                float bias = length(vec2(x, y)) * -0.01;
+                ret += texture(dLightCascade1, p + vec3(vec2(x, y) * texelSize, 0.0)).r / 16.0;
+            }
+        }
+    } else if (dist < dLightSlices.z){
+        vec2 texelSize = vec2(1.0 / 1.5) / textureSize(dLightCascade2, 0);
 
-    vec3 fresnel = f(h, l, f0);
-    float geometry = g(n, l, v, a);
-    float ndf = d(n, h, a);
+        p = (dLightViewProj[2] * vec4(p, 1.0)).xyz;
+        p = p * 0.5 + 0.5;
 
-    vec3 specular = fresnel * geometry * ndf;
+        for (float x = -1.5; x <= 1.5; x += 1.0) {
+            for (float y = -1.5; y <= 1.5; y += 1.0) {
+                float bias = length(vec2(x, y)) * -0.02;
+                ret += texture(dLightCascade2, p + vec3(vec2(x, y) * texelSize, 0.0)).r / 16.0;
+            }
+        }
+    } else {
+        vec2 texelSize = vec2(1.0 / 1.5) / textureSize(dLightCascade3, 0);
 
-    vec3 kD = (1.0f - fresnel) * (1.0f - params.yyy);
-    vec3 diffuse = kD * albedo;
+        p = (dLightViewProj[3] * vec4(p, 1.0)).xyz;
+        p = p * 0.5 + 0.5;
 
-    return specular + diffuse;
+        for (float x = -1.5; x <= 1.5; x += 1.0) {
+            for (float y = -1.5; y <= 1.5; y += 1.0) {
+                float bias = length(vec2(x, y)) * -0.02;
+                ret += texture(dLightCascade3, p + vec3(vec2(x, y) * texelSize, 0.0)).r / 16.0;
+            }
+        }
+    }
+
+    return ret;
 }
 
 void main() {
@@ -99,9 +111,9 @@ void main() {
     vec3 v = normalize(viewInv[3].xyz - p);
     vec3 l = normalize(-dLight.direction.xyz);
 
-    vec3 ambient = albedo * (n.y * 0.5 + 0.5) * SKY * 0.2;
+    vec3 ambient = vec3(0.2, 0.7, 1.0) * (n.y * 0.5 + 0.5) * 0.1;// * vec3(0.1, 0.8, 1.0);
     vec3 indirect = albedo * ambient;
-    vec3 direct = dLight.color.rgb * brdf(n, l, v, albedo, params) * clamp(dot(n, l), 0.0, 1.0);
+    vec3 direct = calcShadow(p, n, l) * dLight.color.rgb * albedo/*brdf(n, l, v, albedo, params)*/ * clamp(dot(n, l), 0.0, 1.0);
 
     float depth = max(4.0 - p.y, 0.0);
     vec3 extinction = exp(-depth * vec3(1.0, 0.6, 0.4));

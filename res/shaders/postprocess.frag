@@ -2,7 +2,7 @@
 
 const float FOG_BEGIN = 100.0;
 const float FOG_END = 200.0;
-const vec3 SKY_UP = vec3(0.2, 0.7, 1.0);
+const vec3 SKY_UP = vec3(0.1, 0.4, 1.0);
 const vec3 SKY_DOWN = vec3(1.0, 1.0, 1.0);
 
 in vec2 texcoord;
@@ -19,6 +19,12 @@ layout(std140, binding = 0) uniform CameraBlock {
     mat4 viewInv;
     mat4 proj;
     mat4 projInv;
+};
+
+layout(std140, binding = 1) uniform LightBlock {
+    mat4 dLightViewProj[4];
+    vec3 dLightSlices; // 16 bytes each
+    DirectionalLight dLight;
 };
 
 layout(binding = 0) uniform sampler2D depthTexture;
@@ -43,6 +49,10 @@ vec3 tonemap(vec3 x)
     return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
 }
 
+float linstep(float min, float max, float x) {
+    return clamp((x - min) / (max - min), 0.0, 1.0);
+}
+
 void main() {
     vec3 position = decodePosition(texcoord);
     vec3 camera = viewInv[3].xyz;
@@ -50,8 +60,8 @@ void main() {
     float distance = length(v);
     v /= distance;
 
-    float skyFactor = smoothstep(-0.3, 0.3, -v.y);
-    vec3 skyColor = mix(SKY_DOWN, SKY_UP, skyFactor);
+    float skyFactor = smoothstep(-0.3, 0.2, -v.y);
+    vec3 skyColor = mix(SKY_DOWN, SKY_UP, skyFactor) + linstep(0.0, 0.5, pow(dot(v, -dLight.direction.xyz), 256.0)) * vec3(1.0, 1.0, 0.5);
 
     float fogFactor = smoothstep(FOG_BEGIN, FOG_END, distance);
 
