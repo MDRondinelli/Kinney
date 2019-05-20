@@ -14,6 +14,11 @@ public class CollisionBox extends CollisionPrimitive {
     }
 
     @Override
+    public void collideWith(CollisionSphere sphere, List<Contact> contacts) {
+        CollisionDetector.collide(this, sphere, contacts);
+    }
+
+    @Override
     public void collideWith(CollisionPlane plane, List<Contact> contacts) {
         CollisionDetector.collide(this, plane, contacts);
     }

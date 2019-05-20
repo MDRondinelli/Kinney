@@ -213,8 +213,9 @@ public class Renderer implements AutoCloseable {
             List<TerrainChunk> chunks = terrainMesh.getChunks();
 
             for (int i = 0; i < dLightShadows.getNumCascades(); ++i) {
-
                 ShadowMap shadowMap = dLightShadows.getShadowMap(i);
+                Matrix4f matrix = dLightShadows.getMatrix(i);
+                AABBf bounds = dLightShadows.getBounds(i);
 
                 shadowMap.bindFramebuffer(GL_FRAMEBUFFER);
                 glViewport(0, 0, shadowMap.getSize(), shadowMap.getSize());
@@ -222,8 +223,19 @@ public class Renderer implements AutoCloseable {
 
                 shadowShader.set("slice", i);
 
-                for (int j = 0; j < chunks.size(); ++j)
-                    chunks.get(j).draw();
+                Vector3f min = new Vector3f();
+                Vector3f max = new Vector3f();
+                for (int j = 0; j < chunks.size(); ++j) {
+                    TerrainChunk chunk = chunks.get(j);
+
+                    min.set(chunk.getBounds().minX, chunk.getBounds().minY, chunk.getBounds().minZ);
+                    max.set(chunk.getBounds().maxX, chunk.getBounds().maxY, chunk.getBounds().maxZ);
+
+                    matrix.transformAab(min, max, min, max);
+
+                    if (bounds.maxX >= min.x && bounds.minX <= max.x && bounds.maxY >= min.y && bounds.minY <= max.y);
+                        chunks.get(j).draw();
+                }
             }
         }
 

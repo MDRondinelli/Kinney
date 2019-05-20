@@ -45,6 +45,14 @@ float rand(vec2 co){
 
 float calcShadow(vec3 p, vec3 n, vec3 l) {
     float dist = -(view * vec4(p, 1.0)).z;
+    float slope = 1.0 - clamp(dot(n, l), 0.0, 1.0);
+
+    float angle = rand(gl_FragCoord.xy) * 6.2831853;
+    float cosTheta = cos(angle);
+    float sinTheta = sin(angle);
+    mat2 rotation;
+    rotation[0] = vec2(cosTheta, sinTheta);
+    rotation[1] = vec2(-sinTheta, cosTheta);
 
     float ret = 0.0;
     if (dist < dLightSlices.x) {
@@ -56,43 +64,43 @@ float calcShadow(vec3 p, vec3 n, vec3 l) {
         for (float x = -1.5; x <= 1.5; x += 1.0) {
             for (float y = -1.5; y <= 1.5; y += 1.0) {
                 float bias = length(vec2(x, y)) * -0.005;
-                ret += texture(dLightCascade0, p + vec3(vec2(x, y) * texelSize, bias)).r / 16.0;
+                ret += texture(dLightCascade0, p + vec3(rotation * vec2(x, y) * texelSize, bias)).r / 16.0;
             }
         }
     } else if (dist < dLightSlices.y) {
-        vec2 texelSize = vec2(1.0 / 1.5) / textureSize(dLightCascade1, 0);
+        vec2 texelSize = vec2(1.0) / textureSize(dLightCascade1, 0);
 
         p = (dLightViewProj[1] * vec4(p, 1.0)).xyz;
         p = p * 0.5 + 0.5;
 
         for (float x = -1.5; x <= 1.5; x += 1.0) {
             for (float y = -1.5; y <= 1.5; y += 1.0) {
-                float bias = length(vec2(x, y)) * -0.01;
-                ret += texture(dLightCascade1, p + vec3(vec2(x, y) * texelSize, 0.0)).r / 16.0;
+                float bias = length(vec2(x, y)) * -0.005;
+                ret += texture(dLightCascade1, p + vec3(rotation * vec2(x, y) * texelSize, bias)).r / 16.0;
             }
         }
     } else if (dist < dLightSlices.z){
-        vec2 texelSize = vec2(1.0 / 1.5) / textureSize(dLightCascade2, 0);
+        vec2 texelSize = vec2(1.0) / textureSize(dLightCascade2, 0);
 
         p = (dLightViewProj[2] * vec4(p, 1.0)).xyz;
         p = p * 0.5 + 0.5;
 
         for (float x = -1.5; x <= 1.5; x += 1.0) {
             for (float y = -1.5; y <= 1.5; y += 1.0) {
-                float bias = length(vec2(x, y)) * -0.02;
-                ret += texture(dLightCascade2, p + vec3(vec2(x, y) * texelSize, 0.0)).r / 16.0;
+                float bias = length(vec2(x, y)) * -0.005;
+                ret += texture(dLightCascade2, p + vec3(vec2(x, y) * texelSize, bias)).r / 16.0;
             }
         }
     } else {
-        vec2 texelSize = vec2(1.0 / 1.5) / textureSize(dLightCascade3, 0);
+        vec2 texelSize = vec2(1.0) / textureSize(dLightCascade3, 0);
 
         p = (dLightViewProj[3] * vec4(p, 1.0)).xyz;
         p = p * 0.5 + 0.5;
 
         for (float x = -1.5; x <= 1.5; x += 1.0) {
             for (float y = -1.5; y <= 1.5; y += 1.0) {
-                float bias = length(vec2(x, y)) * -0.02;
-                ret += texture(dLightCascade3, p + vec3(vec2(x, y) * texelSize, 0.0)).r / 16.0;
+                float bias = length(vec2(x, y)) * -0.005;
+                ret += texture(dLightCascade3, p + vec3(rotation * vec2(x, y) * texelSize, bias)).r / 16.0;
             }
         }
     }

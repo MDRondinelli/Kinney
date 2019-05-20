@@ -6,7 +6,7 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 public class ShadowCascade implements AutoCloseable {
-    private static final float LAMBDA = 0.65f;
+    private static final float LAMBDA = 0.5f;
     private static final Vector4f[] CORNERS = {
             new Vector4f(-1.0f, -1.0f, -1.0f, 1.0f),
             new Vector4f(1.0f, -1.0f, -1.0f, 1.0f),
@@ -21,18 +21,21 @@ public class ShadowCascade implements AutoCloseable {
 
     private ShadowMap[] shadowMaps;
     private Matrix4f[] matrices;
+    private AABBf[] bounds;
     private float[] depths;
 
     public ShadowCascade(int[] resolutions) {
         shadowMaps = new ShadowMap[resolutions.length];
-
         for (int i = 0; i < resolutions.length; ++i)
             shadowMaps[i] = new ShadowMap(resolutions[i]);
 
         matrices = new Matrix4f[resolutions.length];
-
         for (int i = 0; i < resolutions.length; ++i)
             matrices[i] = new Matrix4f();
+
+        bounds = new AABBf[resolutions.length];
+        for (int i = 0; i < resolutions.length; ++i)
+            bounds[i] = new AABBf();
 
         depths = new float[resolutions.length + 1];
     }
@@ -92,7 +95,8 @@ public class ShadowCascade implements AutoCloseable {
             bounds.union(new Vector3f(vec2).mul(depths[i + 1]).add(corners[2].x, corners[2].y, corners[2].z));
             bounds.union(new Vector3f(vec3).mul(depths[i + 1]).add(corners[3].x, corners[3].y, corners[3].z));
 
-            Matrix4f lightProj = new Matrix4f().ortho(bounds.minX, bounds.maxX, bounds.minY, bounds.maxY, -bounds.maxZ, -bounds.minZ);
+            this.bounds[i] = bounds;
+            Matrix4f lightProj = new Matrix4f().ortho(bounds.minX - 1.0f, bounds.maxX + 1.0f, bounds.minY - 1.0f, bounds.maxY + 1.0f, -bounds.maxZ - 1.0f, -bounds.minZ + 1.0f);
             matrices[i].identity().mul(lightProj).mul(lightView);
         }
     }
@@ -111,6 +115,10 @@ public class ShadowCascade implements AutoCloseable {
 
     public Matrix4f getMatrix(int cascade) {
         return matrices[cascade];
+    }
+
+    public AABBf getBounds(int cascade) {
+        return bounds[cascade];
     }
 
     public float getFarPlane(int cascade) {

@@ -8,11 +8,13 @@ public class CollisionPrimitive {
     private RigidBody body;
     private Matrix4f modelTransform;
     private Matrix4f worldTransform;
+    private Matrix4f worldTransformInv;
 
     public CollisionPrimitive(RigidBody body, Matrix4f modelTransform) {
         this.body = body;
         this.modelTransform = modelTransform;
-        this.worldTransform = new Matrix4f();
+        this.worldTransform = new Matrix4f(modelTransform);
+        this.worldTransformInv = new Matrix4f(worldTransform).invertAffine();
         updateDerivedData();
     }
 
@@ -26,8 +28,10 @@ public class CollisionPrimitive {
     }
 
     public void updateDerivedData() {
-        if (body != null)
+        if (body != null) {
             worldTransform.set(body.getTransform()).mul(modelTransform);
+            worldTransformInv.set(worldTransform).invertAffine();
+        }
     }
 
     public RigidBody getBody() {
@@ -44,5 +48,9 @@ public class CollisionPrimitive {
 
     public Matrix4f getWorldTransform() {
         return worldTransform;
+    }
+
+    public Matrix4f getWorldTransformInv() {
+        return worldTransformInv;
     }
 }

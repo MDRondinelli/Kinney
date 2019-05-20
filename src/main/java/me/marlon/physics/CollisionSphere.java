@@ -25,7 +25,7 @@ public class CollisionSphere extends CollisionPrimitive {
 
     @Override
     public void collideWith(CollisionBox other, List<Contact> contacts) {
-//        CollisionDetector.collide(this, other, contacts);
+        CollisionDetector.collide(this, other, contacts);
     }
 
     public float getRadius() {
