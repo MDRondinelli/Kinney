@@ -14,12 +14,14 @@ public class PhysicsSystem {
     private float deltaTime;
 
     private List<ForceRegistration> registry;
+    private ContactResolver resolver;
 
     public PhysicsSystem(EntityManager entities, float deltaTime) {
         this.entities = entities;
         this.deltaTime = deltaTime;
 
         registry = new ArrayList<>();
+        resolver = new ContactResolver(256, 0.01f, 256, 0.01f);
     }
 
     public void onUpdate() {
@@ -56,6 +58,18 @@ public class PhysicsSystem {
                     potentialContacts.add(new PotentialContact(bodyOne, bodyTwo));
             }
         }
+
+        List<Contact> contacts = new ArrayList<>();
+
+        for (int i = 0; i < potentialContacts.size(); ++i) {
+            PotentialContact potentialContact = potentialContacts.get(i);
+            potentialContact.getBodyA().getCollider().collideWith(potentialContact.getBodyB().getCollider(), contacts);
+        }
+
+        resolver.resolveContacts(contacts, deltaTime);
+
+//        for (int i = 0; i < contacts.size(); ++i)
+//            contacts.get(i).resolve();
 
         for (int i = 0; i < EntityManager.MAX_ENTITIES; ++i) {
             if (!entities.match(i, BITS))

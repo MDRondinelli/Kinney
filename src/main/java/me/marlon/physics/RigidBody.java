@@ -5,12 +5,17 @@ import org.joml.*;
 import java.lang.Math;
 
 public class RigidBody {
+    public static RigidBody createPlane(Vector3f normal, float offset) {
+        return new RigidBody(new AABBf().setMin(-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE).setMax(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE),
+                new CollisionPlane(normal, offset), 0.0f, new Matrix3f(new Vector3f(), new Vector3f(), new Vector3f()), new Vector3f());
+    }
+
     public static RigidBody createCuboid(Vector3f halfExtents, float invMass, Vector3f position, Quaternionf orientation, Vector3f velocity, Vector3f acceleration, Vector3f rotation, float linearDamping, float angularDamping) {
-        return new RigidBody(new AABBf(new Vector3f(halfExtents).negate(), halfExtents), null, invMass, getCuboidInverseTensor(1.0f / invMass, halfExtents.x * 2.0f, halfExtents.y * 2.0f, halfExtents.z * 2.0f), position, orientation, velocity, acceleration, rotation, linearDamping, angularDamping);
+        return new RigidBody(new AABBf(new Vector3f(halfExtents).negate(), halfExtents), new CollisionBox(null, new Matrix4f(), halfExtents), invMass, getCuboidInverseTensor(1.0f / invMass, halfExtents.x * 2.0f, halfExtents.y * 2.0f, halfExtents.z * 2.0f), position, orientation, velocity, acceleration, rotation, linearDamping, angularDamping);
     }
 
     public static RigidBody createCuboid(Vector3f halfExtents, float invMass, Vector3f position, Quaternionf orientation, Vector3f velocity, Vector3f acceleration, Vector3f rotation) {
-        return createCuboid(halfExtents, invMass, position, orientation, velocity, acceleration, rotation, 0.99f, 0.99f);
+        return createCuboid(halfExtents, invMass, position, orientation, velocity, acceleration, rotation, 0.9f, 0.9f);
     }
 
     public static RigidBody createCuboid(Vector3f halfExtents, float invMass, Vector3f position, Quaternionf orientation) {
@@ -26,7 +31,7 @@ public class RigidBody {
     }
 
     public static RigidBody createSphere(float radius, float invMass, Vector3f position, Vector3f velocity, Vector3f acceleration, Vector3f rotation) {
-        return createSphere(radius, invMass, position, velocity, acceleration, rotation, 0.99f, 0.99f);
+        return createSphere(radius, invMass, position, velocity, acceleration, rotation, 0.9f, 0.9f);
     }
 
     public static RigidBody createSphere(float radius, float invMass, Vector3f position) {
@@ -68,6 +73,7 @@ public class RigidBody {
 
     private Vector3f velocity;
     private Vector3f acceleration;
+    private Vector3f accelerationAtUpdate;
     private Vector3f rotation;
 
     private float linearDamping;
@@ -91,6 +97,7 @@ public class RigidBody {
         this.orientation = orientation;
         this.velocity = velocity;
         this.acceleration = acceleration;
+        this.accelerationAtUpdate = new Vector3f();
         this.rotation = rotation;
         this.linearDamping = linearDamping;
         this.angularDamping = angularDamping;
@@ -106,7 +113,7 @@ public class RigidBody {
 
     public RigidBody(AABBf volume, CollisionPrimitive collider, float invMass, Matrix3f invInertiaTensor,
                      Vector3f position, Quaternionf orientation, Vector3f velocity, Vector3f acceleration, Vector3f rotation) {
-        this(volume, collider, invMass, invInertiaTensor, position, orientation, velocity, acceleration, rotation, 0.99f, 0.99f);
+        this(volume, collider, invMass, invInertiaTensor, position, orientation, velocity, acceleration, rotation, 0.9f, 0.9f);
     }
 
     public RigidBody(AABBf volume, CollisionPrimitive collider, float invMass, Matrix3f invInertiaTensor,
@@ -175,7 +182,8 @@ public class RigidBody {
     }
 
     public void integrate(float dt) {
-        Vector3f linearAcceleration = new Vector3f(acceleration).add(force.x * invMass, force.y * invMass, force.z * invMass);
+        Vector3f linearAcceleration = accelerationAtUpdate.set(acceleration).add(force.x * invMass, force.y * invMass, force.z * invMass);
+//        Vector3f linearAcceleration = new Vector3f(acceleration).add(force.x * invMass, force.y * invMass, force.z * invMass);
         Vector3f angularAcceleration = transformInvInertiaTensor.transform(new Vector3f(torque));
 
         velocity.add(linearAcceleration.x * dt, linearAcceleration.y * dt, linearAcceleration.z * dt).mul((float) Math.pow(linearDamping, dt));
@@ -274,6 +282,10 @@ public class RigidBody {
         this.acceleration = acceleration;
     }
 
+    public Vector3f getAccelerationAtUpdate() {
+        return accelerationAtUpdate;
+    }
+
     public Vector3f getRotation() {
         return rotation;
     }
@@ -296,22 +308,6 @@ public class RigidBody {
 
     public void setAngularDamping(float damping) {
         angularDamping = damping;
-    }
-
-    public Vector3f getForce() {
-        return force;
-    }
-
-    public void setForce(Vector3f force) {
-        this.force = force;
-    }
-
-    public Vector3f getTorque() {
-        return torque;
-    }
-
-    public void setTorque(Vector3f torque) {
-        this.torque = torque;
     }
 
     public Matrix4f getTransform() {

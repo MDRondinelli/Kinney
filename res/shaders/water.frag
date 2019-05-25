@@ -81,7 +81,7 @@ vec3 brdf(vec3 n, vec3 l, vec3 v, vec3 albedo, vec2 params) {
 
 void main() {
     float depth = length(vertex.position - decodePosition(gl_FragCoord.xy / textureSize(depthTexture, 0)));
-    float alpha = 1.0 - exp(-depth * 0.125);
+    float alpha = 1.0 - exp(-depth * 0.25);
 
     vec3 p = vertex.position;
     vec3 n = normalize(vertex.normal);

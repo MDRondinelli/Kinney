@@ -8,7 +8,6 @@ import static org.lwjgl.opengl.GL45.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
 import java.io.IOException;
-import java.lang.Math;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.file.Files;
@@ -37,7 +36,6 @@ public class Renderer implements AutoCloseable {
 
     private List<MeshInstance> queue;
     private TerrainMesh terrainMesh;
-    private Matrix4f terrainTransform;
     private WaterMesh waterMesh;
     private Matrix4f waterTransform;
     private Matrix4f view;
@@ -46,7 +44,6 @@ public class Renderer implements AutoCloseable {
     private Matrix4f projInv;
     private DirectionalLight dLight;
     private ShadowCascade dLightShadows;
-//    private ShadowCascade cascade;
 
     public Renderer(int width, int height) {
         gbuffer = new Framebuffer(width, height, new int[] { GL_RGBA8, GL_RGBA8 });
@@ -197,7 +194,6 @@ public class Renderer implements AutoCloseable {
         lightBlock.buffer(lightData);
         lightBlock.bind(1);
 
-        terrainShader.set("model", terrainTransform);
         waterShader.set("model", waterTransform);
 
         waterShader.set("time", (float) glfwGetTime());
@@ -207,7 +203,7 @@ public class Renderer implements AutoCloseable {
         glPolygonOffset(2, 1);
 
         shadowShader.bind();
-        shadowShader.set("model", terrainTransform);
+        shadowShader.set("model", new Matrix4f());
 
         if (terrainMesh != null && dLight != null) {
             List<TerrainChunk> chunks = terrainMesh.getChunks();
@@ -265,7 +261,7 @@ public class Renderer implements AutoCloseable {
         if (terrainMesh != null) {
             terrainShader.bind();
 
-            Matrix4f matrix = new Matrix4f().mul(proj).mul(view).mul(terrainTransform);
+            Matrix4f matrix = new Matrix4f().mul(proj).mul(view);
             FrustumIntersection frustum = new FrustumIntersection(matrix);
 
             List<TerrainChunk> chunks = terrainMesh.getChunks();
@@ -317,9 +313,8 @@ public class Renderer implements AutoCloseable {
         screenMesh.draw();
     }
 
-    public void setTerrainMesh(TerrainMesh mesh, Matrix4f transform) {
+    public void setTerrainMesh(TerrainMesh mesh) {
         terrainMesh = mesh;
-        terrainTransform = transform;
     }
 
     public void setWaterMesh(WaterMesh mesh, Matrix4f transform) {

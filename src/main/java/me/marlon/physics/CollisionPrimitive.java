@@ -12,19 +12,28 @@ public class CollisionPrimitive {
 
     public CollisionPrimitive(RigidBody body, Matrix4f modelTransform) {
         this.body = body;
-        this.modelTransform = modelTransform;
-        this.worldTransform = new Matrix4f(modelTransform);
-        this.worldTransformInv = new Matrix4f(worldTransform).invertAffine();
+        this.modelTransform = modelTransform == null ? new Matrix4f() : new Matrix4f(modelTransform);
+        this.worldTransform = new Matrix4f(this.modelTransform);
+        this.worldTransformInv = new Matrix4f(this.worldTransform).invertAffine();
         updateDerivedData();
     }
 
-    public void collideWith(CollisionSphere other, List<Contact> contacts) {
+    protected void collideWith(CollisionSphere other, List<Contact> contacts) {
     }
 
-    public void collideWith(CollisionPlane other, List<Contact> contacts) {
+    protected void collideWith(CollisionPlane other, List<Contact> contacts) {
     }
 
-    public void collideWith(CollisionBox other, List<Contact> contacts) {
+    protected void collideWith(CollisionBox other, List<Contact> contacts) {
+    }
+
+    public void collideWith(CollisionPrimitive other, List<Contact> contacts) {
+        if (other instanceof CollisionSphere)
+            collideWith((CollisionSphere) other, contacts);
+        else if (other instanceof CollisionPlane)
+            collideWith((CollisionPlane) other, contacts);
+        else if (other instanceof CollisionBox)
+            collideWith((CollisionBox) other, contacts);
     }
 
     public void updateDerivedData() {

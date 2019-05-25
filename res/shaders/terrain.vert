@@ -17,12 +17,10 @@ layout(std140, binding = 0) uniform CameraBlock {
     mat4 projInv;
 };
 
-uniform mat4 model;
-
 void main() {
-    vec4 worldSpace = model * vec4(inPosition, 1.0);
+    vec4 worldSpace = vec4(inPosition, 1.0);
 
-    gl_Position = proj * view * model * worldSpace;
+    gl_Position = proj * view * worldSpace;
     vertex.position = worldSpace.xyz;
     vertex.normal = inNormal;
     vertex.altitude = inAltitude;

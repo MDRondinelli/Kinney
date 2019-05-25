@@ -2,6 +2,7 @@ package me.marlon.game;
 
 import me.marlon.ecs.*;
 import me.marlon.gfx.*;
+import me.marlon.physics.RigidBody;
 import org.joml.Vector3f;
 
 public class Main {
@@ -19,7 +20,10 @@ public class Main {
 
         int terrain = entities.create();
         entities.add(terrain, new Terrain(256));
-        entities.add(terrain, new TransformComponent());
+
+//        int plane = entities.create();
+//        entities.add(plane, RigidBody.createPlane(new Vector3f(0.0f, 1.0f, 0.0f), 10.0f));
+//        entities.add(plane, new TransformComponent());
 
 //        Mesh pine = null;
 //

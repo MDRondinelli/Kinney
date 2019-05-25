@@ -16,7 +16,7 @@ public class EntityManager {
     public static final short MESH_BIT = 0x0004;
     public static final short PLAYER_BIT = 0x0008;
     public static final short RIGID_BODY_BIT = 0x0010;
-    public static final short TERRAIN_MESH_BIT = 0x0020;
+    public static final short TERRAIN_BIT = 0x0020;
     public static final short TRANSFORM_BIT = 0x0040;
     public static final short WATER_MESH_BIT = 0x0080;
 
@@ -111,7 +111,7 @@ public class EntityManager {
 
     public Terrain add(int i, Terrain component) {
         terrains[i] = component;
-        entities[i] |= TERRAIN_MESH_BIT;
+        entities[i] |= TERRAIN_BIT;
         return component;
     }
 

@@ -21,6 +21,7 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
     private float deltaTime;
 
     private Mesh ballMesh;
+    private Mesh boxMesh;
 
     public PlayerSystem(EntityManager entities, PhysicsSystem physics, float deltaTime) {
         this.entities = entities;
@@ -29,6 +30,7 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
 
         try {
             ballMesh = new Mesh(new Primitive("res/meshes/ball.obj", new Vector3f(1.0f, 0.0f, 0.0f)));
+            boxMesh = new Mesh(new Primitive("res/meshes/box.obj", new Vector3f(0.0f, 1.0f, 0.0f)));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -132,16 +134,35 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
             Vector3f playerPosition = new Vector3f(entities.getTransform(i).getPosition());
             Vector3f playerDirection = entities.getTransform(i).getMatrix().getColumn(2, new Vector3f()).negate();
 
-            int ball = entities.create();
-            TransformComponent ballTransform = new TransformComponent();
-            RigidBody ballBody = RigidBody.createSphere(1.0f, 1.0f / 2000.0f, playerPosition);
-            ballBody.getPosition().add(new Vector3f(playerDirection).mul(2.0f));
-            ballBody.getOrientation().rotateX((float) Math.random() * 6.28f);
-            ballBody.setVelocity(new Vector3f(playerDirection).mul(20.0f));
-            ballBody.setAcceleration(new Vector3f(0.0f, -10.0f, 0.0f));
+            if (button == 0) {
+                int ball = entities.create();
+                TransformComponent ballTransform = new TransformComponent();
+                RigidBody ballBody = RigidBody.createSphere(1.0f, 1.0f / 2000.0f, playerPosition);
+                ballBody.getPosition().add(new Vector3f(playerDirection).mul(2.0f));
+                ballBody.getOrientation().rotateX((float) Math.random() * 6.28f);
+                ballBody.setVelocity(new Vector3f(playerDirection).mul(20.0f));
+                ballBody.setAcceleration(new Vector3f(0.0f, -10.0f, 0.0f));
 
-            physics.register(new BuoyancyGenerator(new Vector3f(), 1.0f, 4.0f / 3.0f * (float) Math.PI, 3.0f, 10.0f, 4.0f), ballBody);
+                physics.register(new BuoyancyGenerator(new Vector3f(), 1.0f, 4.0f / 3.0f * (float) Math.PI, 3.0f, 10.0f, 4.0f), ballBody);
 
+                entities.add(ball, ballMesh);
+                entities.add(ball, ballTransform);
+                entities.add(ball, ballBody);
+            } else {
+                int box = entities.create();
+                TransformComponent boxTransform = new TransformComponent();
+                RigidBody boxBody = RigidBody.createCuboid(new Vector3f(1.0f), 1.0f / 4000.0f, playerPosition);
+                boxBody.getPosition().add(new Vector3f(playerDirection).mul(2.0f));
+//                boxBody.getOrientation().rotateX((float) Math.random() * 6.28f);
+                boxBody.setVelocity(new Vector3f(playerDirection).mul(20.0f));
+                boxBody.setAcceleration(new Vector3f(0.0f, -10.0f, 0.0f));
+
+                physics.register(new BuoyancyGenerator(new Vector3f(), 1.0f, 8.0f, 9.6f, 10.0f, 4.0f), boxBody);
+
+                entities.add(box, boxMesh);
+                entities.add(box, boxTransform);
+                entities.add(box, boxBody);
+            }
 //            physics.register(new BuoyancyGenerator(new Vector3f(), 0.5f, 3.2f, 3.2f, 10.0f, 4.0f), ballBody);
 //            physics.register(new BuoyancyGenerator(new Vector3f(1.0f, 0.0f, -1.0f), 0.5f, 3.2f, 3.2f, 10.0f, 4.0f), ballBody);
 //            physics.register(new BuoyancyGenerator(new Vector3f(-1.0f, 0.0f, -1.0f), 0.5f, 3.2f, 3.2f, 10.0f, 4.0f), ballBody);
@@ -156,10 +177,6 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
 //            physics.register(new BuoyancyGenerator(new Vector3f(-0.5f, -0.5f, -0.5f), 0.25f, 1.0f, 0.5f, 10.0f, 4.0f), ballBody);
 //            physics.register(new BuoyancyGenerator(new Vector3f(-0.5f, -0.5f, 0.5f), 0.25f, 1.0f, 0.5f, 10.0f, 4.0f), ballBody);
 //            physics.register(new BuoyancyGenerator(new Vector3f(0.5f, -0.5f, 0.5f), 0.25f, 1.0f, 0.5f, 10.0f, 4.0f), ballBody);
-
-            entities.add(ball, ballMesh);
-            entities.add(ball, ballTransform);
-            entities.add(ball, ballBody);
         }
     }
 
@@ -192,6 +209,11 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
             transform.translate(transform.getRotation().transform(velocity.mul(deltaTime, 0.0f, deltaTime)));
 
             player.angleX += player.dAngleX;
+            if (player.angleX < (float) Math.PI * -0.5f)
+                player.angleX = (float) Math.PI * -0.5f;
+            if (player.angleX > (float) Math.PI * 0.5f)
+                player.angleX = (float) Math.PI * 0.5f;
+
             player.dAngleX = 0.0f;
             player.angleY += player.dAngleY;
             player.dAngleY = 0.0f;
