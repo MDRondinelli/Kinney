@@ -7,7 +7,7 @@ import org.joml.Vector3f;
 
 public class Main {
     public static void main(String[] args) {
-        Engine engine = new Engine(1280, 720, "Kinney", 1.0f / 60.0f);
+        Engine engine = new Engine(1600, 900, "Kinney", 1.0f / 60.0f);
         engine.getWindow().setMouseGrabbed(true);
 
         World world = engine.getWorld();
@@ -24,17 +24,6 @@ public class Main {
 //        int plane = entities.create();
 //        entities.add(plane, RigidBody.createPlane(new Vector3f(0.0f, 1.0f, 0.0f), 10.0f));
 //        entities.add(plane, new TransformComponent());
-
-//        Mesh pine = null;
-//
-//        try {
-//            Primitive[] primitives = new Primitive[2];
-//            primitives[0] = new Primitive("res/meshes/pineLeaves.obj", new Vector3f(0.1f, 0.3f, 0.0f));
-//            primitives[1] = new Primitive("res/meshes/pineTrunk.obj", new Vector3f(0.4f, 0.2f, 0.0f));
-//            pine = new Mesh(primitives);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
 
         int water = entities.create();
         entities.add(water, new WaterMesh(1024));

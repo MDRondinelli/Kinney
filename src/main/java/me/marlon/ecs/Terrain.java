@@ -6,23 +6,14 @@ import me.marlon.util.OpenSimplexOctaves;
 import org.joml.Vector2f;
 
 public class Terrain implements AutoCloseable {
-    public static final int TILE_SIZE = 2;
-
-    public static final int TILE_SAND = 0;
-    public static final int TILE_GRASS = 1;
-    public static final int TILE_STONE = 2;
-    public static final int TILE_SNOW = 3;
-
     private int size;
     private float[][] heightmap;
-    private int[][] tilemap;
 
     private TerrainMesh mesh;
 
     public Terrain(int size) {
         this.size = size;
         heightmap = new float[size][size];
-        tilemap = new int[(size - 1) / TILE_SIZE][(size - 1) / TILE_SIZE];
 
         OpenSimplexOctaves noise = new OpenSimplexOctaves(48.0f, 0.5f, 2.0f,  16);
 
@@ -63,33 +54,6 @@ public class Terrain implements AutoCloseable {
             }
         }
 
-        OpenSimplexOctaves layerNoise = new OpenSimplexOctaves(24.0f, 0.5f, 2.0f, 4);
-
-        for (int i = 0; i < size / TILE_SIZE - 1; ++i) {
-            for (int j = 0; j < size / TILE_SIZE - 1; ++j) {
-                float y0 = heightmap[i * TILE_SIZE][j * TILE_SIZE];
-                float y1 = heightmap[i * TILE_SIZE][j * TILE_SIZE + TILE_SIZE];
-                float y2 = heightmap[i * TILE_SIZE + TILE_SIZE][j * TILE_SIZE];
-                float y3 = heightmap[i * TILE_SIZE + TILE_SIZE][j * TILE_SIZE + TILE_SIZE];
-
-                float y = (y0 + y1 + y2 + y3) * 0.25f;
-                if (y > 4.0f)
-                    y += layerNoise.eval(i, j) * 2.0f;
-
-                float maxY = Math.max(Math.max(Math.max(y0, y1), y2), y3);
-                float minY = Math.min(Math.min(Math.min(y0, y1), y2), y3);
-
-                if (y > 22.0f)
-                    tilemap[i][j] = TILE_SNOW;
-                else if (y > 18.0f || (maxY - minY > 1.0f && y > 12.0f))
-                    tilemap[i][j] = TILE_STONE;
-                else if (y > 6.5f)
-                    tilemap[i][j] = TILE_GRASS;
-                else
-                    tilemap[i][j] = TILE_SAND;
-            }
-        }
-
         mesh = new TerrainMesh(this);
     }
 
@@ -109,12 +73,6 @@ public class Terrain implements AutoCloseable {
         float l = (1.0f - v) * heightmap[x0][y0] + v * heightmap[x0][y1];
         float r = (1.0f - v) * heightmap[x1][y0] + v * heightmap[x1][y1];
         return (1.0f - u) * l + u * r;
-    }
-
-    public int sampleTile(int i, int j) {
-        i = Math.min(Math.max(i, 0), (size - 1) / TILE_SIZE - 1);
-        j = Math.min(Math.max(j, 0), (size - 1) / TILE_SIZE - 1);
-        return tilemap[i][j];
     }
 
     public Vector2f gradient(float x, float y) {
@@ -177,10 +135,6 @@ public class Terrain implements AutoCloseable {
 
     public int getSize() {
         return size;
-    }
-
-    public int getSizeTiles() {
-        return (size - 1) / TILE_SIZE;
     }
 
     public TerrainMesh getMesh() {

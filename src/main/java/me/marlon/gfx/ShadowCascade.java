@@ -95,8 +95,12 @@ public class ShadowCascade implements AutoCloseable {
             bounds.union(new Vector3f(vec2).mul(depths[i + 1]).add(corners[2].x, corners[2].y, corners[2].z));
             bounds.union(new Vector3f(vec3).mul(depths[i + 1]).add(corners[3].x, corners[3].y, corners[3].z));
 
+            bounds.minX -= 0.5f;
+            bounds.minY -= 0.5f;
+            bounds.maxX += 0.5f;
+            bounds.maxY += 0.5f;
             this.bounds[i] = bounds;
-            Matrix4f lightProj = new Matrix4f().ortho(bounds.minX - 1.0f, bounds.maxX + 1.0f, bounds.minY - 1.0f, bounds.maxY + 1.0f, -bounds.maxZ - 1.0f, -bounds.minZ + 1.0f);
+            Matrix4f lightProj = new Matrix4f().ortho(bounds.minX, bounds.maxX, bounds.minY, bounds.maxY, -bounds.maxZ, -bounds.minZ);
             matrices[i].identity().mul(lightProj).mul(lightView);
         }
     }

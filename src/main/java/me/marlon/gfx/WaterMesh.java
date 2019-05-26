@@ -11,7 +11,7 @@ import java.nio.IntBuffer;
 import java.util.ArrayList;
 
 public class WaterMesh implements AutoCloseable {
-    public static final int TILE_SIZE = 8;
+    public static final int TILE_SIZE = 6;
 
     private int vao;
     private int vbo;

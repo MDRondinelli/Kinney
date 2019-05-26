@@ -26,10 +26,10 @@ public class TerrainChunk implements AutoCloseable {
 
         for (int i = xMin; i < xMax; ++i) {
             for (int j = yMin; j < yMax; ++j) {
-                Vector3f p0 = new Vector3f(i * Terrain.TILE_SIZE,                     0.0f, j * Terrain.TILE_SIZE + Terrain.TILE_SIZE);
-                Vector3f p1 = new Vector3f(i * Terrain.TILE_SIZE + Terrain.TILE_SIZE, 0.0f, j * Terrain.TILE_SIZE + Terrain.TILE_SIZE);
-                Vector3f p2 = new Vector3f(i * Terrain.TILE_SIZE + Terrain.TILE_SIZE, 0.0f, j * Terrain.TILE_SIZE);
-                Vector3f p3 = new Vector3f(i * Terrain.TILE_SIZE,                     0.0f, j * Terrain.TILE_SIZE);
+                Vector3f p0 = new Vector3f(i * TerrainMesh.TILE_SIZE, 0.0f, j * TerrainMesh.TILE_SIZE + TerrainMesh.TILE_SIZE);
+                Vector3f p1 = new Vector3f(i * TerrainMesh.TILE_SIZE + TerrainMesh.TILE_SIZE, 0.0f, j * TerrainMesh.TILE_SIZE + TerrainMesh.TILE_SIZE);
+                Vector3f p2 = new Vector3f(i * TerrainMesh.TILE_SIZE + TerrainMesh.TILE_SIZE, 0.0f, j * TerrainMesh.TILE_SIZE);
+                Vector3f p3 = new Vector3f(i * TerrainMesh.TILE_SIZE, 0.0f, j * TerrainMesh.TILE_SIZE);
 
                 p0.y = terrain.sampleHeight(p0.x, p0.z);
                 p1.y = terrain.sampleHeight(p1.x, p1.z);

@@ -127,7 +127,7 @@ public class Renderer implements AutoCloseable {
         proj = new Matrix4f();
         projInv = new Matrix4f();
 
-        dLightShadows = new ShadowCascade(new int[] { 2048, 2048, 2048, 2048 });
+        dLightShadows = new ShadowCascade(new int[]{4096, 4096, 4096, 4096});
 
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_CLAMP);

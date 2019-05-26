@@ -81,7 +81,7 @@ vec3 brdf(vec3 n, vec3 l, vec3 v, vec3 albedo, vec2 params) {
 
 void main() {
     float depth = length(vertex.position - decodePosition(gl_FragCoord.xy / textureSize(depthTexture, 0)));
-    float alpha = 1.0 - exp(-depth * 0.25);
+    float depthAlpha = 1.0 - exp(-depth / 2.0f);
 
     vec3 p = vertex.position;
     vec3 n = normalize(vertex.normal);
@@ -89,11 +89,11 @@ void main() {
     vec3 v = normalize(viewInv[3].xyz - p);
     vec3 l = normalize(-dLight.direction.xyz);
 
-    vec3 foamAlbedo = vec3(1.0);
-    float foamFactor = 0.0;//1.0 - clamp(depth, 0.0, 1.0);
+    vec3 direct = dLight.color.rgb * brdf(n, l, v, WATER_ALBEDO, vec2(0.4, 0.0)) * clamp(dot(n, l), 0.0, 1.0);
 
-    vec3 albedo = mix(WATER_ALBEDO, foamAlbedo, foamFactor);
-    vec3 direct = dLight.color.rgb * brdf(n, l, v, albedo, vec2(0.4, 0.0)) * clamp(dot(n, l), 0.0, 1.0);
+    float fresnelAlpha = 1.0 - clamp(dot(n, v), 0.0, 1.0);
 
-    outColor = vec4(direct, mix(alpha, 1.0, foamFactor));
+    float alpha = mix(depthAlpha, fresnelAlpha, smoothstep(0.0, 1.0, depth));
+
+    outColor = vec4(direct, alpha);
 }

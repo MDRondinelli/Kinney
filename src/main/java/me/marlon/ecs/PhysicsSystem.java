@@ -21,7 +21,7 @@ public class PhysicsSystem {
         this.deltaTime = deltaTime;
 
         registry = new ArrayList<>();
-        resolver = new ContactResolver(256, 0.01f, 256, 0.01f);
+        resolver = new ContactResolver(512, 0.01f, 512, 0.01f);
     }
 
     public void onUpdate() {
