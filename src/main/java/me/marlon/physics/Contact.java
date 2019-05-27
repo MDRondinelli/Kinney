@@ -177,7 +177,7 @@ public class Contact {
 
             Quaternionf q = new Quaternionf(angularChange[0].x, angularChange[0].y, angularChange[0].z, 0.0f);
             q.mul(bodyA.getOrientation());
-            bodyA.getOrientation().add(q.x * 0.5f, q.y * 0.5f, q.z * 0.5f, q.w * 0.5f);
+            bodyA.getOrientation().add(q.x * 0.5f, q.y * 0.5f, q.z * 0.5f, q.w * 0.5f).normalize();
         }
 
         if (bodyB != null) {
@@ -212,7 +212,7 @@ public class Contact {
 
             Quaternionf q = new Quaternionf(angularChange[1].x, angularChange[1].y, angularChange[1].z, 0.0f);
             q.mul(bodyB.getOrientation());
-            bodyB.getOrientation().add(q.x * 0.5f, q.y * 0.5f, q.z * 0.5f, q.w * 0.5f);
+            bodyB.getOrientation().add(q.x * 0.5f, q.y * 0.5f, q.z * 0.5f, q.w * 0.5f).normalize();
         } else {
             linearChange[1].zero();
             angularChange[1].zero();
