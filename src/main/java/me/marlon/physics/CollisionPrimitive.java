@@ -14,8 +14,7 @@ public class CollisionPrimitive {
     private AABBf aabb;
     private AABBf worldAabb;
 
-    public CollisionPrimitive(RigidBody body, Matrix4f transform, AABBf aabb) {
-        this.body = body;
+    public CollisionPrimitive(Matrix4f transform, AABBf aabb) {
         this.transform = transform == null ? new Matrix4f() : new Matrix4f(transform);
         this.aabb = aabb;
 
@@ -40,13 +39,18 @@ public class CollisionPrimitive {
     protected void collideWith(CollisionBox other, List<Contact> contacts) {
     }
 
-    public void collideWith(CollisionPrimitive other, List<Contact> contacts) {
+    protected void collideWith(CollisionTerrain other, List<Contact> contacts) {
+    }
+
+    public void collideWith(CollisionPrimitive other, List<Contact> contacts) { // replace with other.collideWIth(this) in each child. That way, the type of this is known
         if (other instanceof CollisionSphere)
             collideWith((CollisionSphere) other, contacts);
         else if (other instanceof CollisionPlane)
             collideWith((CollisionPlane) other, contacts);
         else if (other instanceof CollisionBox)
             collideWith((CollisionBox) other, contacts);
+        else if (other instanceof CollisionTerrain)
+            collideWith((CollisionTerrain) other, contacts);
     }
 
     public void updateDerivedData() {

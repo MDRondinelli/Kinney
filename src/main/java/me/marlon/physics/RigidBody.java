@@ -1,16 +1,21 @@
 package me.marlon.physics;
 
+import me.marlon.ecs.Terrain;
 import org.joml.*;
 
 import java.lang.Math;
 
 public class RigidBody {
+    public static RigidBody createTerrain(Terrain terrain) {
+        return new RigidBody(new CollisionTerrain(terrain), 0.0f, new Matrix3f().zero(), new Vector3f());
+    }
+
     public static RigidBody createPlane(Vector3f normal, float offset) {
-        return new RigidBody(new CollisionPlane(normal, offset), 0.0f, new Matrix3f(new Vector3f(), new Vector3f(), new Vector3f()), new Vector3f());
+        return new RigidBody(new CollisionPlane(normal, offset), 0.0f, new Matrix3f().zero(), new Vector3f());
     }
 
     public static RigidBody createCuboid(Vector3f halfExtents, float invMass, Vector3f position, Quaternionf orientation, Vector3f velocity, Vector3f acceleration, Vector3f rotation, float linearDamping, float angularDamping) {
-        return new RigidBody(new CollisionBox(null, new Matrix4f(), halfExtents), invMass, getCuboidInverseTensor(1.0f / invMass, halfExtents.x * 2.0f, halfExtents.y * 2.0f, halfExtents.z * 2.0f), position, orientation, velocity, acceleration, rotation, linearDamping, angularDamping);
+        return new RigidBody(new CollisionBox(new Matrix4f(), halfExtents), invMass, getCuboidInverseTensor(1.0f / invMass, halfExtents.x * 2.0f, halfExtents.y * 2.0f, halfExtents.z * 2.0f), position, orientation, velocity, acceleration, rotation, linearDamping, angularDamping);
     }
 
     public static RigidBody createCuboid(Vector3f halfExtents, float invMass, Vector3f position, Quaternionf orientation, Vector3f velocity, Vector3f acceleration, Vector3f rotation) {
@@ -26,7 +31,7 @@ public class RigidBody {
     }
 
     public static RigidBody createSphere(float radius, float invMass, Vector3f position, Vector3f velocity, Vector3f acceleration, Vector3f rotation, float linearDamping, float angularDamping) {
-        return new RigidBody(new CollisionSphere(null, new Vector3f(), radius), invMass, getSphereInverseTensor(1.0f / invMass, radius), position, new Quaternionf(), velocity, acceleration, rotation, linearDamping, angularDamping);
+        return new RigidBody(new CollisionSphere(new Vector3f(), radius), invMass, getSphereInverseTensor(1.0f / invMass, radius), position, new Quaternionf(), velocity, acceleration, rotation, linearDamping, angularDamping);
     }
 
     public static RigidBody createSphere(float radius, float invMass, Vector3f position, Vector3f velocity, Vector3f acceleration, Vector3f rotation) {
@@ -193,6 +198,7 @@ public class RigidBody {
 
     public void setCollider(CollisionPrimitive collider) {
         this.collider = collider;
+        this.collider.setBody(this);
     }
 
     public boolean hasFiniteMass() {

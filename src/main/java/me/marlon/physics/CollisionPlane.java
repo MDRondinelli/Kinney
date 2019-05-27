@@ -1,6 +1,7 @@
 package me.marlon.physics;
 
 import org.joml.AABBf;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.util.List;
@@ -10,7 +11,7 @@ public class CollisionPlane extends CollisionPrimitive {
     private float offset;
 
     public CollisionPlane(Vector3f normal, float offset) {
-        super(null, null, new AABBf(-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE));
+        super(new Matrix4f(), new AABBf(-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE));
         this.normal = normal;
         this.offset = offset;
     }

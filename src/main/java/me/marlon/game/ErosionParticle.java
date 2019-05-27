@@ -33,7 +33,7 @@ public class ErosionParticle {
 
         Vector2f oldPosition = new Vector2f(position);
 
-        float hOld = terrain.sampleHeight(position.x, position.y);
+        float hOld = terrain.sample(position.x, position.y);
 
         Vector2f gradient = terrain.gradient(position.x, position.y);
         direction.mul(INERTIA).sub(gradient.mul(1.0f - INERTIA));
@@ -46,7 +46,7 @@ public class ErosionParticle {
         direction.normalize();
         position.add(direction);
 
-        float hNew = terrain.sampleHeight(position.x, position.y);
+        float hNew = terrain.sample(position.x, position.y);
         float hDif = hNew - hOld;
 
         if (hDif > 0.0f) {

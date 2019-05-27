@@ -18,12 +18,10 @@ public class Main {
         entities.add(player, new Player(4.0f));
         entities.add(player, new TransformComponent()).translate(new Vector3f(128.0f, 20.0f, 128.0f));
 
-        int terrain = entities.create();
-        entities.add(terrain, new Terrain(256));
-
-        int plane = entities.create();
-        entities.add(plane, RigidBody.createPlane(new Vector3f(0.0f, 1.0f, 0.0f), 10.0f));
-        entities.add(plane, new TransformComponent());
+        int terrainEntity = entities.create();
+        Terrain terrain = entities.add(terrainEntity, new Terrain(256));
+        entities.add(terrainEntity, RigidBody.createTerrain(terrain));
+        entities.add(terrainEntity, new TransformComponent());
 
         int water = entities.create();
         entities.add(water, new WaterMesh(1024));

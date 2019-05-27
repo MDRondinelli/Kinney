@@ -61,11 +61,16 @@ public class Terrain implements AutoCloseable {
         mesh.close();
     }
 
-    public float sampleHeight(float x, float y) {
-        int x0 = Math.min(Math.max((int) Math.floor(x), 0), size - 1);
-        int x1 = Math.min(Math.max((int) Math.ceil(x), 0), size - 1);
-        int y0 = Math.min(Math.max((int) Math.floor(y), 0), size - 1);
-        int y1 = Math.min(Math.max((int) Math.ceil(y), 0), size - 1);
+
+    public float sample(int x, int y) {
+        return heightmap[x][y];
+    }
+
+    public float sample(float x, float y) {
+        int x0 = Math.min(Math.max((int) x, 0), size - 1);
+        int x1 = Math.min(Math.max((int) (x + 1.0f), 0), size - 1);
+        int y0 = Math.min(Math.max((int) y, 0), size - 1);
+        int y1 = Math.min(Math.max((int) (y + 1.0f), 0), size - 1);
 
         float u = Math.min(x - x0, 1.0f);
         float v = Math.min(y - y0, 1.0f);

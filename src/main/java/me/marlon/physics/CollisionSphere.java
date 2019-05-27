@@ -9,8 +9,8 @@ import java.util.List;
 public class CollisionSphere extends CollisionPrimitive {
     private float radius;
 
-    public CollisionSphere(RigidBody body, Vector3f transform, float radius) {
-        super(body, new Matrix4f().translate(transform), new AABBf(-radius, -radius, -radius, radius, radius, radius));
+    public CollisionSphere(Vector3f transform, float radius) {
+        super(new Matrix4f().translate(transform), new AABBf(-radius, -radius, -radius, radius, radius, radius));
         this.radius = radius;
     }
 
@@ -26,6 +26,11 @@ public class CollisionSphere extends CollisionPrimitive {
 
     @Override
     protected void collideWith(CollisionBox other, List<Contact> contacts) {
+        CollisionDetector.collide(this, other, contacts);
+    }
+
+    @Override
+    protected void collideWith(CollisionTerrain other, List<Contact> contacts) {
         CollisionDetector.collide(this, other, contacts);
     }
 

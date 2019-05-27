@@ -1,5 +1,6 @@
 package me.marlon.physics;
 
+import me.marlon.gfx.TerrainMesh;
 import org.joml.Vector3f;
 
 import java.util.List;
@@ -200,12 +201,6 @@ public class CollisionDetector {
         return oneProject + twoProject - distance;
     }
 
-//    private static Vector3f projectToSegment(Vector3f position, Vector3f a, Vector3f b) {
-//        Vector3f ba = new Vector3f(b).sub(a);
-//        float t = new Vector3f(position).sub(a).dot(ba) / ba.dot(ba);
-//        return new Vector3f(a).lerp(b, Math.min(Math.max(t, 0.0f), 1.0f));
-//    }
-
     private static Vector3f collide(Vector3f pOne, Vector3f dOne, float oneSize, Vector3f pTwo, Vector3f dTwo, float twoSize, boolean useOne) {
         float smOne = dOne.lengthSquared();
         float smTwo = dTwo.lengthSquared();
@@ -378,7 +373,7 @@ public class CollisionDetector {
                 onTwoEdge.z = -onTwoEdge.z;
 
             one.getWorldTransform().transformPosition(onOneEdge);
-            one.getWorldTransform().transformPosition(onTwoEdge);
+            two.getWorldTransform().transformPosition(onTwoEdge);
 
             float oneSize;
             if (oneAxisIndex == 0)
@@ -399,5 +394,326 @@ public class CollisionDetector {
             Vector3f vertex = collide(onOneEdge, oneAxis, oneSize, onTwoEdge, twoAxis, twoSize, bestSingleAxis > 2);
             contacts.add(new Contact(vertex, axis, bestOverlap, one.getBody(), two.getBody()));
         }
+    }
+
+    private static Vector3f closestPoint(Vector3f[] triangle, Vector3f point) {
+        Vector3f edge0 = new Vector3f(triangle[1]).sub(triangle[0]);
+        Vector3f edge1 = new Vector3f(triangle[2]).sub(triangle[0]);
+        Vector3f v0 = new Vector3f(triangle[0]).sub(point);
+
+        float a = edge0.dot(edge0);
+        float b = edge0.dot(edge1);
+        float c = edge1.dot(edge1);
+        float d = edge0.dot(v0);
+        float e = edge1.dot(v0);
+
+        float det = a * c - b * b;
+        float s = b * e - c * d;
+        float t = b * d - a * e;
+
+        if (s + t < det) {
+            if (s < 0.0f) {
+                if (t < 0.0f) {
+                    if (d < 0.0f) {
+                        s = Math.min(Math.max(-d / a, 0.0f), 1.0f);
+                        t = 0.0f;
+                    } else {
+                        s = 0.0f;
+                        t = Math.min(Math.max(-e / c, 0.0f), 1.0f);
+                    }
+                } else {
+                    s = 0.0f;
+                    t = Math.min(Math.max(-e / c, 0.0f), 1.0f);
+                }
+            } else if (t < 0.0f) {
+                s = Math.min(Math.max(-d / a, 0.0f), 1.0f);
+                t = 0.0f;
+            } else {
+                float invDet = 1.0f / det;
+                s *= invDet;
+                t *= invDet;
+            }
+        } else {
+            if (s < 0.0f) {
+                float tmp0 = b + d;
+                float tmp1 = c + e;
+                if (tmp1 > tmp0) {
+                    float numer = tmp1 - tmp0;
+                    float denom = a - 2 * b + c;
+                    s = Math.min(Math.max(numer / denom, 0.0f), 1.0f);
+                    t = 1.0f - s;
+                } else {
+                    s = 0.0f;
+                    t = Math.min(Math.max(-e / c, 0.0f), 1.0f);
+                }
+            } else if (t < 0.0f) {
+                if (a + d > b + e) {
+                    float numer = c + e - b - d;
+                    float denom = a - 2 * b + c;
+                    s = Math.min(Math.max(numer / denom, 0.0f), 1.0f);
+                    t = 1.0f - s;
+                } else {
+                    s = Math.min(Math.max(-e / c, 0.0f), 1.0f);
+                    t = 0.0f;
+                }
+            } else {
+                float numer = c + e - b - d;
+                float denom = a - 2 * b + c;
+                s = Math.min(Math.max(numer / denom, 0.0f), 1.0f);
+                t = 1.0f - s;
+            }
+        }
+
+        return edge0.mul(s).add(edge1.mul(t)).add(triangle[0]);
+    }
+
+    private static void collide(CollisionSphere sphere, CollisionPrimitive other, Vector3f[] triangle, List<Contact> contacts) {
+        Vector3f center = sphere.getWorldTransform().getTranslation(new Vector3f());
+        Vector3f point = closestPoint(triangle, center);
+
+        if (center.distanceSquared(point) < sphere.getRadius() * sphere.getRadius()) {
+            float depth = sphere.getRadius() - center.distance(point);
+            Vector3f normal = center.sub(point).normalize();
+            contacts.add(new Contact(point, normal, depth, sphere.getBody(), other.getBody()));
+        }
+    }
+
+    public static void collide(CollisionSphere sphere, CollisionTerrain terrain, List<Contact> contacts) {
+        Vector3f center = sphere.getWorldTransform().getTranslation(new Vector3f());
+        float minX = (center.x - sphere.getRadius()) / TerrainMesh.TILE_SIZE;
+        float maxX = (center.x + sphere.getRadius()) / TerrainMesh.TILE_SIZE;
+        float minZ = (center.z - sphere.getRadius()) / TerrainMesh.TILE_SIZE;
+        float maxZ = (center.z + sphere.getRadius()) / TerrainMesh.TILE_SIZE;
+
+        int minI = (int) minX;
+        if (minI < 0)
+            minI = 0;
+        if (minI > terrain.getSize() - 1)
+            minI = terrain.getSize() - 1;
+
+        int maxI = (int) (maxX + 1.0f);
+        if (maxI < 0)
+            maxI = 0;
+        if (maxI > terrain.getSize() - 1)
+            maxI = terrain.getSize() - 1;
+
+        int minJ = (int) minZ;
+        if (minJ < 0)
+            minJ = 0;
+        if (minJ > terrain.getSize() - 1)
+            minJ = terrain.getSize() - 1;
+
+        int maxJ = (int) (maxZ + 1.0f);
+        if (maxJ < 0)
+            maxJ = 0;
+        if (maxJ > terrain.getSize() - 1)
+            maxJ = terrain.getSize() - 1;
+
+        Vector3f[] triangle = new Vector3f[3];
+
+        for (int i = minI; i < maxI; ++i) {
+            for (int j = minJ; j < maxJ; ++j) {
+                for (int k = 0; k < 2; ++k) {
+                    terrain.getTriangle(i, j, triangle, k);
+                    collide(sphere, terrain, triangle, contacts);
+                }
+            }
+        }
+    }
+
+    public static void collide(CollisionTerrain terrain, CollisionSphere sphere, List<Contact> contacts) {
+        collide(sphere, terrain, contacts);
+    }
+
+    private static float intersectOnAxis(CollisionBox box, Vector3f[] boxSpaceTriangle, Vector3f axis) {
+        Vector3f boxSpaceAxis = new Vector3f(axis).mulDirection(box.getWorldTransformInv());
+
+        float p0 = boxSpaceAxis.dot(boxSpaceTriangle[0]);
+        float p1 = boxSpaceAxis.dot(boxSpaceTriangle[1]);
+        float p2 = boxSpaceAxis.dot(boxSpaceTriangle[2]);
+
+        float pMin = Math.min(Math.min(p0, p1), p2);
+        float pMax = Math.max(Math.max(p0, p1), p2);
+
+        float boxSize = box.getHalfExtents().x * Math.abs(boxSpaceAxis.x) + box.getHalfExtents().y * Math.abs(boxSpaceAxis.y) + box.getHalfExtents().z * Math.abs(boxSpaceAxis.z);
+
+        if (boxSize <= pMin)
+            return boxSize - pMin;
+        if (-boxSize >= pMax)
+            return boxSize + pMax;
+        if (-boxSize <= pMin && pMax <= boxSize)
+            return pMax - pMin;
+        if (pMin <= -boxSize && boxSize <= pMax)
+            return boxSize * 2.0f;
+        if (pMin <= boxSize && boxSize <= pMax)
+            return boxSize - pMin;
+        if (pMin <= -boxSize && -boxSize <= pMax)
+            return -boxSize - pMin;
+
+        return 0.0f;
+    }
+
+    private static void collide(CollisionBox box, CollisionPrimitive other, Vector3f[] triangle, List<Contact> contacts) {
+        Vector3f[] edges = new Vector3f[3];
+        edges[0] = new Vector3f(triangle[1]).sub(triangle[0]);
+        edges[1] = new Vector3f(triangle[2]).sub(triangle[1]);
+        edges[2] = new Vector3f(triangle[0]).sub(triangle[2]);
+
+        Vector3f[] axes = new Vector3f[13];
+
+        axes[0] = new Vector3f(edges[0]).cross(edges[1]).normalize();
+
+        axes[1] = box.getWorldTransform().getColumn(0, new Vector3f());
+        axes[2] = box.getWorldTransform().getColumn(1, new Vector3f());
+        axes[3] = box.getWorldTransform().getColumn(2, new Vector3f());
+
+        axes[4] = new Vector3f(axes[1]).cross(edges[0]);
+        axes[5] = new Vector3f(axes[1]).cross(edges[1]);
+        axes[6] = new Vector3f(axes[1]).cross(edges[2]);
+
+        axes[7] = new Vector3f(axes[2]).cross(edges[0]);
+        axes[8] = new Vector3f(axes[2]).cross(edges[1]);
+        axes[9] = new Vector3f(axes[2]).cross(edges[2]);
+
+        axes[10] = new Vector3f(axes[3]).cross(edges[0]);
+        axes[11] = new Vector3f(axes[3]).cross(edges[1]);
+        axes[12] = new Vector3f(axes[3]).cross(edges[2]);
+
+        Vector3f[] boxSpaceTriangle = new Vector3f[3];
+        boxSpaceTriangle[0] = new Vector3f(triangle[0]).mulPosition(box.getWorldTransformInv());
+        boxSpaceTriangle[1] = new Vector3f(triangle[1]).mulPosition(box.getWorldTransformInv());
+        boxSpaceTriangle[2] = new Vector3f(triangle[2]).mulPosition(box.getWorldTransformInv());
+
+        float bestOverlap = Float.MAX_VALUE;
+        int bestCase = -1;
+
+        for (int i = 0; i < 4; ++i) {
+            Vector3f axis = axes[i];
+            axis.normalize();
+
+            float overlap = intersectOnAxis(box, boxSpaceTriangle, axis);
+            if (overlap < 0.0f)
+                return;
+
+            if (overlap < bestOverlap) {
+                bestOverlap = overlap;
+                bestCase = i;
+            }
+        }
+
+        int bestSingleAxis = bestCase;
+
+        for (int i = 4; i < 13; ++i) {
+            Vector3f axis = axes[i];
+
+            if (axis.lengthSquared() < 0.001f)
+                continue;
+
+            axis.normalize();
+
+            float overlap = intersectOnAxis(box, boxSpaceTriangle, axis);
+            if (overlap < 0.0f)
+                return;
+
+            if (overlap < bestOverlap) {
+                bestOverlap = overlap;
+                bestCase = i;
+            }
+        }
+
+        if (bestCase == -1)
+            return;
+
+        if (bestCase == 0) { // vertex of box on face of triangle
+            Vector3f normal = axes[bestCase];
+
+            Vector3f vertex = new Vector3f(box.getHalfExtents());
+            if (axes[1].dot(normal) > 0.0f)
+                vertex.x = -vertex.x;
+            if (axes[2].dot(normal) > 0.0f)
+                vertex.y = -vertex.y;
+            if (axes[3].dot(normal) > 0.0f)
+                vertex.z = -vertex.z;
+
+            box.getWorldTransform().transformPosition(vertex);
+            contacts.add(new Contact(vertex, normal, bestOverlap, box.getBody(), other.getBody()));
+        } else if (bestCase < 4) { // vertex of triangle on face of box
+            Vector3f normal = axes[bestCase]; // should already be normalized
+
+            Vector3f centroid = new Vector3f(
+                    triangle[0].x + triangle[1].x + triangle[2].x,
+                    triangle[0].y + triangle[1].y + triangle[2].y,
+                    triangle[0].z + triangle[1].z + triangle[2].z)
+                    .div(3.0f);
+
+            // flip normal away from triangle
+            if (normal.dot(centroid) > 0.0f)
+                normal.negate(); // mutates axes[bestCase]
+
+            float p0 = normal.dot(triangle[0]);
+            float p1 = normal.dot(triangle[1]);
+            float p2 = normal.dot(triangle[2]);
+
+            if (p0 > p1) {
+                if (p0 > p2)
+                    contacts.add(new Contact(triangle[0], normal, bestOverlap, box.getBody(), other.getBody()));
+                else
+                    contacts.add(new Contact(triangle[2], normal, bestOverlap, box.getBody(), other.getBody()));
+            } else {
+                if (p1 > p2)
+                    contacts.add(new Contact(triangle[1], normal, bestOverlap, box.getBody(), other.getBody()));
+                else
+                    contacts.add(new Contact(triangle[2], normal, bestOverlap, box.getBody(), other.getBody()));
+            }
+        } else {
+            bestCase -= 4;
+            int boxAxisIndex = bestCase / 3 + 1;
+            int triEdgeIndex = bestCase % 3;
+        }
+    }
+
+    public static void collide(CollisionBox box, CollisionTerrain terrain, List<Contact> contacts) {
+        float minX = (box.getWorldAabb().minX) / TerrainMesh.TILE_SIZE;
+        float maxX = (box.getWorldAabb().maxX) / TerrainMesh.TILE_SIZE;
+        float minZ = (box.getWorldAabb().minZ) / TerrainMesh.TILE_SIZE;
+        float maxZ = (box.getWorldAabb().maxZ) / TerrainMesh.TILE_SIZE;
+
+        int minI = (int) minX;
+        if (minI < 0)
+            minI = 0;
+        if (minI > terrain.getSize() - 1)
+            minI = terrain.getSize() - 1;
+
+        int maxI = (int) (maxX + 1.0f);
+        if (maxI < 0)
+            maxI = 0;
+        if (maxI > terrain.getSize() - 1)
+            maxI = terrain.getSize() - 1;
+
+        int minJ = (int) minZ;
+        if (minJ < 0)
+            minJ = 0;
+        if (minJ > terrain.getSize() - 1)
+            minJ = terrain.getSize() - 1;
+
+        int maxJ = (int) (maxZ + 1.0f);
+        if (maxJ < 0)
+            maxJ = 0;
+        if (maxJ > terrain.getSize() - 1)
+            maxJ = terrain.getSize() - 1;
+
+        Vector3f[] triangle = new Vector3f[3];
+        for (int i = minI; i < maxI; ++i) {
+            for (int j = minJ; j < maxJ; ++j) {
+                for (int k = 0; k < 2; ++k) {
+                    terrain.getTriangle(i, j, triangle, k);
+                    collide(box, terrain, triangle, contacts);
+                }
+            }
+        }
+    }
+
+    public static void collide(CollisionTerrain terrain, CollisionBox box, List<Contact> contacts) {
+        collide(box, terrain, contacts);
     }
 }

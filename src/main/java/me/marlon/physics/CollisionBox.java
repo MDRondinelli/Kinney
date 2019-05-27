@@ -9,24 +9,29 @@ import java.util.List;
 public class CollisionBox extends CollisionPrimitive {
     private Vector3f halfExtents;
 
-    public CollisionBox(RigidBody body, Matrix4f transform, Vector3f halfExtents) {
-        super(body, transform, new AABBf(-halfExtents.x, -halfExtents.y, -halfExtents.z, halfExtents.x, halfExtents.y, halfExtents.z));
+    public CollisionBox(Matrix4f transform, Vector3f halfExtents) {
+        super(transform, new AABBf(-halfExtents.x, -halfExtents.y, -halfExtents.z, halfExtents.x, halfExtents.y, halfExtents.z));
         this.halfExtents = halfExtents;
     }
 
     @Override
-    protected void collideWith(CollisionSphere sphere, List<Contact> contacts) {
-        CollisionDetector.collide(this, sphere, contacts);
+    protected void collideWith(CollisionSphere other, List<Contact> contacts) {
+        CollisionDetector.collide(this, other, contacts);
     }
 
     @Override
-    protected void collideWith(CollisionPlane plane, List<Contact> contacts) {
-        CollisionDetector.collide(this, plane, contacts);
+    protected void collideWith(CollisionPlane other, List<Contact> contacts) {
+        CollisionDetector.collide(this, other, contacts);
     }
 
     @Override
-    protected void collideWith(CollisionBox box, List<Contact> contacts) {
-        CollisionDetector.collide(this, box, contacts);
+    protected void collideWith(CollisionBox other, List<Contact> contacts) {
+        CollisionDetector.collide(this, other, contacts);
+    }
+
+    @Override
+    protected void collideWith(CollisionTerrain other, List<Contact> contacts) {
+        CollisionDetector.collide(this, other, contacts);
     }
 
     public Vector3f getHalfExtents() {

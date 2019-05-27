@@ -31,10 +31,10 @@ public class TerrainChunk implements AutoCloseable {
                 Vector3f p2 = new Vector3f(i * TerrainMesh.TILE_SIZE + TerrainMesh.TILE_SIZE, 0.0f, j * TerrainMesh.TILE_SIZE);
                 Vector3f p3 = new Vector3f(i * TerrainMesh.TILE_SIZE, 0.0f, j * TerrainMesh.TILE_SIZE);
 
-                p0.y = terrain.sampleHeight(p0.x, p0.z);
-                p1.y = terrain.sampleHeight(p1.x, p1.z);
-                p2.y = terrain.sampleHeight(p2.x, p2.z);
-                p3.y = terrain.sampleHeight(p3.x, p3.z);
+                p0.y = terrain.sample(p0.x, p0.z);
+                p1.y = terrain.sample(p1.x, p1.z);
+                p2.y = terrain.sample(p2.x, p2.z);
+                p3.y = terrain.sample(p3.x, p3.z);
 
                 bounds.union(p0);
                 bounds.union(p1);
@@ -76,8 +76,6 @@ public class TerrainChunk implements AutoCloseable {
                     Vector3f n1 = p2.sub(p1, new Vector3f()).cross(p3.sub(p1, new Vector3f())).normalize();
                     float a0 = (Math.min(Math.min(p3.y, p0.y), p1.y) + Math.max(Math.max(p3.y, p0.y), p1.y)) * 0.5f;
                     float a1 = (Math.min(Math.min(p1.y, p2.y), p3.y) + Math.max(Math.max(p1.y, p2.y), p3.y)) * 0.5f;
-//                    float a0 = (p3.y + p0.y + p1.y) / 3.0f;
-//                    float a1 = (p1.y + p2.y + p3.y) / 3.0f;
 
                     positions.add(p3);
                     positions.add(p0);
