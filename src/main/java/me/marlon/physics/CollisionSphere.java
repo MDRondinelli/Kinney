@@ -1,5 +1,6 @@
 package me.marlon.physics;
 
+import org.joml.AABBf;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -9,7 +10,7 @@ public class CollisionSphere extends CollisionPrimitive {
     private float radius;
 
     public CollisionSphere(RigidBody body, Vector3f transform, float radius) {
-        super(body, new Matrix4f().translate(transform));
+        super(body, new Matrix4f().translate(transform), new AABBf(-radius, -radius, -radius, radius, radius, radius));
         this.radius = radius;
     }
 

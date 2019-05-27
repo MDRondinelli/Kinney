@@ -89,11 +89,12 @@ void main() {
     vec3 v = normalize(viewInv[3].xyz - p);
     vec3 l = normalize(-dLight.direction.xyz);
 
+    vec3 indirect = WATER_ALBEDO * 0.1;
     vec3 direct = dLight.color.rgb * brdf(n, l, v, WATER_ALBEDO, vec2(0.4, 0.0)) * clamp(dot(n, l), 0.0, 1.0);
 
     float fresnelAlpha = 1.0 - clamp(dot(n, v), 0.0, 1.0);
 
     float alpha = mix(depthAlpha, fresnelAlpha, smoothstep(0.0, 1.0, depth));
 
-    outColor = vec4(direct, alpha);
+    outColor = vec4(indirect + direct, alpha);
 }

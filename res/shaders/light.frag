@@ -55,7 +55,7 @@ float calcShadow(vec3 p) {
 
     float ret = 0.0;
 
-    // vec3 pCascade0 = (dLightViewProj[0] * vec4(p, 1.0)).xyz * 0.5 + 0.5;
+    //    vec3 pCascade0 = (dLightViewProj[0] * vec4(p, 1.0)).xyz * 0.5 + 0.5;
     if (dist < dLightSlices.x) {
         vec2 texelSize = vec2(1.0) / textureSize(dLightCascade0, 0);
         p = (dLightViewProj[0] * vec4(p, 1.0)).xyz * 0.5 + 0.5;
@@ -130,7 +130,7 @@ void main() {
     vec3 direct = calcShadow(p) * dLight.color.rgb * albedo/*brdf(n, l, v, albedo, params)*/ * clamp(dot(n, l), 0.0, 1.0);
 
     float depth = max(4.0 - p.y, 0.0);
-    vec3 extinction = exp(-depth * vec3(1.0, 0.5, 0.4));
+    vec3 extinction = exp(-depth * vec3(1.0, 0.6, 0.4));
 
     color = vec4((direct + indirect) * extinction, 1.0);
 }

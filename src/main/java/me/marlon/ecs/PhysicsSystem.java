@@ -48,11 +48,11 @@ public class PhysicsSystem {
 
         for (int i = 0; i < bodies.size(); ++i) {
             RigidBody bodyOne = entities.getRigidBody(bodies.get(i));
-            AABBf aabbOne = bodyOne.getTransformVolume();
+            AABBf aabbOne = bodyOne.getCollider().getWorldAabb();
 
             for (int j = i + 1; j < bodies.size(); ++j) {
                 RigidBody bodyTwo = entities.getRigidBody(bodies.get(j));
-                AABBf aabbTwo = bodyTwo.getTransformVolume();
+                AABBf aabbTwo = bodyTwo.getCollider().getWorldAabb();
 
                 if (aabbOne.testAABB(aabbTwo))
                     potentialContacts.add(new PotentialContact(bodyOne, bodyTwo));

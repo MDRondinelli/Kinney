@@ -105,10 +105,6 @@ public class ShadowCascade implements AutoCloseable {
         }
     }
 
-//    public int getSize() {
-//        return shadowMaps[0].getSize();
-//    }
-
     public int getNumCascades() {
         return shadowMaps.length;
     }

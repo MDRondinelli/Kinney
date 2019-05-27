@@ -195,7 +195,6 @@ public class Renderer implements AutoCloseable {
         lightBlock.bind(1);
 
         waterShader.set("model", waterTransform);
-
         waterShader.set("time", (float) glfwGetTime());
 
         glEnable(GL_DEPTH_TEST);
@@ -203,7 +202,6 @@ public class Renderer implements AutoCloseable {
         glPolygonOffset(2, 1);
 
         shadowShader.bind();
-        shadowShader.set("model", new Matrix4f());
 
         if (terrainMesh != null && dLight != null) {
             List<TerrainChunk> chunks = terrainMesh.getChunks();
@@ -218,9 +216,11 @@ public class Renderer implements AutoCloseable {
                 glClear(GL_DEPTH_BUFFER_BIT);
 
                 shadowShader.set("slice", i);
+                shadowShader.set("model", new Matrix4f());
 
                 Vector3f min = new Vector3f();
                 Vector3f max = new Vector3f();
+
                 for (int j = 0; j < chunks.size(); ++j) {
                     TerrainChunk chunk = chunks.get(j);
 
@@ -231,6 +231,15 @@ public class Renderer implements AutoCloseable {
 
                     if (bounds.maxX >= min.x && bounds.minX <= max.x && bounds.maxY >= min.y && bounds.minY <= max.y);
                         chunks.get(j).draw();
+                }
+
+                for (int j = 0; j < queue.size(); ++j) {
+                    MeshInstance instance = queue.get(j);
+                    shadowShader.set("model", instance.matrix);
+
+                    Primitive[] primitives = instance.mesh.getPrimitives();
+                    for (int k = 0; k < primitives.length; ++k)
+                        primitives[k].draw();
                 }
             }
         }

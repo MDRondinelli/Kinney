@@ -7,7 +7,7 @@ import org.joml.Vector3f;
 
 public class Main {
     public static void main(String[] args) {
-        Engine engine = new Engine(1600, 900, "Kinney", 1.0f / 60.0f);
+        Engine engine = new Engine(1280, 720, "Kinney", 1.0f / 60.0f);
         engine.getWindow().setMouseGrabbed(true);
 
         World world = engine.getWorld();
@@ -21,9 +21,9 @@ public class Main {
         int terrain = entities.create();
         entities.add(terrain, new Terrain(256));
 
-//        int plane = entities.create();
-//        entities.add(plane, RigidBody.createPlane(new Vector3f(0.0f, 1.0f, 0.0f), 10.0f));
-//        entities.add(plane, new TransformComponent());
+        int plane = entities.create();
+        entities.add(plane, RigidBody.createPlane(new Vector3f(0.0f, 1.0f, 0.0f), 10.0f));
+        entities.add(plane, new TransformComponent());
 
         int water = entities.create();
         entities.add(water, new WaterMesh(1024));
