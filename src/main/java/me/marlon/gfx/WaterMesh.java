@@ -23,8 +23,6 @@ public class WaterMesh implements AutoCloseable {
                 float x = i * TILE_SIZE;
                 float z = j * TILE_SIZE;
 
-                int startingIdx = vertices.size();
-
                 vertices.add(new Vector2f(x, z + TILE_SIZE));
                 vertices.add(new Vector2f(TILE_SIZE, 0.0f));
                 vertices.add(new Vector2f(TILE_SIZE, -TILE_SIZE));
