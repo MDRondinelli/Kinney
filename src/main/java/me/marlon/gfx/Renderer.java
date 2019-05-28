@@ -209,7 +209,7 @@ public class Renderer implements AutoCloseable {
             for (int i = 0; i < dLightShadows.getNumCascades(); ++i) {
                 ShadowMap shadowMap = dLightShadows.getShadowMap(i);
                 Matrix4f matrix = dLightShadows.getMatrix(i);
-                AABBf bounds = dLightShadows.getBounds(i);
+//                AABBf bounds = dLightShadows.getBounds(i);
 
                 shadowMap.bindFramebuffer(GL_FRAMEBUFFER);
                 glViewport(0, 0, shadowMap.getSize(), shadowMap.getSize());
@@ -221,25 +221,20 @@ public class Renderer implements AutoCloseable {
                 Vector3f min = new Vector3f();
                 Vector3f max = new Vector3f();
 
-                for (int j = 0; j < chunks.size(); ++j) {
-                    TerrainChunk chunk = chunks.get(j);
-
+                for (TerrainChunk chunk : chunks) {
                     min.set(chunk.getBounds().minX, chunk.getBounds().minY, chunk.getBounds().minZ);
                     max.set(chunk.getBounds().maxX, chunk.getBounds().maxY, chunk.getBounds().maxZ);
 
                     matrix.transformAab(min, max, min, max);
 
-                    if (bounds.maxX >= min.x && bounds.minX <= max.x && bounds.maxY >= min.y && bounds.minY <= max.y);
-                        chunks.get(j).draw();
+                    chunk.draw();
                 }
 
-                for (int j = 0; j < queue.size(); ++j) {
-                    MeshInstance instance = queue.get(j);
-                    shadowShader.set("model", instance.matrix);
+                for (MeshInstance mesh : queue) {
+                    shadowShader.set("model", mesh.matrix);
 
-                    Primitive[] primitives = instance.mesh.getPrimitives();
-                    for (int k = 0; k < primitives.length; ++k)
-                        primitives[k].draw();
+                    for (Primitive primitive : mesh.mesh.getPrimitives())
+                        primitive.draw();
                 }
             }
         }
@@ -256,14 +251,12 @@ public class Renderer implements AutoCloseable {
 
         meshShader.bind();
 
-        for (int i = 0; i < queue.size(); ++i) {
-            MeshInstance instance = queue.get(i);
-            meshShader.set("model", instance.matrix);
+        for (MeshInstance mesh : queue) {
+            meshShader.set("model", mesh.matrix);
 
-            Primitive[] primitives = instance.mesh.getPrimitives();
-            for (int j = 0; j < primitives.length; ++j) {
-                meshShader.set("albedo", primitives[j].getAlbedo());
-                primitives[j].draw();
+            for (Primitive primitive : mesh.mesh.getPrimitives()) {
+                meshShader.set("albedo", primitive.getAlbedo());
+                primitive.draw();
             }
         }
 
@@ -273,10 +266,7 @@ public class Renderer implements AutoCloseable {
             Matrix4f matrix = new Matrix4f().mul(proj).mul(view);
             FrustumIntersection frustum = new FrustumIntersection(matrix);
 
-            List<TerrainChunk> chunks = terrainMesh.getChunks();
-
-            for (int i = 0; i < chunks.size(); ++i) {
-                TerrainChunk chunk = chunks.get(i);
+            for (TerrainChunk chunk : terrainMesh.getChunks()) {
                 AABBf bounds = chunk.getBounds();
 
                 if (frustum.testAab(bounds.minX, bounds.minY, bounds.minZ, bounds.maxX, bounds.maxY, bounds.maxZ))

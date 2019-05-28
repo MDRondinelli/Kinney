@@ -54,8 +54,8 @@ public class Framebuffer implements AutoCloseable {
     public void close() {
         glDeleteFramebuffers(framebuffer);
 
-        for (int i = 0; i < textures.size(); i++)
-            glDeleteTextures(textures.get(i));
+        for (int texture : textures)
+            glDeleteTextures(texture);
     }
 
     public void bind(int target) {

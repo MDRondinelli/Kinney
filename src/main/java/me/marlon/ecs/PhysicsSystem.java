@@ -2,7 +2,6 @@ package me.marlon.ecs;
 
 import me.marlon.physics.*;
 import org.joml.AABBf;
-import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,33 +24,32 @@ public class PhysicsSystem {
     }
 
     public void onUpdate() {
-        List<Integer> bodies = new ArrayList<>();
+        List<RigidBody> bodies = new ArrayList<>();
 
         for (int i = 0; i < EntityManager.MAX_ENTITIES; ++i) {
             if (!entities.match(i, BITS))
                 continue;
 
-            entities.getRigidBody(i).clearAccumulators();
-            entities.getRigidBody(i).updateDerivedData();
-            bodies.add(i);
+            RigidBody body = entities.getRigidBody(i);
+            body.clearAccumulators();
+            body.updateDerivedData();
+            bodies.add(body);
         }
 
-        for (int i = 0; i < registry.size(); ++i) {
-            ForceRegistration registration = registry.get(i);
+        for (ForceRegistration registration : registry)
             registration.generator.updateForce(registration.body, deltaTime);
-        }
 
-        for (int i = 0; i < bodies.size(); ++i)
-            entities.getRigidBody(bodies.get(i)).integrate(deltaTime);
+        for (RigidBody body : bodies)
+            body.integrate(deltaTime);
 
         List<PotentialContact> potentialContacts = new ArrayList<>();
 
         for (int i = 0; i < bodies.size(); ++i) {
-            RigidBody bodyOne = entities.getRigidBody(bodies.get(i));
+            RigidBody bodyOne = bodies.get(i);
             AABBf aabbOne = bodyOne.getCollider().getWorldAabb();
 
             for (int j = i + 1; j < bodies.size(); ++j) {
-                RigidBody bodyTwo = entities.getRigidBody(bodies.get(j));
+                RigidBody bodyTwo = bodies.get(j);
                 AABBf aabbTwo = bodyTwo.getCollider().getWorldAabb();
 
                 if (aabbOne.testAABB(aabbTwo))
@@ -61,15 +59,11 @@ public class PhysicsSystem {
 
         List<Contact> contacts = new ArrayList<>();
 
-        for (int i = 0; i < potentialContacts.size(); ++i) {
-            PotentialContact potentialContact = potentialContacts.get(i);
-            potentialContact.getBodyA().getCollider().collideWith(potentialContact.getBodyB().getCollider(), contacts);
-        }
+        for (PotentialContact contact : potentialContacts)
+            contact.getBodyA().getCollider().collideWith(contact.getBodyB().getCollider(), contacts);
 
         resolver.resolveContacts(contacts, deltaTime);
 
-//        for (int i = 0; i < contacts.size(); ++i)
-//            contacts.get(i).resolve();
 
         for (int i = 0; i < EntityManager.MAX_ENTITIES; ++i) {
             if (!entities.match(i, BITS))

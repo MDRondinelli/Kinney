@@ -6,6 +6,8 @@ import org.joml.*;
 import java.lang.Math;
 
 public class RigidBody {
+    public static final float SLEEP_EPSILON = 0.4f;
+
     public static RigidBody createTerrain(Terrain terrain) {
         return new RigidBody(new CollisionTerrain(terrain), 0.0f, new Matrix3f().zero(), new Vector3f());
     }
@@ -87,7 +89,9 @@ public class RigidBody {
 
     private Matrix4f transform;
     private Matrix3f transformInvInertiaTensor;
-    private AABBf transformVolume;
+
+    private boolean awake;
+    private float motion;
 
     public RigidBody(CollisionPrimitive collider, float invMass, Matrix3f invInertiaTensor,
                      Vector3f position, Quaternionf orientation, Vector3f velocity, Vector3f acceleration, Vector3f rotation,
@@ -110,7 +114,9 @@ public class RigidBody {
         torque = new Vector3f();
         transform = new Matrix4f();
         transformInvInertiaTensor = new Matrix3f();
-        transformVolume = new AABBf();
+
+        awake = true;
+        motion = SLEEP_EPSILON * 2.0f;
     }
 
     public RigidBody(CollisionPrimitive collider, float invMass, Matrix3f invInertiaTensor,
@@ -160,6 +166,7 @@ public class RigidBody {
 
     public void addForce(Vector3f f) {
         force.add(f);
+        setAwake(true);
     }
 
     public void addForceAtBodyPoint(Vector3f f, Vector3f p) {
@@ -170,13 +177,18 @@ public class RigidBody {
     public void addForceAtWorldPoint(Vector3f f, Vector3f p) {
         force.add(f);
         torque.add(p.sub(position, new Vector3f()).cross(f));
+        setAwake(true);
     }
 
     public void addTorque(Vector3f t) {
         torque.add(t);
+        setAwake(true);
     }
 
     public void integrate(float dt) {
+        if (!awake)
+            return;
+
         Vector3f linearAcceleration = accelerationAtUpdate.set(acceleration).add(force.x * invMass, force.y * invMass, force.z * invMass);
         Vector3f angularAcceleration = transformInvInertiaTensor.transform(new Vector3f(torque));
 
@@ -190,6 +202,15 @@ public class RigidBody {
 
         clearAccumulators();
         updateDerivedData();
+
+        float currMotion = velocity.lengthSquared() + rotation.lengthSquared();
+        float bias = (float) Math.pow(0.5f, dt);
+        motion = bias * motion + (1.0f - bias) * currMotion;
+
+        if (motion < SLEEP_EPSILON)
+            setAwake(false);
+        else if (motion > 5.0f * SLEEP_EPSILON)
+            motion = 5.0f * SLEEP_EPSILON;
     }
 
     public CollisionPrimitive getCollider() {
@@ -303,5 +324,20 @@ public class RigidBody {
 
     public Matrix3f getTransformInvInertiaTensor() {
         return transformInvInertiaTensor;
+    }
+
+    public boolean isAwake() {
+        return awake;
+    }
+
+    public void setAwake(boolean awake) {
+        if (awake) {
+            this.awake = true;
+            motion = SLEEP_EPSILON * 2.0f;
+        } else {
+            this.awake = false;
+            velocity.zero();
+            rotation.zero();
+        }
     }
 }

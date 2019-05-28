@@ -18,48 +18,41 @@ public class ContactResolver {
     }
 
     private void prepareContacts(List<Contact> contacts, float dt) {
-        for (int i = 0; i < contacts.size(); ++i)
-            contacts.get(i).calcData(dt);
+        for (Contact contact : contacts)
+            contact.calcData(dt);
     }
 
     private void adjustPositions(List<Contact> contacts) {
-//        Vector3f linearChangeA = new Vector3f();
-//        Vector3f linearChangeB = new Vector3f();
         Vector3f[] linearChange = new Vector3f[2];
         linearChange[0] = new Vector3f();
         linearChange[1] = new Vector3f();
         Vector3f[] angularChange = new Vector3f[2];
         angularChange[0] = new Vector3f();
         angularChange[1] = new Vector3f();
-//        Vector3f deltaPosition = new Vector3f();
 
         for (int numPositionIterations = 0; numPositionIterations < positionIterations; numPositionIterations++) {
             float max = positionEpsilon;
-            int index = -1;
+            Contact cMax = null;
 
-            for (int i = 0; i < contacts.size(); ++i) {
-                Contact c = contacts.get(i);
+            for (Contact c : contacts) {
                 if (c.getDepth() > max) {
                     max = c.getDepth();
-                    index = i;
+                    cMax = c;
                 }
             }
 
-            if (index == -1)
+            if (cMax == null)
                 break;
 
-            Contact cIndex = contacts.get(index);
-            cIndex.applyPositionChange(linearChange, angularChange);
+            cMax.matchAwakeState();
+            cMax.applyPositionChange(linearChange, angularChange);
 
-            for (int i = 0; i < contacts.size(); ++i) {
-                Contact c = contacts.get(i);
-
+            for (Contact c : contacts)
                 for (int b = 0; b < 2; ++b)
                     if (c.getBody(b) != null)
                         for (int d = 0; d < 2; ++d)
-                            if (c.getBody(b) == cIndex.getBody(d))
+                            if (c.getBody(b) == cMax.getBody(d))
                                 c.setDepth(c.getDepth() + new Vector3f(angularChange[d]).cross(c.getRelPoint(b)).add(linearChange[d]).dot(c.getNormal()) * (b != 0 ? 1.0f : -1.0f));
-            }
         }
     }
 
@@ -74,29 +67,27 @@ public class ContactResolver {
 
         for (int velocityIterationsUsed = 0; velocityIterationsUsed < velocityIterations; ++velocityIterationsUsed) {
             float max = velocityEpsilon;
-            int index = -1;
 
-            for (int i = 0; i < contacts.size(); ++i) {
-                Contact c = contacts.get(i);
+            Contact cMax = null;
+
+            for (Contact c : contacts) {
                 if (c.getDesiredDeltaVelocity() > max) {
                     max = c.getDesiredDeltaVelocity();
-                    index = i;
+                    cMax = c;
                 }
             }
 
-            if (index == -1)
+            if (cMax == null)
                 break;
 
-            Contact cIndex = contacts.get(index);
-            cIndex.applyVelocityChange(velocityChange, rotationChange);
+            cMax.matchAwakeState();
+            cMax.applyVelocityChange(velocityChange, rotationChange);
 
-            for (int i = 0; i < contacts.size(); ++i) {
-                Contact c = contacts.get(i);
-
+            for (Contact c : contacts) {
                 for (int b = 0; b < 2; ++b) {
                     if (c.getBody(b) != null) {
                         for (int d = 0; d < 2; ++d) {
-                            if (c.getBody(b) == cIndex.getBody(d)) {
+                            if (c.getBody(b) == cMax.getBody(d)) {
                                 Vector3f deltaVelocity = new Vector3f(rotationChange[d])
                                         .cross(c.getRelPoint(b))
                                         .add(velocityChange[d])

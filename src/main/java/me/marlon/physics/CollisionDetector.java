@@ -3,7 +3,6 @@ package me.marlon.physics;
 import me.marlon.gfx.TerrainMesh;
 import org.joml.Vector3f;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class CollisionDetector {

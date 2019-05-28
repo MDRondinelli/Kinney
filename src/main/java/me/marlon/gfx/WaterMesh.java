@@ -4,10 +4,8 @@ import static org.lwjgl.opengl.GL45.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
 import org.joml.Vector2f;
-import org.joml.Vector3f;
 
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.util.ArrayList;
 
 public class WaterMesh implements AutoCloseable {

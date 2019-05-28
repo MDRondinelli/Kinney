@@ -78,8 +78,6 @@ public class Contact {
         acceleration.x = 0.0f;
         velocity.add(acceleration);
         return velocity;
-
-//        return new Vector3f(body.getRotation()).cross(relPoint).add(body.getVelocity()).mul(worldToContact);
     }
 
     public void calcDesiredDeltaVelocity(float dt) {
@@ -93,6 +91,14 @@ public class Contact {
             restitution = 0.0f;
 
         desiredDeltaVelocity = -contactVelocity.x - restitution * (contactVelocity.x - velocityFromAcceleration);
+    }
+
+    private void swap() {
+        normal.negate();
+
+        RigidBody temp = bodyA;
+        bodyA = bodyB;
+        bodyB = temp;
     }
 
     public void calcData(float dt) {
@@ -113,9 +119,9 @@ public class Contact {
     }
 
     public void applyPositionChange(Vector3f[] linearChange, Vector3f[] angularChange) {
-        float linearInertiaA = 0.0f;
+        float linearInertiaA;
         float linearInertiaB = 0.0f;
-        float angularInertiaA = 0.0f;
+        float angularInertiaA;
         float angularInertiaB = 0.0f;
         float totalInertia = 0.0f;
 
@@ -283,29 +289,6 @@ public class Contact {
     }
 
     public void applyVelocityChange(Vector3f[] velocityChange, Vector3f[] rotationChange) {
-//        float deltaVelocity = 0.0f;
-//
-//        {
-//            Vector3f deltaVelWorld = new Vector3f();
-//            deltaVelWorld.set(relPointA);
-//            deltaVelWorld.cross(normal);
-//            deltaVelWorld.mul(bodyA.getTransformInvInertiaTensor());
-//            deltaVelWorld.cross(relPointA);
-//            deltaVelocity += deltaVelWorld.dot(normal);
-//            deltaVelocity += bodyA.getInvMass();
-//        }
-//
-//        if (bodyB != null) {
-//            Vector3f deltaVelWorld = new Vector3f();
-//            deltaVelWorld.set(relPointB);
-//            deltaVelWorld.cross(normal);
-//            deltaVelWorld.mul(bodyB.getTransformInvInertiaTensor());
-//            deltaVelWorld.cross(relPointB);
-//            deltaVelocity += deltaVelWorld.dot(normal);
-//            deltaVelocity += bodyB.getInvMass();
-//        }
-
-
         Vector3f impulse = calcImpulse();
 
         velocityChange[0].set(impulse.x * bodyA.getInvMass(), impulse.y * bodyA.getInvMass(), impulse.z * bodyA.getInvMass());
@@ -326,12 +309,17 @@ public class Contact {
         }
     }
 
-    public void swap() {
-        normal.negate();
+    public void matchAwakeState() {
+        if (bodyB == null)
+            return;
 
-        RigidBody temp = bodyA;
-        bodyA = bodyB;
-        bodyB = temp;
+        boolean awakeA = bodyA.isAwake();
+        boolean awakeB = bodyB.isAwake();
+
+        if (awakeA && !awakeB)
+            bodyB.setAwake(true);
+        if (!awakeA && awakeB)
+            bodyA.setAwake(true);
     }
 
     public Vector3f getPoint() {

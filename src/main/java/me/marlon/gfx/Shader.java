@@ -49,14 +49,12 @@ public class Shader implements AutoCloseable {
         if (compText != null)
             shaders.add(createShader(compText, GL_COMPUTE_SHADER));
 
-        for (int i = 0; i < shaders.size(); ++i)
-            glAttachShader(program, shaders.get(i));
+        for (int shader : shaders)
+            glAttachShader(program, shader);
 
         glLinkProgram(program);
 
-        for (int i = 0; i < shaders.size(); ++i) {
-            int shader = shaders.get(i);
-
+        for (int shader : shaders) {
             glDetachShader(program, shader);
             glDeleteShader(shader);
         }
