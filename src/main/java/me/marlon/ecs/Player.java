@@ -12,6 +12,7 @@ public class Player {
     public float angleY;
     public float dAngleY;
     public float lerp;
+    public boolean jumping;
 
     public Player(float speed) {
         this.speed = speed;

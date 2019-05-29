@@ -2,6 +2,7 @@ package me.marlon.ecs;
 
 import me.marlon.gfx.Renderer;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 public class CameraSystem {
     private static final short BITS = EntityManager.CAMERA_BIT | EntityManager.TRANSFORM_BIT;
@@ -30,8 +31,10 @@ public class CameraSystem {
                 transform.getMatrix().mul(matrix, matrix);
             }
 
-            Matrix4f view = new Matrix4f(matrix).invert();
-            Matrix4f viewInv = matrix;
+            Vector3f position = matrix.getTranslation(new Vector3f());
+            camera.position.lerp(position, 0.33f);
+            Matrix4f viewInv = matrix.setTranslation(camera.position);
+            Matrix4f view = new Matrix4f(viewInv).invertAffine();
 
             Matrix4f proj = new Matrix4f().perspective(camera.fov, camera.aspect, camera.zNear, camera.zFar);
             Matrix4f projInv = new Matrix4f(proj).invert();

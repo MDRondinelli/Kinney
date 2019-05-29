@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.lang.Math;
 
 public class PlayerSystem implements IKeyListener, IMouseListener {
-    private static final short BITS = EntityManager.PLAYER_BIT | EntityManager.TRANSFORM_BIT;
+    private static final short BITS = EntityManager.PLAYER_BIT | EntityManager.RIGID_BODY_BIT | EntityManager.TRANSFORM_BIT;
 
     private EntityManager entities;
     private PhysicsSystem physics;
@@ -58,11 +58,11 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
                      player.direction.z += 1.0f;
                      break;
                  case GLFW_KEY_SPACE:
-                     player.direction.y += 1.0f;
+                     player.jumping = true;
                      break;
-                 case GLFW_KEY_LEFT_SHIFT:
-                     player.direction.y -= 1.0f;
-                     break;
+//                 case GLFW_KEY_LEFT_SHIFT:
+//                     player.speed += 4.0f;
+//                     break;
                  default:
                      update = false;
                      break;
@@ -102,12 +102,9 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
                 case GLFW_KEY_S:
                     player.direction.z -= 1.0f;
                     break;
-                case GLFW_KEY_SPACE:
-                    player.direction.y -= 1.0f;
-                    break;
-                case GLFW_KEY_LEFT_SHIFT:
-                    player.direction.y += 1.0f;
-                    break;
+//                case GLFW_KEY_LEFT_SHIFT:
+//                    player.speed -= 4.0f;
+//                    break;
                 default:
                     update = false;
                     break;
@@ -163,20 +160,6 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
                 entities.add(box, boxTransform);
                 entities.add(box, boxBody);
             }
-//            physics.register(new BuoyancyGenerator(new Vector3f(), 0.5f, 3.2f, 3.2f, 10.0f, 4.0f), ballBody);
-//            physics.register(new BuoyancyGenerator(new Vector3f(1.0f, 0.0f, -1.0f), 0.5f, 3.2f, 3.2f, 10.0f, 4.0f), ballBody);
-//            physics.register(new BuoyancyGenerator(new Vector3f(-1.0f, 0.0f, -1.0f), 0.5f, 3.2f, 3.2f, 10.0f, 4.0f), ballBody);
-//            physics.register(new BuoyancyGenerator(new Vector3f(-1.0f, 0.0f, 1.0f), 0.5f, 3.2f, 3.2f, 10.0f, 4.0f), ballBody);
-//            physics.register(new BuoyancyGenerator(new Vector3f(1.0f, 0.0f, 1.0f), 0.5f, 3.2f, 3.2f, 10.0f, 4.0f), ballBody);
-
-//            physics.register(new BuoyancyGenerator(new Vector3f(0.5f, 0.5f, -0.5f), 0.25f, 1.0f, 0.5f, 10.0f, 4.0f), ballBody);
-//            physics.register(new BuoyancyGenerator(new Vector3f(-0.5f, 0.5f, -0.5f), 0.25f, 1.0f, 0.5f, 10.0f, 4.0f), ballBody);
-//            physics.register(new BuoyancyGenerator(new Vector3f(-0.5f, 0.5f, 0.5f), 0.25f, 1.0f, 0.5f, 10.0f, 4.0f), ballBody);
-//            physics.register(new BuoyancyGenerator(new Vector3f(0.5f, 0.5f, 0.5f), 0.25f, 1.0f, 0.5f, 10.0f, 4.0f), ballBody);
-//            physics.register(new BuoyancyGenerator(new Vector3f(0.5f, -0.5f, -0.5f), 0.25f, 1.0f, 0.5f, 10.0f, 4.0f), ballBody);
-//            physics.register(new BuoyancyGenerator(new Vector3f(-0.5f, -0.5f, -0.5f), 0.25f, 1.0f, 0.5f, 10.0f, 4.0f), ballBody);
-//            physics.register(new BuoyancyGenerator(new Vector3f(-0.5f, -0.5f, 0.5f), 0.25f, 1.0f, 0.5f, 10.0f, 4.0f), ballBody);
-//            physics.register(new BuoyancyGenerator(new Vector3f(0.5f, -0.5f, 0.5f), 0.25f, 1.0f, 0.5f, 10.0f, 4.0f), ballBody);
         }
     }
 
@@ -199,14 +182,11 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
                 continue;
 
             Player player = entities.getPlayer(i);
-            TransformComponent transform = entities.getTransform(i);
+            RigidBody body = entities.getRigidBody(i);
+            body.setAwake(true);
 
             player.lerp += 4.0f * deltaTime;
             player.lerp = Math.min(player.lerp, 1.0f);
-
-            Vector3f velocity = player.oldVelocity.lerp(player.newVelocity, player.lerp, new Vector3f());
-            transform.translate(velocity.mul(0.0f, deltaTime, 0.0f, new Vector3f()));
-            transform.translate(transform.getRotation().transform(velocity.mul(deltaTime, 0.0f, deltaTime)));
 
             player.angleX += player.dAngleX;
             if (player.angleX < (float) Math.PI * -0.5f)
@@ -218,10 +198,23 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
             player.angleY += player.dAngleY;
             player.dAngleY = 0.0f;
 
-            Quaternionf rotation = new Quaternionf();
-            rotation.mul(new Quaternionf(new AxisAngle4f(player.angleY, 0.0f, 1.0f, 0.0f)));
-            rotation.mul(new Quaternionf(new AxisAngle4f(player.angleX, 1.0f, 0.0f, 0.0f)));
-            transform.setRotation(rotation);
+            Vector3f velocity = new Vector3f(player.oldVelocity)
+                    .lerp(player.newVelocity, player.lerp)
+                    .mul(new Matrix3f().rotateY(player.angleY));
+
+            velocity.y = body.getVelocity().y;
+
+            if (player.jumping) {
+                player.jumping = false;
+                velocity.y += 6.0f;
+            }
+
+            Quaternionf orientation = new Quaternionf();
+            orientation.mul(new Quaternionf(new AxisAngle4f(player.angleY, 0.0f, 1.0f, 0.0f)));
+            orientation.mul(new Quaternionf(new AxisAngle4f(player.angleX, 1.0f, 0.0f, 0.0f)));
+
+            body.getVelocity().set(velocity);
+            body.getOrientation().set(orientation);
         }
     }
 }

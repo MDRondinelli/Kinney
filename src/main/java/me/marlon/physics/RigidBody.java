@@ -6,7 +6,9 @@ import org.joml.*;
 import java.lang.Math;
 
 public class RigidBody {
-    public static final float SLEEP_EPSILON = 0.4f;
+    private static final float LINEAR_DAMPING = 0.95f;
+    private static final float ANGULAR_DAMPING = 0.95f;
+    private static final float SLEEP_EPSILON = 0.4f;
 
     public static RigidBody createTerrain(Terrain terrain) {
         return new RigidBody(new CollisionTerrain(terrain), 0.0f, new Matrix3f().zero(), new Vector3f());
@@ -16,12 +18,8 @@ public class RigidBody {
         return new RigidBody(new CollisionPlane(normal, offset), 0.0f, new Matrix3f().zero(), new Vector3f());
     }
 
-    public static RigidBody createCuboid(Vector3f halfExtents, float invMass, Vector3f position, Quaternionf orientation, Vector3f velocity, Vector3f acceleration, Vector3f rotation, float linearDamping, float angularDamping) {
-        return new RigidBody(new CollisionBox(new Matrix4f(), halfExtents), invMass, getCuboidInverseTensor(1.0f / invMass, halfExtents.x * 2.0f, halfExtents.y * 2.0f, halfExtents.z * 2.0f), position, orientation, velocity, acceleration, rotation, linearDamping, angularDamping);
-    }
-
     public static RigidBody createCuboid(Vector3f halfExtents, float invMass, Vector3f position, Quaternionf orientation, Vector3f velocity, Vector3f acceleration, Vector3f rotation) {
-        return createCuboid(halfExtents, invMass, position, orientation, velocity, acceleration, rotation, 0.9f, 0.9f);
+        return new RigidBody(new CollisionBox(new Matrix4f(), halfExtents), invMass, getCuboidInverseTensor(1.0f / invMass, halfExtents.x * 2.0f, halfExtents.y * 2.0f, halfExtents.z * 2.0f), position, orientation, velocity, acceleration, rotation);
     }
 
     public static RigidBody createCuboid(Vector3f halfExtents, float invMass, Vector3f position, Quaternionf orientation) {
@@ -32,12 +30,8 @@ public class RigidBody {
         return createCuboid(halfExtents, invMass, position, new Quaternionf());
     }
 
-    public static RigidBody createSphere(float radius, float invMass, Vector3f position, Vector3f velocity, Vector3f acceleration, Vector3f rotation, float linearDamping, float angularDamping) {
-        return new RigidBody(new CollisionSphere(new Vector3f(), radius), invMass, getSphereInverseTensor(1.0f / invMass, radius), position, new Quaternionf(), velocity, acceleration, rotation, linearDamping, angularDamping);
-    }
-
     public static RigidBody createSphere(float radius, float invMass, Vector3f position, Vector3f velocity, Vector3f acceleration, Vector3f rotation) {
-        return createSphere(radius, invMass, position, velocity, acceleration, rotation, 0.9f, 0.9f);
+        return new RigidBody(new CollisionSphere(new Vector3f(), radius), invMass, getSphereInverseTensor(1.0f / invMass, radius), position, new Quaternionf(), velocity, acceleration, rotation);
     }
 
     public static RigidBody createSphere(float radius, float invMass, Vector3f position) {
@@ -81,9 +75,6 @@ public class RigidBody {
     private Vector3f accelerationAtUpdate;
     private Vector3f rotation;
 
-    private float linearDamping;
-    private float angularDamping;
-
     private Vector3f force;
     private Vector3f torque;
 
@@ -94,8 +85,7 @@ public class RigidBody {
     private float motion;
 
     public RigidBody(CollisionPrimitive collider, float invMass, Matrix3f invInertiaTensor,
-                     Vector3f position, Quaternionf orientation, Vector3f velocity, Vector3f acceleration, Vector3f rotation,
-                     float linearDamping, float angularDamping) {
+                     Vector3f position, Quaternionf orientation, Vector3f velocity, Vector3f acceleration, Vector3f rotation) {
         this.collider = collider;
         this.invMass = invMass;
         this.invInertiaTensor = invInertiaTensor;
@@ -105,8 +95,6 @@ public class RigidBody {
         this.acceleration = acceleration;
         this.accelerationAtUpdate = new Vector3f();
         this.rotation = rotation;
-        this.linearDamping = linearDamping;
-        this.angularDamping = angularDamping;
 
         this.collider.setBody(this);
 
@@ -117,11 +105,6 @@ public class RigidBody {
 
         awake = true;
         motion = SLEEP_EPSILON * 2.0f;
-    }
-
-    public RigidBody(CollisionPrimitive collider, float invMass, Matrix3f invInertiaTensor,
-                     Vector3f position, Quaternionf orientation, Vector3f velocity, Vector3f acceleration, Vector3f rotation) {
-        this(collider, invMass, invInertiaTensor, position, orientation, velocity, acceleration, rotation, 0.9f, 0.9f);
     }
 
     public RigidBody(CollisionPrimitive collider, float invMass, Matrix3f invInertiaTensor,
@@ -192,8 +175,8 @@ public class RigidBody {
         Vector3f linearAcceleration = accelerationAtUpdate.set(acceleration).add(force.x * invMass, force.y * invMass, force.z * invMass);
         Vector3f angularAcceleration = transformInvInertiaTensor.transform(new Vector3f(torque));
 
-        velocity.add(linearAcceleration.x * dt, linearAcceleration.y * dt, linearAcceleration.z * dt).mul((float) Math.pow(linearDamping, dt));
-        rotation.add(angularAcceleration.x * dt, angularAcceleration.y * dt, angularAcceleration.z * dt).mul((float) Math.pow(angularDamping, dt));
+        velocity.add(linearAcceleration.x * dt, linearAcceleration.y * dt, linearAcceleration.z * dt).mul((float) Math.pow(LINEAR_DAMPING, dt));
+        rotation.add(angularAcceleration.x * dt, angularAcceleration.y * dt, angularAcceleration.z * dt).mul((float) Math.pow(ANGULAR_DAMPING, dt));
 
         position.add(velocity.x * dt, velocity.y * dt, velocity.z * dt);
         Quaternionf q = new Quaternionf(rotation.x * dt, rotation.y * dt, rotation.z * dt, 0.0f).mul(orientation);
@@ -296,26 +279,6 @@ public class RigidBody {
 
     public Vector3f getRotation() {
         return rotation;
-    }
-
-    public void setRotation(Vector3f rotation) {
-        this.rotation = rotation;
-    }
-
-    public float getLinearDamping() {
-        return linearDamping;
-    }
-
-    public void setLinearDamping(float damping) {
-        linearDamping = damping;
-    }
-
-    public float getAngularDamping() {
-        return angularDamping;
-    }
-
-    public void setAngularDamping(float damping) {
-        angularDamping = damping;
     }
 
     public Matrix4f getTransform() {

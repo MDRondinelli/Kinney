@@ -41,6 +41,7 @@ vec3 decodePosition(vec2 uv) {
 
 vec3 tonemap(vec3 x)
 {
+    x *= 0.6;
     float a = 2.51;
     float b = 0.03;
     float c = 2.43;

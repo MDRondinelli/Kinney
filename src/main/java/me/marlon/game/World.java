@@ -58,5 +58,7 @@ public class World implements IKeyListener, IMouseListener {
         return entities;
     }
 
-
+    public PhysicsSystem getPhysicsSystem() {
+        return physicsSystem;
+    }
 }

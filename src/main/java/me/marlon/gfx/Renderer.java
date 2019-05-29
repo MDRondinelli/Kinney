@@ -127,7 +127,7 @@ public class Renderer implements AutoCloseable {
         proj = new Matrix4f();
         projInv = new Matrix4f();
 
-        dLightShadows = new ShadowCascade(new int[]{4096, 4096, 4096, 4096});
+        dLightShadows = new ShadowCascade(new int[] { 2048, 2048, 2048, 2048 });
 
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_CLAMP);
@@ -208,8 +208,6 @@ public class Renderer implements AutoCloseable {
 
             for (int i = 0; i < dLightShadows.getNumCascades(); ++i) {
                 ShadowMap shadowMap = dLightShadows.getShadowMap(i);
-                Matrix4f matrix = dLightShadows.getMatrix(i);
-//                AABBf bounds = dLightShadows.getBounds(i);
 
                 shadowMap.bindFramebuffer(GL_FRAMEBUFFER);
                 glViewport(0, 0, shadowMap.getSize(), shadowMap.getSize());
@@ -218,17 +216,8 @@ public class Renderer implements AutoCloseable {
                 shadowShader.set("slice", i);
                 shadowShader.set("model", new Matrix4f());
 
-                Vector3f min = new Vector3f();
-                Vector3f max = new Vector3f();
-
-                for (TerrainChunk chunk : chunks) {
-                    min.set(chunk.getBounds().minX, chunk.getBounds().minY, chunk.getBounds().minZ);
-                    max.set(chunk.getBounds().maxX, chunk.getBounds().maxY, chunk.getBounds().maxZ);
-
-                    matrix.transformAab(min, max, min, max);
-
+                for (TerrainChunk chunk : chunks)
                     chunk.draw();
-                }
 
                 for (MeshInstance mesh : queue) {
                     shadowShader.set("model", mesh.matrix);
