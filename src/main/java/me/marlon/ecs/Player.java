@@ -1,24 +1,24 @@
 package me.marlon.ecs;
 
+import me.marlon.physics.CollisionBox;
+import me.marlon.physics.RigidBody;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 public class Player {
-    public float speed;
     public Vector3f direction;
-    public Vector3f oldVelocity;
-    public Vector3f newVelocity;
+    public Vector3f oldMovement;
+    public Vector3f newMovement;
+    public float speed;
     public float angleX;
-    public float dAngleX;
     public float angleY;
-    public float dAngleY;
     public float lerp;
     public boolean jumping;
 
     public Player(float speed) {
-        this.speed = speed;
-
         direction = new Vector3f();
-        oldVelocity = new Vector3f();
-        newVelocity = new Vector3f();
+        oldMovement = new Vector3f();
+        newMovement = new Vector3f();
+        this.speed = speed;
     }
 }

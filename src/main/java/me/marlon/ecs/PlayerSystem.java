@@ -7,6 +7,8 @@ import me.marlon.game.IMouseListener;
 import me.marlon.gfx.Mesh;
 import me.marlon.gfx.Primitive;
 import me.marlon.physics.BuoyancyGenerator;
+import me.marlon.physics.CollisionBox;
+import me.marlon.physics.CollisionPrimitive;
 import me.marlon.physics.RigidBody;
 import org.joml.*;
 
@@ -69,12 +71,12 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
              }
 
              if (update) {
-                 player.oldVelocity.lerp(player.newVelocity, player.lerp);
+                 player.oldMovement.lerp(player.newMovement, player.lerp);
 
                  if (player.direction.lengthSquared() == 0.0f)
-                     player.newVelocity.zero();
+                     player.newMovement.zero();
                  else
-                     player.direction.normalize(player.speed, player.newVelocity);
+                     player.direction.normalize(player.speed, player.newMovement);
 
                  player.lerp = 0.0f;
              }
@@ -111,12 +113,12 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
             }
 
             if (update) {
-                player.oldVelocity.lerp(player.newVelocity, player.lerp);
+                player.oldMovement.lerp(player.newMovement, player.lerp);
 
                 if (player.direction.lengthSquared() == 0.0f)
-                    player.newVelocity.zero();
+                    player.newMovement.zero();
                 else
-                    player.direction.normalize(player.speed, player.newVelocity);
+                    player.direction.normalize(player.speed, player.newMovement);
 
                 player.lerp = 0.0f;
             }
@@ -128,15 +130,17 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
             if (!entities.match(i, BITS))
                 continue;
 
-            Vector3f playerPosition = new Vector3f(entities.getTransform(i).getPosition());
-            Vector3f playerDirection = entities.getTransform(i).getMatrix().getColumn(2, new Vector3f()).negate();
+            TransformComponent transform = entities.getTransform(i);
+
+            Vector3f playerPosition = new Vector3f(transform.getPosition());
+            Vector3f playerDirection = new Vector3f(0.0f, 0.0f, -1.0f).rotate(transform.getRotation());
 
             if (button == 0) {
                 int ball = entities.create();
                 TransformComponent ballTransform = new TransformComponent();
                 RigidBody ballBody = RigidBody.createSphere(1.0f, 1.0f / 3000.0f, playerPosition);
                 ballBody.getPosition().add(new Vector3f(playerDirection).mul(2.0f));
-                ballBody.getOrientation().rotateX((float) Math.random() * 6.28f);
+                ballBody.getOrientation().rotateX((float) Math.random() * 6.283f);
                 ballBody.setVelocity(new Vector3f(playerDirection).mul(10.0f));
                 ballBody.setAcceleration(new Vector3f(0.0f, -10.0f, 0.0f));
 
@@ -146,19 +150,26 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
                 entities.add(ball, ballTransform);
                 entities.add(ball, ballBody);
             } else {
-                int box = entities.create();
-                TransformComponent boxTransform = new TransformComponent();
-                RigidBody boxBody = RigidBody.createCuboid(new Vector3f(1.0f), 1.0f / 6000.0f, playerPosition);
-                boxBody.getPosition().add(new Vector3f(playerDirection).mul(2.0f));
-//                boxBody.getOrientation().rotateX((float) Math.random() * 6.28f);
-                boxBody.setVelocity(new Vector3f(playerDirection).mul(10.0f));
-                boxBody.setAcceleration(new Vector3f(0.0f, -10.0f, 0.0f));
+                float t = physics.rayCast(playerPosition, playerDirection) - 0.01f;
 
-                physics.register(new BuoyancyGenerator(new Vector3f(), 1.0f, 8.0f, 9.6f, 10.0f, 4.0f), boxBody);
+                if (t < 4.0f) {
+                    float x = (float) Math.floor(playerPosition.x + playerDirection.x * t) + 0.5f;
+                    float y = (float) Math.floor(playerPosition.y + playerDirection.y * t) + 0.5f;
+                    float z = (float) Math.floor(playerPosition.z + playerDirection.z * t) + 0.5f;
 
-                entities.add(box, boxMesh);
-                entities.add(box, boxTransform);
-                entities.add(box, boxBody);
+                    CollisionBox blockBox = new CollisionBox(new Matrix4f().translate(x, y, z), new Vector3f(0.5f));
+                    if (blockBox.collideWith(entities.getRigidBody(i).getCollider())) {
+                        System.out.println("would intersect");
+                        return;
+                    }
+
+                    if (playerPosition.distance(x, y, z) > 1.5f) {
+                        int block = entities.create();
+                        entities.add(block, boxMesh);
+                        entities.add(block, new TransformComponent()).scale(0.5f);
+                        entities.add(block, RigidBody.createCuboid(new Vector3f(0.5f), 0.0f, new Vector3f(x, y, z)));
+                    }
+                }
             }
         }
     }
@@ -171,8 +182,13 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
                 continue;
 
             Player player = entities.getPlayer(i);
-            player.dAngleX += velocity.y * -0.001f;
-            player.dAngleY += velocity.x * -0.001f;
+            player.angleX += velocity.y * -0.001f;
+            player.angleY += velocity.x * -0.001f;
+
+            if (player.angleX < (float) Math.PI * -0.5f)
+                player.angleX = (float) Math.PI * -0.5f;
+            if (player.angleX > (float) Math.PI * 0.5f)
+                player.angleX = (float) Math.PI * 0.5f;
         }
     }
 
@@ -185,36 +201,50 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
             RigidBody body = entities.getRigidBody(i);
             body.setAwake(true);
 
-            player.lerp += 4.0f * deltaTime;
-            player.lerp = Math.min(player.lerp, 1.0f);
-
-            player.angleX += player.dAngleX;
-            if (player.angleX < (float) Math.PI * -0.5f)
-                player.angleX = (float) Math.PI * -0.5f;
-            if (player.angleX > (float) Math.PI * 0.5f)
-                player.angleX = (float) Math.PI * 0.5f;
-
-            player.dAngleX = 0.0f;
-            player.angleY += player.dAngleY;
-            player.dAngleY = 0.0f;
-
-            Vector3f velocity = new Vector3f(player.oldVelocity)
-                    .lerp(player.newVelocity, player.lerp)
-                    .mul(new Matrix3f().rotateY(player.angleY));
-
-            velocity.y = body.getVelocity().y;
-
-            if (player.jumping) {
-                player.jumping = false;
-                velocity.y += 6.0f;
+            float altitude = Float.MAX_VALUE;
+            {
+                float t = physics.rayCast(new Vector3f(body.getPosition()).add(0.0f, 1.0f, 0.0f), new Vector3f(0.0f, -1.0f, 0.0f));
+                if (altitude > t)
+                    altitude = t;
             }
+//            {
+//                float t = physics.rayCast(new Vector3f(body.getPosition()).add(0.1f, 1.0f, -0.1f), new Vector3f(0.0f, -1.0f, 0.0f));
+//                if (altitude > t)
+//                    altitude = t;
+//            }
+//            {
+//                float t = physics.rayCast(new Vector3f(body.getPosition()).add(-0.1f, 1.0f, 0.1f), new Vector3f(0.0f, -1.0f, 0.0f));
+//                if (altitude > t)
+//                    altitude = t;
+//            }
+//            {
+//                float t = physics.rayCast(new Vector3f(body.getPosition()).add(-0.1f, 1.0f, -0.1f), new Vector3f(0.0f, -1.0f, 0.0f));
+//                if (altitude > t)
+//                    altitude = t;
+//            }
+
+            if (altitude < 2.25f) {
+                player.lerp += 4.0f * deltaTime;
+                player.lerp = Math.min(player.lerp, 1.0f);
+
+                Vector3f movement = new Vector3f(player.oldMovement)
+                        .lerp(player.newMovement, player.lerp)
+                        .rotateY(player.angleY);
+
+                body.getVelocity().x = movement.x;
+                body.getVelocity().z = movement.z;
+
+                if (player.jumping)
+                    body.getVelocity().y = 5.0f;
+            }
+
+            player.jumping = false;
 
             Quaternionf orientation = new Quaternionf();
             orientation.mul(new Quaternionf(new AxisAngle4f(player.angleY, 0.0f, 1.0f, 0.0f)));
             orientation.mul(new Quaternionf(new AxisAngle4f(player.angleX, 1.0f, 0.0f, 0.0f)));
 
-            body.getVelocity().set(velocity);
-            body.getOrientation().set(orientation);
+            entities.getTransform(i).getRotation().set(orientation);
         }
     }
 }

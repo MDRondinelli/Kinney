@@ -19,7 +19,13 @@ public class RigidBody {
     }
 
     public static RigidBody createCuboid(Vector3f halfExtents, float invMass, Vector3f position, Quaternionf orientation, Vector3f velocity, Vector3f acceleration, Vector3f rotation) {
-        return new RigidBody(new CollisionBox(new Matrix4f(), halfExtents), invMass, getCuboidInverseTensor(1.0f / invMass, halfExtents.x * 2.0f, halfExtents.y * 2.0f, halfExtents.z * 2.0f), position, orientation, velocity, acceleration, rotation);
+        Matrix3f invInertiaTensor;
+        if (invMass == 0.0f)
+            invInertiaTensor = new Matrix3f().zero();
+        else
+            invInertiaTensor = getCuboidInverseTensor(1.0f / invMass, halfExtents.x * 2.0f, halfExtents.y * 2.0f, halfExtents.z * 2.0f);
+
+        return new RigidBody(new CollisionBox(new Matrix4f(), halfExtents), invMass, invInertiaTensor, position, orientation, velocity, acceleration, rotation);
     }
 
     public static RigidBody createCuboid(Vector3f halfExtents, float invMass, Vector3f position, Quaternionf orientation) {

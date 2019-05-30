@@ -1,12 +1,13 @@
 package me.marlon.physics;
 
 import org.joml.AABBf;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.util.List;
 
-public class CollisionPrimitive {
+public abstract class CollisionPrimitive {
     private RigidBody body;
     private Matrix4f transform;
     private Matrix4f worldTransform;
@@ -53,17 +54,50 @@ public class CollisionPrimitive {
             collideWith((CollisionTerrain) other, contacts);
     }
 
+    protected boolean collideWith(CollisionSphere other) {
+        return false;
+    }
+
+    protected boolean collideWith(CollisionPlane other) {
+        return false;
+    }
+
+    protected boolean collideWith(CollisionBox other) {
+        return false;
+    }
+
+    protected boolean collideWith(CollisionTerrain other) {
+        return false;
+    }
+
+    public boolean collideWith(CollisionPrimitive other) {
+        if (other instanceof CollisionSphere)
+            return collideWith((CollisionSphere) other);
+        else if (other instanceof CollisionPlane)
+            return collideWith((CollisionPlane) other);
+        else if (other instanceof CollisionBox)
+            return collideWith((CollisionBox) other);
+        else if (other instanceof CollisionTerrain)
+            return collideWith((CollisionTerrain) other);
+        return false;
+    }
+
+    public abstract Float rayCast(Vector3f o, Vector3f d);
+
     public void updateDerivedData() {
-        if (body != null) {
+        if (body == null) {
+            worldTransform.set(transform);
+            worldTransformInv.set(worldTransform).invertAffine();
+        } else  {
             worldTransform.set(body.getTransform()).mul(transform);
             worldTransformInv.set(worldTransform).invertAffine();
-
-            Vector3f min = new Vector3f(aabb.minX, aabb.minY, aabb.minZ);
-            Vector3f max = new Vector3f(aabb.maxX, aabb.maxY, aabb.maxZ);
-            worldTransform.transformAab(min, max, min, max);
-            worldAabb.setMin(min);
-            worldAabb.setMax(max);
         }
+
+        Vector3f min = new Vector3f(aabb.minX, aabb.minY, aabb.minZ);
+        Vector3f max = new Vector3f(aabb.maxX, aabb.maxY, aabb.maxZ);
+        worldTransform.transformAab(min, max, min, max);
+        worldAabb.setMin(min);
+        worldAabb.setMax(max);
     }
 
     public RigidBody getBody() {
@@ -72,6 +106,10 @@ public class CollisionPrimitive {
 
     public void setBody(RigidBody body) {
         this.body = body;
+    }
+
+    public Matrix4f getTransform() {
+        return transform;
     }
 
     public Matrix4f getWorldTransform() {

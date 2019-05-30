@@ -26,6 +26,21 @@ public class CollisionPlane extends CollisionPrimitive {
         CollisionDetector.collide(this, other, contacts);
     }
 
+    @Override
+    protected boolean collideWith(CollisionSphere other) {
+        return CollisionDetector.collide(this, other);
+    }
+
+    @Override
+    protected boolean collideWith(CollisionBox other) {
+        return CollisionDetector.collide(this, other);
+    }
+
+    @Override
+    public Float rayCast(Vector3f o, Vector3f d) {
+        return -(o.dot(normal) + offset) / d.dot(normal);
+    }
+
     public Vector3f getNormal() {
         return normal;
     }

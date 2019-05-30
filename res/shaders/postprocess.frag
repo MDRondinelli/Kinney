@@ -1,9 +1,9 @@
 #version 450 core
 
-const float FOG_BEGIN = 40.0;
+const float FOG_BEGIN = 0.0;
 const float FOG_END = 120.0;
 const vec3 SKY_UP = vec3(0.1, 0.4, 1.0);
-const vec3 SKY_DOWN = vec3(1.0, 1.0, 1.0);
+const vec3 SKY_DOWN = vec3(0.75, 0.85, 1.0);
 
 in vec2 texcoord;
 
@@ -61,7 +61,7 @@ void main() {
     float distance = length(v);
     v /= distance;
 
-    float skyFactor = smoothstep(-0.3, 0.2, -v.y);
+    float skyFactor = smoothstep(-0.5, 0.5, -v.y);
     vec3 skyColor = mix(SKY_DOWN, SKY_UP, skyFactor) + linstep(0.0, 0.5, pow(clamp(dot(v, dLight.direction.xyz), 0.0, 1.0), 512.0)) * vec3(1.0, 1.0, 0.5);
 
     float fogFactor = smoothstep(FOG_BEGIN, FOG_END, distance);

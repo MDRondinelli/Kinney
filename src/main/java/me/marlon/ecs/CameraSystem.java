@@ -32,7 +32,7 @@ public class CameraSystem {
             }
 
             Vector3f position = matrix.getTranslation(new Vector3f());
-            camera.position.lerp(position, 0.33f);
+            camera.position.lerp(position, 0.5f);
             Matrix4f viewInv = matrix.setTranslation(camera.position);
             Matrix4f view = new Matrix4f(viewInv).invertAffine();
 

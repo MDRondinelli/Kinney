@@ -2,6 +2,7 @@ package me.marlon.ecs;
 
 import me.marlon.physics.*;
 import org.joml.AABBf;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +53,7 @@ public class PhysicsSystem {
                 RigidBody bodyTwo = bodies.get(j);
                 AABBf aabbTwo = bodyTwo.getCollider().getWorldAabb();
 
-                if (aabbOne.testAABB(aabbTwo))
+                if ((bodyOne.hasFiniteMass() || bodyTwo.hasFiniteMass()) && aabbOne.testAABB(aabbTwo))
                     potentialContacts.add(new PotentialContact(bodyOne, bodyTwo));
             }
         }
@@ -86,5 +87,20 @@ public class PhysicsSystem {
             if (registration.generator == generator && registration.body == body)
                 registry.remove(i--);
         }
+    }
+
+    public float rayCast(Vector3f o, Vector3f d) {
+        float tMin = Float.MAX_VALUE;
+
+        for (int i = 0; i < EntityManager.MAX_ENTITIES; ++i) {
+            if (!entities.match(i, BITS) || entities.match(i, EntityManager.PLAYER_BIT))
+                continue;
+
+            Float t = entities.getRigidBody(i).getCollider().rayCast(o, d);
+            if (t != null && 0.0f < t && t < tMin)
+                tMin = t;
+        }
+
+        return tMin;
     }
 }

@@ -60,6 +60,80 @@ public class CollisionTerrain extends CollisionPrimitive {
         CollisionDetector.collide(this, other, contacts);
     }
 
+    @Override
+    protected boolean collideWith(CollisionSphere other) {
+        return CollisionDetector.collide(this, other);
+    }
+
+    @Override
+    protected boolean collideWith(CollisionBox other) {
+        return CollisionDetector.collide(this, other);
+    }
+
+    private Float rayCast(Vector3f ro, Vector3f rd, Vector3f[] tri) {
+        Vector3f v1v0 = new Vector3f(tri[1]).sub(tri[0]);
+        Vector3f v2v0 = new Vector3f(tri[2]).sub(tri[0]);
+        Vector3f rov0 = new Vector3f(ro).sub(tri[0]);
+
+        Vector3f n = new Vector3f(v1v0).cross(v2v0);
+        Vector3f q = new Vector3f(rov0).cross(rd);
+        float d = 1.0f / rd.dot(n);
+        float u = d * -q.dot(v2v0);
+        float v = d * q.dot(v1v0);
+        float t = d * -n.dot(rov0);
+
+        if (u < 0.0f || v < 0.0f || u + v > 1.0f)
+            return null;
+        else
+            return t;
+    }
+
+    private Float rayCast(Vector3f o, Vector3f d, Vector3f[] tri, int i, int j) {
+        getTriangle(i, j, tri, 0);
+        Float t1 = rayCast(o, d, tri);
+        getTriangle(i, j, tri, 1);
+        Float t2 = rayCast(o, d, tri);
+
+        if (t1 != null) {
+            if (t2 != null) {
+                float tMin = Math.min(t1, t2);
+                float tMax = Math.max(t1, t2);
+
+                if (tMin > 0.0f)
+                    return tMin;
+                else if (tMax > 0.0f)
+                    return tMax;
+                else
+                    return null;
+            } else if (t1 > 0.0f) {
+                return t1;
+            } else {
+                return null;
+            }
+        } else if (t2 != null && t2 > 0.0f) {
+            return t2;
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public Float rayCast(Vector3f o, Vector3f d) {
+        Vector3f[] tri = new Vector3f[3];
+        Vector3f ro = new Vector3f(o);
+        Vector3f rd = new Vector3f(d);
+
+        for (int i = 0; i < 32; ++i) {
+            Float t = rayCast(o, d, tri, (int) (ro.x / TerrainMesh.TILE_SIZE), (int) (ro.z / TerrainMesh.TILE_SIZE));
+            if (t != null)
+                return t;
+
+            ro.add(rd);
+        }
+
+        return null;
+    }
+
     public void getTriangle(int x, int z, Vector3f[] triangle, int which) {
         int offs = (size * x + z) * 6 + which * 3;
         triangle[0] = data[offs];

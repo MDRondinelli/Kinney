@@ -64,6 +64,8 @@ public class ShadowCascade implements AutoCloseable {
             depths[i] = LAMBDA * cLog + (1.0f - LAMBDA) * cLin;
         }
 
+        depths[0] = 0.0f;
+
         Vector3f vec0 = new Vector3f(corners[4].x - corners[0].x, corners[4].y - corners[0].y, corners[4].z - corners[0].z);
         vec0.div(-vec0.z);
         Vector3f vec1 = new Vector3f(corners[5].x - corners[1].x, corners[5].y - corners[1].y, corners[5].z - corners[1].z);

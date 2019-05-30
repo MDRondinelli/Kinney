@@ -45,8 +45,8 @@ public class World implements IKeyListener, IMouseListener {
     }
 
     public void onUpdate() {
-        playerSystem.onUpdate();
         physicsSystem.onUpdate();
+        playerSystem.onUpdate();
         cameraSystem.onUpdate();
         dLightSystem.onUpdate();
         meshSystem.onUpdate();

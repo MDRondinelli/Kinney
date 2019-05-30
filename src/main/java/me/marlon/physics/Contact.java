@@ -10,6 +10,9 @@ public class Contact {
     private float depth;
     private float friction;
 
+    private CollisionPrimitive primitiveA;
+    private CollisionPrimitive primitiveB;
+
     private RigidBody bodyA;
     private RigidBody bodyB;
 
@@ -23,13 +26,15 @@ public class Contact {
     private Vector3f relPointA;
     private Vector3f relPointB;
 
-    public Contact(Vector3f point, Vector3f normal, float depth, RigidBody bodyA, RigidBody bodyB) {
+    public Contact(Vector3f point, Vector3f normal, float depth, CollisionPrimitive primitiveA, CollisionPrimitive primitiveB) {
         this.point = point;
         this.normal = normal;
         this.depth = depth;
         this.friction = 1.4f;
-        this.bodyA = bodyA;
-        this.bodyB = bodyB;
+        this.primitiveA = primitiveA;
+        this.primitiveB = primitiveB;
+        this.bodyA = primitiveA.getBody();
+        this.bodyB = primitiveB.getBody();
         contactToWorld = new Matrix3f();
         worldToContact = new Matrix3f();
         contactVelocity = new Vector3f();
@@ -86,19 +91,23 @@ public class Contact {
         if (bodyB != null)
             velocityFromAcceleration -= bodyB.getAccelerationAtUpdate().dot(normal) * dt;
 
-        float restitution = 0.25f;
+        float restitution = 0.15f;
         if (Math.abs(contactVelocity.x) < 0.1f)
             restitution = 0.0f;
 
         desiredDeltaVelocity = -contactVelocity.x - restitution * (contactVelocity.x - velocityFromAcceleration);
     }
 
-    private void swap() {
+    public void swap() {
         normal.negate();
 
-        RigidBody temp = bodyA;
+        RigidBody bodyC = bodyA;
         bodyA = bodyB;
-        bodyB = temp;
+        bodyB = bodyC;
+
+        CollisionPrimitive primitiveC = primitiveA;
+        primitiveA = primitiveB;
+        primitiveA = primitiveC;
     }
 
     public void calcData(float dt) {
@@ -342,13 +351,18 @@ public class Contact {
         return friction;
     }
 
+    public CollisionPrimitive getPrimitive(int index) {
+        if (index == 0)
+            return primitiveA;
+        else
+            return primitiveB;
+    }
+
     public RigidBody getBody(int index) {
         if (index == 0)
             return bodyA;
-        else if (index == 1)
-            return bodyB;
         else
-            return null;
+            return bodyB;
     }
 
     public Matrix3f getContactToWorld() {
