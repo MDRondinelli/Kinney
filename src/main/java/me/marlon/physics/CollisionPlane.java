@@ -10,8 +10,8 @@ public class CollisionPlane extends CollisionPrimitive {
     private Vector3f normal;
     private float offset;
 
-    public CollisionPlane(Vector3f normal, float offset) {
-        super(new Matrix4f(), new AABBf(-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE));
+    public CollisionPlane(PhysicsMaterial material, Vector3f normal, float offset) {
+        super(material, new Matrix4f(), new AABBf(-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE));
         this.normal = normal;
         this.offset = offset;
     }

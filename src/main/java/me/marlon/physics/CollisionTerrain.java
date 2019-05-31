@@ -12,8 +12,8 @@ public class CollisionTerrain extends CollisionPrimitive {
     private int size; // in tiles
     private Vector3f[] data; // every 3 vec3s is a tri - every 2 tris is a quad - every size quads is a column
 
-    public CollisionTerrain(Terrain terrain) {
-        super(new Matrix4f(), new AABBf(0.0f, -Float.MAX_VALUE, 0.0f, terrain.getSize(), Float.MAX_VALUE, terrain.getSize()));
+    public CollisionTerrain(PhysicsMaterial material, Terrain terrain) {
+        super(material, new Matrix4f(), new AABBf(0.0f, -Float.MAX_VALUE, 0.0f, terrain.getSize(), Float.MAX_VALUE, terrain.getSize()));
         size = (terrain.getSize() - 1) / TerrainMesh.TILE_SIZE;
         data = new Vector3f[size * size * 6];
 

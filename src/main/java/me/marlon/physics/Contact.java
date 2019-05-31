@@ -8,6 +8,7 @@ public class Contact {
     private Vector3f point;
     private Vector3f normal;
     private float depth;
+    private float restitution;
     private float friction;
 
     private CollisionPrimitive primitiveA;
@@ -30,7 +31,17 @@ public class Contact {
         this.point = point;
         this.normal = normal;
         this.depth = depth;
-        this.friction = 1.4f;
+
+        restitution = 0.2f;
+        friction = 1.0f;
+
+        if (primitiveA.getMaterial() == PhysicsMaterial.PLAYER || primitiveB.getMaterial() == PhysicsMaterial.PLAYER) {
+            restitution = 0.0f;
+            if (Math.abs(normal.y) < 0.2f) {
+                friction = 0.0f;
+            }
+        }
+
         this.primitiveA = primitiveA;
         this.primitiveB = primitiveB;
         this.bodyA = primitiveA.getBody();
@@ -91,11 +102,11 @@ public class Contact {
         if (bodyB != null)
             velocityFromAcceleration -= bodyB.getAccelerationAtUpdate().dot(normal) * dt;
 
-        float restitution = 0.15f;
+        float appliedRestitution = restitution;
         if (Math.abs(contactVelocity.x) < 0.1f)
-            restitution = 0.0f;
+            appliedRestitution = 0.0f;
 
-        desiredDeltaVelocity = -contactVelocity.x - restitution * (contactVelocity.x - velocityFromAcceleration);
+        desiredDeltaVelocity = -contactVelocity.x - appliedRestitution * (contactVelocity.x - velocityFromAcceleration);
     }
 
     public void swap() {
@@ -234,7 +245,7 @@ public class Contact {
         }
     }
 
-    private Vector3f calcImpulse() {
+    private Vector3f calcFrictionImpulse() {
         float invMass = bodyA.getInvMass();
 
         Matrix3f impulseToTorque = new Matrix3f()
@@ -297,8 +308,39 @@ public class Contact {
         return impulseContact.mul(contactToWorld);
     }
 
+    private Vector3f calcFrictionlessImpulse() {
+        float deltaVelocity = 0.0f;
+
+        {
+            Vector3f deltaVelWorld = new Vector3f(relPointA)
+                    .cross(normal)
+                    .mul(bodyA.getInvInertiaTensor())
+                    .cross(relPointA);
+            deltaVelocity += deltaVelWorld.dot(normal);
+            deltaVelocity += bodyA.getInvMass();
+        }
+
+
+      if (bodyB != null) {
+          Vector3f deltaVelWorld = new Vector3f(relPointB)
+                  .cross(normal)
+                  .mul(bodyB.getInvInertiaTensor())
+                  .cross(relPointB);
+          deltaVelocity += deltaVelWorld.dot(normal);
+          deltaVelocity += bodyB.getInvMass();
+      }
+
+      Vector3f impulseContact = new Vector3f();
+      impulseContact.x = desiredDeltaVelocity / deltaVelocity;
+      return impulseContact.mul(contactToWorld);
+    }
+
     public void applyVelocityChange(Vector3f[] velocityChange, Vector3f[] rotationChange) {
-        Vector3f impulse = calcImpulse();
+        Vector3f impulse;
+        if (friction == 0.0f)
+            impulse = calcFrictionlessImpulse();
+        else
+            impulse = calcFrictionImpulse();
 
         velocityChange[0].set(impulse.x * bodyA.getInvMass(), impulse.y * bodyA.getInvMass(), impulse.z * bodyA.getInvMass());
         rotationChange[0].set(new Vector3f(relPointA).cross(impulse).mul(bodyA.getTransformInvInertiaTensor()));

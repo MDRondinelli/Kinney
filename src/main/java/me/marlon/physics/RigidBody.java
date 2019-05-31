@@ -11,37 +11,37 @@ public class RigidBody {
     private static final float SLEEP_EPSILON = 0.4f;
 
     public static RigidBody createTerrain(Terrain terrain) {
-        return new RigidBody(new CollisionTerrain(terrain), 0.0f, new Matrix3f().zero(), new Vector3f());
+        return new RigidBody(new CollisionTerrain(PhysicsMaterial.WOOD, terrain), 0.0f, new Matrix3f().zero(), new Vector3f());
     }
 
-    public static RigidBody createPlane(Vector3f normal, float offset) {
-        return new RigidBody(new CollisionPlane(normal, offset), 0.0f, new Matrix3f().zero(), new Vector3f());
+    public static RigidBody createPlane(PhysicsMaterial material, Vector3f normal, float offset) {
+        return new RigidBody(new CollisionPlane(material, normal, offset), 0.0f, new Matrix3f().zero(), new Vector3f());
     }
 
-    public static RigidBody createCuboid(Vector3f halfExtents, float invMass, Vector3f position, Quaternionf orientation, Vector3f velocity, Vector3f acceleration, Vector3f rotation) {
+    public static RigidBody createCuboid(PhysicsMaterial material, Vector3f halfExtents, float invMass, Vector3f position, Quaternionf orientation, Vector3f velocity, Vector3f acceleration, Vector3f rotation) {
         Matrix3f invInertiaTensor;
         if (invMass == 0.0f)
             invInertiaTensor = new Matrix3f().zero();
         else
             invInertiaTensor = getCuboidInverseTensor(1.0f / invMass, halfExtents.x * 2.0f, halfExtents.y * 2.0f, halfExtents.z * 2.0f);
 
-        return new RigidBody(new CollisionBox(new Matrix4f(), halfExtents), invMass, invInertiaTensor, position, orientation, velocity, acceleration, rotation);
+        return new RigidBody(new CollisionBox(material, new Matrix4f(), halfExtents), invMass, invInertiaTensor, position, orientation, velocity, acceleration, rotation);
     }
 
-    public static RigidBody createCuboid(Vector3f halfExtents, float invMass, Vector3f position, Quaternionf orientation) {
-        return createCuboid(halfExtents, invMass, position, orientation, new Vector3f(), new Vector3f(), new Vector3f());
+    public static RigidBody createCuboid(PhysicsMaterial material, Vector3f halfExtents, float invMass, Vector3f position, Quaternionf orientation) {
+        return createCuboid(material, halfExtents, invMass, position, orientation, new Vector3f(), new Vector3f(), new Vector3f());
     }
 
-    public static RigidBody createCuboid(Vector3f halfExtents, float invMass, Vector3f position) {
-        return createCuboid(halfExtents, invMass, position, new Quaternionf());
+    public static RigidBody createCuboid(PhysicsMaterial material, Vector3f halfExtents, float invMass, Vector3f position) {
+        return createCuboid(material, halfExtents, invMass, position, new Quaternionf());
     }
 
-    public static RigidBody createSphere(float radius, float invMass, Vector3f position, Vector3f velocity, Vector3f acceleration, Vector3f rotation) {
-        return new RigidBody(new CollisionSphere(new Vector3f(), radius), invMass, getSphereInverseTensor(1.0f / invMass, radius), position, new Quaternionf(), velocity, acceleration, rotation);
+    public static RigidBody createSphere(PhysicsMaterial material, float radius, float invMass, Vector3f position, Vector3f velocity, Vector3f acceleration, Vector3f rotation) {
+        return new RigidBody(new CollisionSphere(material, new Vector3f(), radius), invMass, getSphereInverseTensor(1.0f / invMass, radius), position, new Quaternionf(), velocity, acceleration, rotation);
     }
 
-    public static RigidBody createSphere(float radius, float invMass, Vector3f position) {
-        return createSphere(radius, invMass, position, new Vector3f(), new Vector3f(), new Vector3f());
+    public static RigidBody createSphere(PhysicsMaterial material, float radius, float invMass, Vector3f position) {
+        return createSphere(material, radius, invMass, position, new Vector3f(), new Vector3f(), new Vector3f());
     }
 
     public static Matrix3f getCuboidInverseTensor(float m, float dx, float dy, float dz) {
@@ -111,6 +111,8 @@ public class RigidBody {
 
         awake = true;
         motion = SLEEP_EPSILON * 2.0f;
+
+        updateDerivedData();
     }
 
     public RigidBody(CollisionPrimitive collider, float invMass, Matrix3f invInertiaTensor,

@@ -10,8 +10,8 @@ import java.util.List;
 public class CollisionBox extends CollisionPrimitive {
     private Vector3f halfExtents;
 
-    public CollisionBox(Matrix4f transform, Vector3f halfExtents) {
-        super(transform, new AABBf(-halfExtents.x, -halfExtents.y, -halfExtents.z, halfExtents.x, halfExtents.y, halfExtents.z));
+    public CollisionBox(PhysicsMaterial material, Matrix4f transform, Vector3f halfExtents) {
+        super(material, transform, new AABBf(-halfExtents.x, -halfExtents.y, -halfExtents.z, halfExtents.x, halfExtents.y, halfExtents.z));
         this.halfExtents = halfExtents;
     }
 

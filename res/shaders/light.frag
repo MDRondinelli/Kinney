@@ -61,7 +61,7 @@ float calcShadow(vec3 p) {
 
         for (float x = -1.0; x <= 1.0; x += 1.0) {
             for (float y = -1.0; y <= 1.0; y += 1.0) {
-                float bias = length(vec2(x, y)) * -0.0035;
+                float bias = length(vec2(x, y)) * -0.001;
                 ret += texture(dLightCascade0, p + vec3(rotation * vec2(x, y) * texelSize, bias)).r;
             }
         }
@@ -75,7 +75,7 @@ float calcShadow(vec3 p) {
 
         for (float x = -1.0; x <= 1.0; x += 1.0) {
             for (float y = -1.0; y <= 1.0; y += 1.0) {
-                float bias = length(vec2(x, y)) * -0.0035;
+                float bias = length(vec2(x, y)) * -0.002;
                 ret += texture(dLightCascade1, p + vec3(rotation * vec2(x, y) * texelSize, bias)).r;
             }
         }
@@ -89,7 +89,7 @@ float calcShadow(vec3 p) {
 
         for (float x = -1.0; x <= 1.0; x += 1.0) {
             for (float y = -1.0; y <= 1.0; y += 1.0) {
-                float bias = length(vec2(x, y)) * -0.0035;
+                float bias = length(vec2(x, y)) * -0.002;
                 ret += texture(dLightCascade2, p + vec3(vec2(x, y) * texelSize, bias)).r;
             }
         }
@@ -102,7 +102,7 @@ float calcShadow(vec3 p) {
 
     for (float x = -1.0; x <= 1.0; x += 1.0) {
         for (float y = -1.0; y <= 1.0; y += 1.0) {
-            float bias = length(vec2(x, y)) * -0.0035;
+            float bias = length(vec2(x, y)) * -0.002;
             ret += texture(dLightCascade3, p + vec3(rotation * vec2(x, y) * texelSize, bias)).r;
         }
     }

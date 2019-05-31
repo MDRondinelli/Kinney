@@ -1,13 +1,13 @@
 package me.marlon.physics;
 
 import org.joml.AABBf;
-import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.util.List;
 
 public abstract class CollisionPrimitive {
+    private PhysicsMaterial material;
     private RigidBody body;
     private Matrix4f transform;
     private Matrix4f worldTransform;
@@ -15,7 +15,8 @@ public abstract class CollisionPrimitive {
     private AABBf aabb;
     private AABBf worldAabb;
 
-    public CollisionPrimitive(Matrix4f transform, AABBf aabb) {
+    public CollisionPrimitive(PhysicsMaterial material, Matrix4f transform, AABBf aabb) {
+        this.material = material;
         this.transform = transform == null ? new Matrix4f() : new Matrix4f(transform);
         this.aabb = aabb;
 
@@ -98,6 +99,10 @@ public abstract class CollisionPrimitive {
         worldTransform.transformAab(min, max, min, max);
         worldAabb.setMin(min);
         worldAabb.setMax(max);
+    }
+
+    public PhysicsMaterial getMaterial() {
+        return material;
     }
 
     public RigidBody getBody() {
