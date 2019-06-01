@@ -16,20 +16,21 @@ import java.util.List;
 public class EntityManager implements IUpdateListener, IKeyListener, IMouseListener {
     public static final int MAX_ENTITIES = 2048;
 
-    public static final short BLOCK_BIT = 0x0001;
-    public static final short CAMERA_BIT = 0x0002;
-    public static final short COLLIDER_BIT = 0x0004;
-    public static final short DLIGHT_BIT = 0x0008;
-    public static final short MESH_BIT = 0x0010;
-    public static final short PLAYER_BIT = 0x0020;
-    public static final short RIGID_BODY_BIT = 0x0040;
-    public static final short TERRAIN_BIT = 0x0080;
-    public static final short TRANSFORM_BIT = 0x0100;
-    public static final short WATER_MESH_BIT = 0x0200;
+    public static final int BLOCK_BIT       = 0x00000001;
+    public static final int CAMERA_BIT      = 0x00000002;
+    public static final int COLLIDER_BIT    = 0x00000004;
+    public static final int DLIGHT_BIT      = 0x00000008;
+    public static final int MESH_BIT        = 0x00000010;
+    public static final int PLAYER_BIT      = 0x00000020;
+    public static final int RIGID_BODY_BIT  = 0x00000040;
+    public static final int TERRAIN_BIT     = 0x00000080;
+    public static final int TRANSFORM_BIT   = 0x00000100;
+    public static final int WATER_MESH_BIT  = 0x00000200;
 
     private ArrayList<Integer> freeList;
 
-    private short[] entities;
+    private int[] entities;
+
     private Block[] blocks;
     private Camera[] cameras;
     private Collider[] colliders;
@@ -51,7 +52,7 @@ public class EntityManager implements IUpdateListener, IKeyListener, IMouseListe
         for (int i = 0; i < MAX_ENTITIES; ++i)
             freeList.add(MAX_ENTITIES - 1 - i);
 
-        entities = new short[MAX_ENTITIES];
+        entities = new int[MAX_ENTITIES];
         blocks = new Block[MAX_ENTITIES];
         cameras = new Camera[MAX_ENTITIES];
         colliders = new Collider[MAX_ENTITIES];
@@ -68,10 +69,11 @@ public class EntityManager implements IUpdateListener, IKeyListener, IMouseListe
         componentListeners = new ArrayList<>();
         updateListeners = new ArrayList<>();
 
+        BlockSystem blockSystem = new BlockSystem(this, 400, 100, 400);
         CameraSystem cameraSystem = new CameraSystem(this, renderer);
         MeshSystem meshSystem = new MeshSystem(this, renderer);
         PhysicsSystem physicsSystem = new PhysicsSystem(this, dt);
-        PlayerSystem playerSystem = new PlayerSystem(this, physicsSystem);
+        PlayerSystem playerSystem = new PlayerSystem(this, blockSystem, physicsSystem);
         SunSystem sunSystem = new SunSystem(this, renderer);
         TerrainSystem terrainSystem = new TerrainSystem(this, renderer);
         WaterSystem waterSystem = new WaterSystem(this, renderer);
@@ -79,6 +81,7 @@ public class EntityManager implements IUpdateListener, IKeyListener, IMouseListe
         keyListeners.add(playerSystem);
         mouseListeners.add(playerSystem);
 
+        componentListeners.add(blockSystem);
         componentListeners.add(cameraSystem);
         componentListeners.add(meshSystem);
         componentListeners.add(physicsSystem);
@@ -87,6 +90,7 @@ public class EntityManager implements IUpdateListener, IKeyListener, IMouseListe
         componentListeners.add(terrainSystem);
         componentListeners.add(waterSystem);
 
+        updateListeners.add(blockSystem);
         updateListeners.add(physicsSystem);
         updateListeners.add(playerSystem);
         updateListeners.add(cameraSystem);
@@ -296,7 +300,7 @@ public class EntityManager implements IUpdateListener, IKeyListener, IMouseListe
         return waterMeshes[i];
     }
 
-    public boolean match(int i, short bits) {
+    public boolean match(int i, int bits) {
         return (entities[i] & bits) == bits;
     }
 }

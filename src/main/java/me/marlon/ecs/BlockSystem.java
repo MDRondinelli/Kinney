@@ -1,18 +1,18 @@
 package me.marlon.ecs;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
-public class BlockSystem {
-    private static final short BITS = EntityManager.BLOCK_BIT;
+public class BlockSystem implements IComponentListener, IUpdateListener {
+    private static final int BITS = EntityManager.BLOCK_BIT | EntityManager.TRANSFORM_BIT;
 
     private EntityManager entities;
 
     private int xSize;
     private int ySize;
     private int zSize;
-    private Block[] blocks;
+    private int[] blocks;
+
+    private Set<Integer> ids;
 
     public BlockSystem(EntityManager entities, int xSize, int ySize, int zSize) {
         this.entities = entities;
@@ -20,42 +20,52 @@ public class BlockSystem {
         this.xSize = xSize;
         this.ySize = ySize;
         this.zSize = zSize;
-        blocks = new Block[xSize * ySize * zSize];
+        blocks = new int[xSize * ySize * zSize];
+        ids = new HashSet<>();
+
+        Arrays.fill(blocks, 0xffffffff);
     }
 
-    public void onUpdate() {
-        Arrays.fill(blocks, null);
-
-        List<Block> blockList = new ArrayList<>();
-
-        for (int i = 0; i < EntityManager.MAX_ENTITIES; ++i) {
-            if (!entities.match(i, BITS))
-                continue;
-
-            Block block = entities.getBlock(i);
-            addBlock(block);
-            blockList.add(block);
+    @Override
+    public void onComponentAdded(int entity) {
+        if (entities.match(entity, BITS)) {
+            Block block = entities.getBlock(entity);
+            int x = block.getX();
+            int y = block.getY();
+            int z = block.getZ();
+            int idx = xSize * ySize * z + xSize * y + x;
+            blocks[idx] = entity;
+            ids.add(entity);
         }
+    }
 
-        for (Block block : blockList)
+    @Override
+    public void onComponentRemoved(int entity) {
+        if (!entities.match(entity, BITS))
+            ids.remove(entity);
+    }
+
+    public int getBlock(int x, int y, int z) {
+        int idx = xSize * ySize * z + xSize * y + x;
+
+        if (blocks[idx] != 0xffffffff && !entities.match(blocks[idx], BITS))
+            blocks[idx] = 0xffffffff;
+
+        return blocks[idx];
+    }
+
+    @Override
+    public void onUpdate() {
+        for (int id : ids) {
+            Block block = entities.getBlock(id);
+            TransformComponent transform = entities.getTransform(id);
+
             block.onUpdate();
-    }
-
-    private void addBlock(Block block) {
-        int x = block.getX();
-        int y = block.getY();
-        int z = block.getZ();
-
-        if (x < 0 || x >= xSize || y < 0 || y >= ySize || z < 0 || z >= zSize)
-            return;
-
-        blocks[xSize * ySize * z + xSize * y + x] = block;
-    }
-
-    public Block getBlock(int x, int y, int z) {
-        if (x < 0 || x >= xSize || y < 0 || y >= ySize || z < 0 || z >= zSize)
-            return null;
-
-        return blocks[xSize * ySize * z + xSize * y + x];
+            transform.getPosition().x = block.getX() + 0.5f;
+            transform.getPosition().y = block.getY() + 0.5f;
+            transform.getPosition().z = block.getZ() + 0.5f;
+            transform.getOrientation().set(0.0f, 0.0f, 0.0f, 1.0f);
+            transform.setScale(1.0f);
+        }
     }
 }

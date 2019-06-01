@@ -5,9 +5,11 @@ import org.lwjgl.system.MemoryStack;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL45.*;
+import static org.lwjgl.system.MemoryStack.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
 import java.io.IOException;
+import java.lang.Math;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.file.Files;
@@ -26,10 +28,17 @@ public class Renderer implements AutoCloseable {
     private UniformBuffer lightBlock;
     private ByteBuffer lightData;
 
+    private UniformBuffer ssaoBlock;
+    private Texture ssaoNoise;
+    private Texture ssaoTexture0;
+    private Texture ssaoTexture1;
+
     private Shader meshShader;
     private Shader terrainShader;
     private Shader waterShader;
 
+    private Shader ssaoShader;
+    private Shader blurShader;
     private Shader lightShader;
     private Shader shadowShader;
     private Shader postProcessShader;
@@ -49,7 +58,7 @@ public class Renderer implements AutoCloseable {
         gbuffer = new Framebuffer(width, height, new int[] { GL_RGBA8, GL_RGBA8 });
         pbuffer = new Framebuffer(width, height, new int[] { GL_RGBA16F });
 
-        try (MemoryStack stack = MemoryStack.stackPush()) {
+        try (MemoryStack stack = stackPush()) {
             FloatBuffer vertices = stack.mallocFloat(3 * 6);
 
             vertices.put(-1.0f);
@@ -79,6 +88,56 @@ public class Renderer implements AutoCloseable {
             screenMesh = new Primitive(vertices.rewind(), null);
         }
 
+        try (MemoryStack stack = stackPush()) {
+            ByteBuffer samples = stack.malloc(16 * 64);
+
+            for (int i = 0; i < 64; ++i) {
+                float r = (float) Math.sqrt(Math.random());
+                float theta = (float) Math.random() * (float) Math.PI * 2.0f;
+
+                float x = r * (float) Math.cos(theta);
+                float y = r * (float) Math.sin(theta);
+                float z = (float) Math.sqrt(1.0f - x * x - y * y);
+
+                Vector3f sample = new Vector3f(x, y, z);
+                float scale = (float) Math.random();
+                scale *= scale;
+                scale += 0.1f * (1.0f - scale);
+                sample.mul(scale);
+
+                samples.putFloat(i * 16, sample.x);
+                samples.putFloat(i * 16 + 4, sample.y);
+                samples.putFloat(i * 16 + 8, sample.z);
+            }
+
+            ssaoBlock = new UniformBuffer(16 * 64);
+            ssaoBlock.buffer(samples.rewind());
+            ssaoBlock.bind(2);
+        }
+
+        {
+            FloatBuffer noise = memAllocFloat(128 * 128 * 2);
+
+            for (int i = 0; i < 128 * 128;) {
+                float x = (float) Math.random() * 2.0f - 1.0f;
+                float y = (float) Math.random() * 2.0f - 1.0f;
+
+                if (x * x + y * y < 1.0f) {
+                    noise.put(i * 2, x);
+                    noise.put(i * 2 + 1, y);
+                    ++i;
+                }
+            }
+
+            ssaoNoise = new Texture(128, 128, GL_RG16F);
+            ssaoNoise.image(GL_RG, noise.rewind());
+
+            memFree(noise);
+        }
+
+        ssaoTexture0 = new Texture(width / 2, height / 2, GL_R8);
+        ssaoTexture1 = new Texture(width / 2, height / 2, GL_R8);
+
         cameraBlock = new UniformBuffer(256);
         cameraData = memAlloc(cameraBlock.getSize());
 
@@ -88,6 +147,8 @@ public class Renderer implements AutoCloseable {
         meshShader = new Shader();
         terrainShader = new Shader();
         waterShader = new Shader();
+        ssaoShader = new Shader();
+        blurShader = new Shader();
         lightShader = new Shader();
         shadowShader = new Shader();
         postProcessShader = new Shader();
@@ -101,6 +162,10 @@ public class Renderer implements AutoCloseable {
 
             waterShader.setVertText(Files.readString(Paths.get("res/shaders/water.vert")));
             waterShader.setFragText(Files.readString(Paths.get("res/shaders/water.frag")));
+
+            ssaoShader.setCompText(Files.readString(Paths.get("res/shaders/ssao.comp")));
+
+            blurShader.setCompText(Files.readString(Paths.get("res/shaders/blur.comp")));
 
             lightShader.setVertText(Files.readString(Paths.get("res/shaders/light.vert")));
             lightShader.setFragText(Files.readString(Paths.get("res/shaders/light.frag")));
@@ -117,6 +182,8 @@ public class Renderer implements AutoCloseable {
         meshShader.compile();
         terrainShader.compile();
         waterShader.compile();
+        ssaoShader.compile();
+        blurShader.compile();
         lightShader.compile();
         shadowShader.compile();
         postProcessShader.compile();
@@ -232,9 +299,8 @@ public class Renderer implements AutoCloseable {
     }
 
     public void submitDraw() {
-        glViewport(0, 0, gbuffer.getWidth(), gbuffer.getHeight());
-
         gbuffer.bind(GL_FRAMEBUFFER);
+        glViewport(0, 0, gbuffer.getWidth(), gbuffer.getHeight());
         glEnable(GL_DEPTH_TEST);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -263,17 +329,43 @@ public class Renderer implements AutoCloseable {
             }
         }
 
+        ssaoShader.bind();
+        ssaoTexture0.bindImage(0, GL_WRITE_ONLY, GL_R8);
+        gbuffer.bindTexture(0, 0);
+        gbuffer.bindTexture(1, 1);
+        ssaoNoise.bind(2);
+
+        glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT);
+        glDispatchCompute((ssaoTexture0.getWidth() + 15) / 16, (ssaoTexture0.getHeight() + 15) / 16, 1);
+
+        blurShader.bind();
+
+        blurShader.set("direction", new Vector2i(1, 0));
+        ssaoTexture0.bindImage(0, GL_READ_ONLY, GL_R8);
+        ssaoTexture1.bindImage(1, GL_WRITE_ONLY, GL_R8);
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        glDispatchCompute((ssaoTexture0.getWidth() + 15) / 16, (ssaoTexture0.getHeight() + 15) / 16, 1);
+
+        blurShader.set("direction", new Vector2i(0, 1));
+        ssaoTexture1.bindImage(0, GL_READ_ONLY, GL_R8);
+        ssaoTexture0.bindImage(1, GL_WRITE_ONLY, GL_R8);
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        glDispatchCompute((ssaoTexture0.getWidth() + 15) / 16, (ssaoTexture0.getHeight() + 15) / 16, 1);
+
         pbuffer.bind(GL_FRAMEBUFFER);
+        glViewport(0, 0, pbuffer.getWidth(), pbuffer.getHeight());
         glDisable(GL_DEPTH_TEST);
 
         lightShader.bind();
         gbuffer.bindTexture(0, 0);
         gbuffer.bindTexture(1, 1);
         gbuffer.bindTexture(2, 2);
+        ssaoTexture0.bind(3);
 
         for (int i = 0; i < dLightShadows.getNumCascades(); ++i)
-            dLightShadows.getShadowMap(i).bindTexture(i + 3);
+            dLightShadows.getShadowMap(i).bindTexture(i + 4);
 
+        glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT);
         screenMesh.draw();
 
         if (waterMesh != null) {
@@ -298,6 +390,7 @@ public class Renderer implements AutoCloseable {
         postProcessShader.bind();
         pbuffer.bindTexture(0, 0);
         pbuffer.bindTexture(1, 1);
+//        ssaoTexture0.bind(1);
         screenMesh.draw();
     }
 

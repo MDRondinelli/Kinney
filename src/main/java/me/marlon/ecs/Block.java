@@ -1,6 +1,6 @@
 package me.marlon.ecs;
 
-public abstract class Block {
+public class Block implements IUpdateListener {
     private int x;
     private int y;
     private int z;
@@ -11,7 +11,9 @@ public abstract class Block {
         this.z = z;
     }
 
-    public abstract void onUpdate();
+    @Override
+    public void onUpdate() {
+    }
 
     public int getX() {
         return x;

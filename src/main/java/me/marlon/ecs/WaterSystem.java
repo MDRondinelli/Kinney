@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class WaterSystem implements IComponentListener, IUpdateListener {
-    private static final short BITS = EntityManager.TRANSFORM_BIT | EntityManager.WATER_MESH_BIT;
+    private static final int BITS = EntityManager.TRANSFORM_BIT | EntityManager.WATER_MESH_BIT;
 
     private EntityManager entities;
     private Renderer renderer;

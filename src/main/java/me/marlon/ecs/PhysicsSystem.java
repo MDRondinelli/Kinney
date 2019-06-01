@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Set;
 
 public class PhysicsSystem implements IComponentListener, IUpdateListener {
-    private static final short DYNAMIC_BITS = EntityManager.RIGID_BODY_BIT | EntityManager.TRANSFORM_BIT;
-    private static final short STATIC_BITS = EntityManager.COLLIDER_BIT | EntityManager.TRANSFORM_BIT;
+    private static final int DYNAMIC_BITS = EntityManager.RIGID_BODY_BIT | EntityManager.TRANSFORM_BIT;
+    private static final int STATIC_BITS = EntityManager.COLLIDER_BIT | EntityManager.TRANSFORM_BIT;
 
     private EntityManager entities;
     private float deltaTime;

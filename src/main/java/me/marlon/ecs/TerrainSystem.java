@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class TerrainSystem implements IComponentListener, IUpdateListener {
-    private static final short BITS = EntityManager.TERRAIN_BIT;
+    private static final int BITS = EntityManager.TERRAIN_BIT;
 
     private EntityManager entities;
     private Renderer renderer;

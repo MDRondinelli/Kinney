@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class CameraSystem implements IComponentListener, IUpdateListener {
-    private static final short BITS = EntityManager.CAMERA_BIT | EntityManager.TRANSFORM_BIT;
+    private static final int BITS = EntityManager.CAMERA_BIT | EntityManager.TRANSFORM_BIT;
 
     private EntityManager entities;
     private Renderer renderer;

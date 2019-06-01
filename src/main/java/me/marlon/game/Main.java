@@ -25,7 +25,7 @@ public class Main {
         Vector3f playerPos = new Vector3f(200.0f, 0.0f, 200.0f);
         playerPos.y = terrain.sample(playerPos.x, playerPos.z) + 2.0f;
 
-        RigidBody playerBody = RigidBody.createCuboid(PhysicsMaterial.PLAYER, new Vector3f(0.1f, 1.0f, 0.1f), 1.0f / 50.0f, playerPos);
+        RigidBody playerBody = RigidBody.createCuboid(PhysicsMaterial.PLAYER, new Vector3f(0.25f, 1.0f, 0.25f), 1.0f / 50.0f, playerPos);
         playerBody.getInvInertiaTensor().zero();
         playerBody.getAcceleration().y = -10.0f;
 

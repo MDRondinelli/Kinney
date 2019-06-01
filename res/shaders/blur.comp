@@ -1,0 +1,19 @@
+#version 450 core
+
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+layout(binding = 0, r8) uniform restrict readonly image2D src;
+layout(binding = 1, r8) uniform restrict writeonly image2D dst;
+
+uniform ivec2 direction;
+
+void main() {
+    float sum = 0.0;
+    sum += imageLoad(src, ivec2(gl_GlobalInvocationID.xy) - direction * 2).r * 1.0 / 16.0;
+    sum += imageLoad(src, ivec2(gl_GlobalInvocationID.xy) - direction * 1).r * 4.0 / 16.0;
+    sum += imageLoad(src, ivec2(gl_GlobalInvocationID.xy)).r * 6.0 / 16.0;
+    sum += imageLoad(src, ivec2(gl_GlobalInvocationID.xy) + direction * 1).r * 4.0 / 16.0;
+    sum += imageLoad(src, ivec2(gl_GlobalInvocationID.xy) + direction * 2).r * 1.0 / 16.0;
+
+    imageStore(dst, ivec2(gl_GlobalInvocationID.xy), vec4(sum));
+}

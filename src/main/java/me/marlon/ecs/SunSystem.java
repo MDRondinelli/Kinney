@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class SunSystem implements IComponentListener, IUpdateListener {
-    private static final short BITS = EntityManager.DLIGHT_BIT;
+    private static final int BITS = EntityManager.DLIGHT_BIT;
 
     private EntityManager entities;
     private Renderer renderer;

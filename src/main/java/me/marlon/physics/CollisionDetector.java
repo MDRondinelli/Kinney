@@ -497,6 +497,8 @@ public class CollisionDetector {
     }
 
     public static boolean collide(CollisionBox one, CollisionBox two) {
+        System.out.println('t');
+
         Vector3f[] axes = new Vector3f[15];
 
         axes[0] = one.getWorldTransform().getColumn(0, new Vector3f());
@@ -528,7 +530,7 @@ public class CollisionDetector {
             axis.normalize();
 
             float overlap = intersectOnAxis(one, two, axis, toCenter);
-            if (overlap < 0.0f)
+            if (overlap < 0.01f)
                 return false;
         }
 
@@ -541,7 +543,7 @@ public class CollisionDetector {
             axis.normalize();
 
             float overlap = intersectOnAxis(one, two, axis, toCenter);
-            if (overlap < 0.0f)
+            if (overlap < 0.01f)
                 return false;
         }
 

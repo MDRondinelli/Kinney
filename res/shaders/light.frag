@@ -25,10 +25,11 @@ layout(std140, binding = 1) uniform LightBlock {
 layout(binding = 0) uniform sampler2D gbufferTexture0; // depth
 layout(binding = 1) uniform sampler2D gbufferTexture1; // rgb: normal, a: metallic
 layout(binding = 2) uniform sampler2D gbufferTexture2; // rgb: albedo, a: roughness
-layout(binding = 3) uniform sampler2DShadow dLightCascade0;
-layout(binding = 4) uniform sampler2DShadow dLightCascade1;
-layout(binding = 5) uniform sampler2DShadow dLightCascade2;
-layout(binding = 6) uniform sampler2DShadow dLightCascade3;
+layout(binding = 3) uniform sampler2D ssaoTexture;
+layout(binding = 4) uniform sampler2DShadow dLightCascade0;
+layout(binding = 5) uniform sampler2DShadow dLightCascade1;
+layout(binding = 6) uniform sampler2DShadow dLightCascade2;
+layout(binding = 7) uniform sampler2DShadow dLightCascade3;
 
 vec3 decodePosition(vec2 uv) {
     float z = texture(gbufferTexture0, uv).r * 2.0 - 1.0;
@@ -61,7 +62,7 @@ float calcShadow(vec3 p) {
 
         for (float x = -1.0; x <= 1.0; x += 1.0) {
             for (float y = -1.0; y <= 1.0; y += 1.0) {
-                float bias = length(vec2(x, y)) * -0.002;
+                float bias = length(vec2(x, y)) * -0.0025;
                 ret += texture(dLightCascade0, p + vec3(rotation * vec2(x, y) * texelSize, bias)).r;
             }
         }
@@ -75,7 +76,7 @@ float calcShadow(vec3 p) {
 
         for (float x = -1.0; x <= 1.0; x += 1.0) {
             for (float y = -1.0; y <= 1.0; y += 1.0) {
-                float bias = length(vec2(x, y)) * -0.002;
+                float bias = length(vec2(x, y)) * -0.0025;
                 ret += texture(dLightCascade1, p + vec3(rotation * vec2(x, y) * texelSize, bias)).r;
             }
         }
@@ -89,7 +90,7 @@ float calcShadow(vec3 p) {
 
         for (float x = -1.0; x <= 1.0; x += 1.0) {
             for (float y = -1.0; y <= 1.0; y += 1.0) {
-                float bias = length(vec2(x, y)) * -0.002;
+                float bias = length(vec2(x, y)) * -0.0025;
                 ret += texture(dLightCascade2, p + vec3(vec2(x, y) * texelSize, bias)).r;
             }
         }
@@ -102,7 +103,7 @@ float calcShadow(vec3 p) {
 
     for (float x = -1.0; x <= 1.0; x += 1.0) {
         for (float y = -1.0; y <= 1.0; y += 1.0) {
-            float bias = length(vec2(x, y)) * -0.002;
+            float bias = length(vec2(x, y)) * -0.0025;
             ret += texture(dLightCascade3, p + vec3(rotation * vec2(x, y) * texelSize, bias)).r;
         }
     }
@@ -121,7 +122,8 @@ void main() {
     vec3 v = normalize(viewInv[3].xyz - p);
     vec3 l = normalize(-dLight.direction.xyz);
 
-    vec3 ambient = vec3(0.1, 0.4, 1.0) * (n.y * 0.5 + 0.5) * 0.15;// * vec3(0.1, 0.8, 1.0);
+    vec3 occlusion = texture(ssaoTexture, texcoord).xxx;
+    vec3 ambient = vec3(0.02, 0.08, 0.2) * (n.y * 0.5 + 0.5) * occlusion;// * vec3(0.1, 0.8, 1.0);
     vec3 indirect = albedo * ambient;
     vec3 direct = calcShadow(p) * dLight.color.rgb * albedo/*brdf(n, l, v, albedo, params)*/ * clamp(dot(n, l), 0.0, 1.0);
 

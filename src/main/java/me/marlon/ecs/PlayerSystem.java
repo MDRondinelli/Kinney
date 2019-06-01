@@ -15,9 +15,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class PlayerSystem implements IComponentListener, IKeyListener, IMouseListener, IUpdateListener {
-    private static final short BITS = EntityManager.PLAYER_BIT | EntityManager.RIGID_BODY_BIT | EntityManager.TRANSFORM_BIT;
+    private static final int BITS = EntityManager.PLAYER_BIT | EntityManager.RIGID_BODY_BIT | EntityManager.TRANSFORM_BIT;
 
     private EntityManager entities;
+    private BlockSystem blocks;
     private PhysicsSystem physics;
 
     private Mesh ballMesh;
@@ -25,8 +26,9 @@ public class PlayerSystem implements IComponentListener, IKeyListener, IMouseLis
 
     private Set<Integer> ids;
 
-    public PlayerSystem(EntityManager entities, PhysicsSystem physics) {
+    public PlayerSystem(EntityManager entities, BlockSystem blocks, PhysicsSystem physics) {
         this.entities = entities;
+        this.blocks = blocks;
         this.physics = physics;
 
         try {
@@ -112,21 +114,37 @@ public class PlayerSystem implements IComponentListener, IKeyListener, IMouseLis
             Vector3f playerPosition = new Vector3f(transform.getPosition());
             Vector3f playerDirection = new Vector3f(0.0f, 0.0f, -1.0f).rotate(transform.getOrientation());
 
-            float t = physics.rayCast(playerPosition, playerDirection) - 0.01f;
+            float t = physics.rayCast(playerPosition, playerDirection);
 
             if (t < 3.0f) {
-                float x = (float) Math.floor(playerPosition.x + playerDirection.x * t) + 0.5f;
-                float y = (float) Math.floor(playerPosition.y + playerDirection.y * t) + 0.5f;
-                float z = (float) Math.floor(playerPosition.z + playerDirection.z * t) + 0.5f;
+                if (button == GLFW_MOUSE_BUTTON_LEFT) {
+                    t += 0.01f;
+                    int x = (int) (playerPosition.x + playerDirection.x * t);
+                    int y = (int) (playerPosition.y + playerDirection.y * t);
+                    int z = (int) (playerPosition.z + playerDirection.z * t);
 
-                CollisionBox blockCollider = new CollisionBox(PhysicsMaterial.CONCRETE, new Matrix4f(), new Vector3f(0.5f));
-                blockCollider.updateDerivedData(new Matrix4f().translate(x, y, z));
+                    int blockEnt = blocks.getBlock(x, y, z);
+                    if (blockEnt != 0xffffffff) {
+                        entities.destroy(blockEnt);
+                    }
+                }
 
-                if (!blockCollider.collideWith(entities.getRigidBody(id).getCollider())) {
-                    int block = entities.create();
-                    entities.add(block, boxMesh);
-                    entities.add(block, new TransformComponent()).translate(new Vector3f(x, y, z));
-                    entities.add(block, blockCollider);
+                if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+                    t -= 0.01f;
+                    int x = (int) (playerPosition.x + playerDirection.x * t);
+                    int y = (int) (playerPosition.y + playerDirection.y * t);
+                    int z = (int) (playerPosition.z + playerDirection.z * t);
+
+                    CollisionBox boxCollider = new CollisionBox(PhysicsMaterial.CONCRETE, new Matrix4f(), new Vector3f(0.5f));
+                    boxCollider.updateDerivedData(new Matrix4f().translate(x + 0.5f, y + 0.5f, z + 0.5f));
+
+                    if (!boxCollider.collideWith(entities.getRigidBody(id).getCollider())) {
+                        int block = entities.create();
+                        entities.add(block, boxMesh);
+                        entities.add(block, boxCollider);
+                        entities.add(block, new Block(x, y, z));
+                        entities.add(block, new TransformComponent());
+                    }
                 }
             }
         }
@@ -158,22 +176,22 @@ public class PlayerSystem implements IComponentListener, IKeyListener, IMouseLis
 
             float altitude = Float.MAX_VALUE;
             {
-                float t = physics.rayCast(new Vector3f(body.getPosition()).add(0.1f, -0.99f, 0.1f), new Vector3f(0.0f, -1.0f, 0.0f));
+                float t = physics.rayCast(new Vector3f(body.getPosition()).add(0.25f, -0.99f, 0.25f), new Vector3f(0.0f, -1.0f, 0.0f));
                 if (altitude > t)
                     altitude = t;
             }
             {
-                float t = physics.rayCast(new Vector3f(body.getPosition()).add(0.1f, -0.99f, -0.1f), new Vector3f(0.0f, -1.0f, 0.0f));
+                float t = physics.rayCast(new Vector3f(body.getPosition()).add(0.25f, -0.99f, -0.15f), new Vector3f(0.0f, -1.0f, 0.0f));
                 if (altitude > t)
                     altitude = t;
             }
             {
-                float t = physics.rayCast(new Vector3f(body.getPosition()).add(-0.1f, -0.99f, 0.1f), new Vector3f(0.0f, -1.0f, 0.0f));
+                float t = physics.rayCast(new Vector3f(body.getPosition()).add(-0.25f, -0.99f, 0.25f), new Vector3f(0.0f, -1.0f, 0.0f));
                 if (altitude > t)
                     altitude = t;
             }
             {
-                float t = physics.rayCast(new Vector3f(body.getPosition()).add(-0.1f, -0.99f, -0.1f), new Vector3f(0.0f, -1.0f, 0.0f));
+                float t = physics.rayCast(new Vector3f(body.getPosition()).add(-0.25f, -0.99f, -0.25f), new Vector3f(0.0f, -1.0f, 0.0f));
                 if (altitude > t)
                     altitude = t;
             }
