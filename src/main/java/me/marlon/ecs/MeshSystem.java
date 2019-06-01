@@ -8,7 +8,7 @@ import org.joml.Matrix4f;
 import java.util.HashSet;
 import java.util.Set;
 
-public class MeshSystem implements IComponentListener {
+public class MeshSystem implements IComponentListener, IUpdateListener {
     private static final short BITS = EntityManager.MESH_BIT | EntityManager.TRANSFORM_BIT;
 
     private EntityManager entities;
@@ -34,6 +34,7 @@ public class MeshSystem implements IComponentListener {
             ids.remove(entity);
     }
 
+    @Override
     public void onUpdate() {
         for (int id : ids) {
             Mesh mesh = entities.getMesh(id);

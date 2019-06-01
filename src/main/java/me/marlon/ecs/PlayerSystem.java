@@ -14,7 +14,7 @@ import java.lang.Math;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PlayerSystem implements IComponentListener, IKeyListener, IMouseListener {
+public class PlayerSystem implements IComponentListener, IKeyListener, IMouseListener, IUpdateListener {
     private static final short BITS = EntityManager.PLAYER_BIT | EntityManager.RIGID_BODY_BIT | EntityManager.TRANSFORM_BIT;
 
     private EntityManager entities;
@@ -149,6 +149,7 @@ public class PlayerSystem implements IComponentListener, IKeyListener, IMouseLis
         }
     }
 
+    @Override
     public void onUpdate() {
         for (int id : ids) {
             Player player = entities.getPlayer(id);

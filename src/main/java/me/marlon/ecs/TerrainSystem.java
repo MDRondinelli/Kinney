@@ -5,7 +5,7 @@ import me.marlon.gfx.Renderer;
 import java.util.HashSet;
 import java.util.Set;
 
-public class TerrainSystem implements IComponentListener {
+public class TerrainSystem implements IComponentListener, IUpdateListener {
     private static final short BITS = EntityManager.TERRAIN_BIT;
 
     private EntityManager entities;
@@ -31,6 +31,7 @@ public class TerrainSystem implements IComponentListener {
             ids.remove(entity);
     }
 
+    @Override
     public void onUpdate() {
         for (int id : ids)
             renderer.setTerrainMesh(entities.getTerrain(id).getMesh());

@@ -10,11 +10,10 @@ import me.marlon.physics.Collider;
 import me.marlon.physics.RigidBody;
 import org.joml.Vector2f;
 
-import java.awt.event.ComponentListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EntityManager implements IKeyListener, IMouseListener {
+public class EntityManager implements IUpdateListener, IKeyListener, IMouseListener {
     public static final int MAX_ENTITIES = 2048;
 
     public static final short BLOCK_BIT = 0x0001;
@@ -42,15 +41,10 @@ public class EntityManager implements IKeyListener, IMouseListener {
     private TransformComponent[] transforms;
     private WaterMesh[] waterMeshes;
 
+    private List<IKeyListener> keyListeners;
+    private List<IMouseListener> mouseListeners;
     private List<IComponentListener> componentListeners;
-
-    private CameraSystem cameraSystem;
-    private MeshSystem meshSystem;
-    private PhysicsSystem physicsSystem;
-    private PlayerSystem playerSystem;
-    private SunSystem sunSystem;
-    private TerrainSystem terrainSystem;
-    private WaterSystem waterSystem;
+    private List<IUpdateListener> updateListeners;
 
     public EntityManager(float dt, Renderer renderer) {
         freeList = new ArrayList<>(MAX_ENTITIES);
@@ -69,15 +63,21 @@ public class EntityManager implements IKeyListener, IMouseListener {
         transforms = new TransformComponent[MAX_ENTITIES];
         waterMeshes = new WaterMesh[MAX_ENTITIES];
 
+        keyListeners = new ArrayList<>();
+        mouseListeners = new ArrayList<>();
         componentListeners = new ArrayList<>();
+        updateListeners = new ArrayList<>();
 
-        cameraSystem = new CameraSystem(this, renderer);
-        meshSystem = new MeshSystem(this, renderer);
-        physicsSystem = new PhysicsSystem(this, dt);
-        playerSystem = new PlayerSystem(this, physicsSystem);
-        sunSystem = new SunSystem(this, renderer);
-        terrainSystem = new TerrainSystem(this, renderer);
-        waterSystem = new WaterSystem(this, renderer);
+        CameraSystem cameraSystem = new CameraSystem(this, renderer);
+        MeshSystem meshSystem = new MeshSystem(this, renderer);
+        PhysicsSystem physicsSystem = new PhysicsSystem(this, dt);
+        PlayerSystem playerSystem = new PlayerSystem(this, physicsSystem);
+        SunSystem sunSystem = new SunSystem(this, renderer);
+        TerrainSystem terrainSystem = new TerrainSystem(this, renderer);
+        WaterSystem waterSystem = new WaterSystem(this, renderer);
+
+        keyListeners.add(playerSystem);
+        mouseListeners.add(playerSystem);
 
         componentListeners.add(cameraSystem);
         componentListeners.add(meshSystem);
@@ -86,37 +86,50 @@ public class EntityManager implements IKeyListener, IMouseListener {
         componentListeners.add(sunSystem);
         componentListeners.add(terrainSystem);
         componentListeners.add(waterSystem);
+
+        updateListeners.add(physicsSystem);
+        updateListeners.add(playerSystem);
+        updateListeners.add(cameraSystem);
+        updateListeners.add(sunSystem);
+        updateListeners.add(meshSystem);
+        updateListeners.add(terrainSystem);
+        updateListeners.add(waterSystem);
     }
 
+    @Override
     public void onKeyPressed(int key) {
-        playerSystem.onKeyPressed(key);
+        for (IKeyListener listener : keyListeners)
+            listener.onKeyPressed(key);
     }
 
+    @Override
     public void onKeyReleased(int key) {
-        playerSystem.onKeyReleased(key);
+        for (IKeyListener listener : keyListeners)
+            listener.onKeyReleased(key);
     }
 
+    @Override
     public void onButtonPressed(int button) {
-        playerSystem.onButtonPressed(button);
+        for (IMouseListener listener : mouseListeners)
+            listener.onButtonPressed(button);
     }
 
+    @Override
     public void onButtonReleased(int button) {
-        playerSystem.onButtonReleased(button);
+        for (IMouseListener listener : mouseListeners)
+            listener.onButtonReleased(button);
     }
 
+    @Override
     public void onMouseMoved(Vector2f position, Vector2f velocity) {
-        playerSystem.onMouseMoved(position, velocity);
+        for (IMouseListener listener : mouseListeners)
+            listener.onMouseMoved(position, velocity);
     }
 
+    @Override
     public void onUpdate() {
-//        blockSystem.onUpdate();
-        physicsSystem.onUpdate();
-        playerSystem.onUpdate();
-        cameraSystem.onUpdate();
-        sunSystem.onUpdate();
-        meshSystem.onUpdate();
-        terrainSystem.onUpdate();
-        waterSystem.onUpdate();
+        for (IUpdateListener listener : updateListeners)
+            listener.onUpdate();
     }
 
     public int create() {

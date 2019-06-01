@@ -393,7 +393,7 @@ public class Contact {
         return friction;
     }
 
-    public Collider getPrimitive(int index) {
+    public Collider getCollider(int index) {
         if (index == 0)
             return colliderA;
         else
@@ -417,10 +417,6 @@ public class Contact {
 
     public Vector3f getContactVelocity() {
         return contactVelocity;
-    }
-
-    public void setContactVelocity(Vector3f contactVelocity) {
-        this.contactVelocity = contactVelocity;
     }
 
     public float getDesiredDeltaVelocity() {

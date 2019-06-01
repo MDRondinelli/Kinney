@@ -7,7 +7,7 @@ import org.joml.Vector3f;
 import java.util.HashSet;
 import java.util.Set;
 
-public class CameraSystem implements IComponentListener {
+public class CameraSystem implements IComponentListener, IUpdateListener {
     private static final short BITS = EntityManager.CAMERA_BIT | EntityManager.TRANSFORM_BIT;
 
     private EntityManager entities;
@@ -34,6 +34,7 @@ public class CameraSystem implements IComponentListener {
             ids.remove(entity);
     }
 
+    @Override
     public void onUpdate() {
         for (int id : ids) {
             Camera camera = entities.getCamera(id);

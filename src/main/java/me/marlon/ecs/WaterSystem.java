@@ -5,7 +5,7 @@ import me.marlon.gfx.Renderer;
 import java.util.HashSet;
 import java.util.Set;
 
-public class WaterSystem implements IComponentListener {
+public class WaterSystem implements IComponentListener, IUpdateListener {
     private static final short BITS = EntityManager.TRANSFORM_BIT | EntityManager.WATER_MESH_BIT;
 
     private EntityManager entities;
@@ -31,6 +31,7 @@ public class WaterSystem implements IComponentListener {
             ids.remove(entity);
     }
 
+    @Override
     public void onUpdate() {
         for (int id : ids)
             renderer.setWaterMesh(entities.getWaterMesh(id), entities.getTransform(id).getMatrix());

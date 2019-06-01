@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class PhysicsSystem implements IComponentListener {
+public class PhysicsSystem implements IComponentListener, IUpdateListener {
     private static final short DYNAMIC_BITS = EntityManager.RIGID_BODY_BIT | EntityManager.TRANSFORM_BIT;
     private static final short STATIC_BITS = EntityManager.COLLIDER_BIT | EntityManager.TRANSFORM_BIT;
 
@@ -49,6 +49,7 @@ public class PhysicsSystem implements IComponentListener {
             staticIds.remove(entity);
     }
 
+    @Override
     public void onUpdate() {
         List<RigidBody> bodies = new ArrayList<>();
         List<Collider> colliders = new ArrayList<>();
