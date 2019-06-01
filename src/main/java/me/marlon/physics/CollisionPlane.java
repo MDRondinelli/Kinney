@@ -6,7 +6,7 @@ import org.joml.Vector3f;
 
 import java.util.List;
 
-public class CollisionPlane extends CollisionPrimitive {
+public class CollisionPlane extends Collider {
     private Vector3f normal;
     private float offset;
 

@@ -4,24 +4,40 @@ import me.marlon.gfx.Renderer;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-public class CameraSystem {
+import java.util.HashSet;
+import java.util.Set;
+
+public class CameraSystem implements IComponentListener {
     private static final short BITS = EntityManager.CAMERA_BIT | EntityManager.TRANSFORM_BIT;
 
     private EntityManager entities;
     private Renderer renderer;
 
+    private Set<Integer> ids;
+
     public CameraSystem(EntityManager entities, Renderer renderer) {
         this.entities = entities;
         this.renderer = renderer;
+
+        ids = new HashSet<>();
+    }
+
+    @Override
+    public void onComponentAdded(int entity) {
+        if (entities.match(entity, BITS))
+            ids.add(entity);
+    }
+
+    @Override
+    public void onComponentRemoved(int entity) {
+        if (!entities.match(entity, BITS))
+            ids.remove(entity);
     }
 
     public void onUpdate() {
-        for (int i = 0; i < EntityManager.MAX_ENTITIES; ++i) {
-            if (!entities.match(i, BITS))
-                continue;
-
-            Camera camera = entities.getCamera(i);
-            TransformComponent transform = entities.getTransform(i);
+        for (int id : ids) {
+            Camera camera = entities.getCamera(id);
+            TransformComponent transform = entities.getTransform(id);
 
             int parent = transform.parent;
             Matrix4f matrix = new Matrix4f(transform.getMatrix());

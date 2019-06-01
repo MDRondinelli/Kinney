@@ -2,6 +2,7 @@ package me.marlon.game;
 
 import static org.lwjgl.glfw.GLFW.*;
 
+import me.marlon.ecs.EntityManager;
 import me.marlon.gfx.Renderer;
 import me.marlon.gfx.Window;
 import org.joml.Vector2f;
@@ -14,22 +15,23 @@ public class Engine implements AutoCloseable {
     private Renderer renderer;
 
     private float deltaTime;
-    private World world;
+    private EntityManager entities;
 
     public Engine(int width, int height, String title, float deltaTime) {
         this.window = new Window(width, height, title);
         this.renderer = new Renderer(width, height);
         this.deltaTime = deltaTime;
-        this.world = new World(this);
+        entities = new EntityManager(deltaTime, renderer);
+//        this.world = new World(this);
 
         glfwSetKeyCallback(window.getHandle(), new GLFWKeyCallback() {
             public void invoke(long window, int key, int scancode, int action, int mods) {
                 switch (action) {
                     case GLFW_PRESS:
-                        world.onKeyPressed(key);
+                        entities.onKeyPressed(key);
                         break;
                     case GLFW_RELEASE:
-                        world.onKeyReleased(key);
+                        entities.onKeyReleased(key);
                         break;
                 }
             }
@@ -39,10 +41,10 @@ public class Engine implements AutoCloseable {
             public void invoke(long window, int button, int action, int mods) {
                 switch (action) {
                     case GLFW_PRESS:
-                        world.onButtonPressed(button);
+                        entities.onButtonPressed(button);
                         break;
                     case GLFW_RELEASE:
-                        world.onButtonReleased(button);
+                        entities.onButtonReleased(button);
                         break;
                 }
             }
@@ -64,14 +66,14 @@ public class Engine implements AutoCloseable {
                 x = (float) xpos;
                 float dy = (float) ypos - y;
                 y = (float) ypos;
-                world.onMouseMoved(new Vector2f(x, y), new Vector2f(dx, dy));
+                entities.onMouseMoved(new Vector2f(x, y), new Vector2f(dx, dy));
             }
         });
     }
 
     public void update() {
         renderer.clear();
-        world.onUpdate();
+        entities.onUpdate();
         renderer.submitData();
     }
 
@@ -128,7 +130,7 @@ public class Engine implements AutoCloseable {
         return deltaTime;
     }
 
-    public World getWorld() {
-        return world;
+    public EntityManager getEntities() {
+        return entities;
     }
 }

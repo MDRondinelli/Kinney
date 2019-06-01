@@ -2,7 +2,6 @@ package me.marlon.game;
 
 import me.marlon.ecs.*;
 import me.marlon.gfx.*;
-import me.marlon.physics.BuoyancyGenerator;
 import me.marlon.physics.PhysicsMaterial;
 import me.marlon.physics.RigidBody;
 import org.joml.Vector3f;
@@ -12,8 +11,7 @@ public class Main {
         Engine engine = new Engine(1280, 720, "Kinney", 1.0f / 60.0f);
         engine.getWindow().setMouseGrabbed(true);
 
-        World world = engine.getWorld();
-        EntityManager entities = world.getEntities();
+        EntityManager entities = engine.getEntities();
 
         int terrainEntity = entities.create();
         Terrain terrain = entities.add(terrainEntity, new Terrain(400));

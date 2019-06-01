@@ -6,7 +6,7 @@ import org.joml.Vector3f;
 
 import java.util.List;
 
-public class CollisionSphere extends CollisionPrimitive {
+public class CollisionSphere extends Collider {
     private float radius;
 
     public CollisionSphere(PhysicsMaterial material, Vector3f transform, float radius) {

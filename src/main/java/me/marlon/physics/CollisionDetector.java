@@ -619,7 +619,7 @@ public class CollisionDetector {
         return edge0.mul(s).add(edge1.mul(t)).add(triangle[0]);
     }
 
-    private static void collide(CollisionSphere sphere, CollisionPrimitive other, Vector3f[] triangle, List<Contact> contacts) {
+    private static void collide(CollisionSphere sphere, Collider other, Vector3f[] triangle, List<Contact> contacts) {
         Vector3f center = sphere.getWorldTransform().getTranslation(new Vector3f());
         Vector3f point = closestPoint(triangle, center);
 
@@ -760,7 +760,7 @@ public class CollisionDetector {
         return 0.0f;
     }
 
-    private static void collide(CollisionBox box, CollisionPrimitive other, Vector3f[] triangle, List<Contact> contacts) {
+    private static void collide(CollisionBox box, Collider other, Vector3f[] triangle, List<Contact> contacts) {
         Vector3f[] edges = new Vector3f[3];
         edges[0] = new Vector3f(triangle[1]).sub(triangle[0]);
         edges[1] = new Vector3f(triangle[2]).sub(triangle[1]);

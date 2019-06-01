@@ -68,7 +68,7 @@ public class RigidBody {
         return tensor.invert();
     }
 
-    private CollisionPrimitive collider;
+    private Collider collider;
 
     private float invMass;
     private Matrix3f invInertiaTensor;
@@ -90,7 +90,7 @@ public class RigidBody {
     private boolean awake;
     private float motion;
 
-    public RigidBody(CollisionPrimitive collider, float invMass, Matrix3f invInertiaTensor,
+    public RigidBody(Collider collider, float invMass, Matrix3f invInertiaTensor,
                      Vector3f position, Quaternionf orientation, Vector3f velocity, Vector3f acceleration, Vector3f rotation) {
         this.collider = collider;
         this.invMass = invMass;
@@ -115,12 +115,12 @@ public class RigidBody {
         updateDerivedData();
     }
 
-    public RigidBody(CollisionPrimitive collider, float invMass, Matrix3f invInertiaTensor,
+    public RigidBody(Collider collider, float invMass, Matrix3f invInertiaTensor,
                      Vector3f position, Quaternionf orientation) {
         this(collider, invMass, invInertiaTensor, position, orientation, new Vector3f(), new Vector3f(), new Vector3f());
     }
 
-    public RigidBody(CollisionPrimitive collider, float invMass, Matrix3f invInertiaTensor, Vector3f position) {
+    public RigidBody(Collider collider, float invMass, Matrix3f invInertiaTensor, Vector3f position) {
         this(collider, invMass, invInertiaTensor, position, new Quaternionf());
     }
 
@@ -147,7 +147,7 @@ public class RigidBody {
         transformInvInertiaTensor.m12(t52 * transform.m01() + t57 * transform.m11() + t62 * transform.m21());
         transformInvInertiaTensor.m22(t52 * transform.m02() + t57 * transform.m12() + t62 * transform.m22());
 
-        collider.updateDerivedData();
+        collider.updateDerivedData(transform);
     }
 
     public void clearAccumulators() {
@@ -204,11 +204,11 @@ public class RigidBody {
             motion = 5.0f * SLEEP_EPSILON;
     }
 
-    public CollisionPrimitive getCollider() {
+    public Collider getCollider() {
         return collider;
     }
 
-    public void setCollider(CollisionPrimitive collider) {
+    public void setCollider(Collider collider) {
         this.collider = collider;
         this.collider.setBody(this);
     }

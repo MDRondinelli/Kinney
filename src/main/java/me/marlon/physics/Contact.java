@@ -11,8 +11,8 @@ public class Contact {
     private float restitution;
     private float friction;
 
-    private CollisionPrimitive primitiveA;
-    private CollisionPrimitive primitiveB;
+    private Collider colliderA;
+    private Collider colliderB;
 
     private RigidBody bodyA;
     private RigidBody bodyB;
@@ -27,7 +27,7 @@ public class Contact {
     private Vector3f relPointA;
     private Vector3f relPointB;
 
-    public Contact(Vector3f point, Vector3f normal, float depth, CollisionPrimitive primitiveA, CollisionPrimitive primitiveB) {
+    public Contact(Vector3f point, Vector3f normal, float depth, Collider colliderA, Collider colliderB) {
         this.point = point;
         this.normal = normal;
         this.depth = depth;
@@ -35,17 +35,17 @@ public class Contact {
         restitution = 0.2f;
         friction = 1.0f;
 
-        if (primitiveA.getMaterial() == PhysicsMaterial.PLAYER || primitiveB.getMaterial() == PhysicsMaterial.PLAYER) {
+        if (colliderA.getMaterial() == PhysicsMaterial.PLAYER || colliderB.getMaterial() == PhysicsMaterial.PLAYER) {
             restitution = 0.0f;
-            if (Math.abs(normal.y) < 0.2f) {
+
+            if (Math.abs(normal.y) < 0.25f)
                 friction = 0.0f;
-            }
         }
 
-        this.primitiveA = primitiveA;
-        this.primitiveB = primitiveB;
-        this.bodyA = primitiveA.getBody();
-        this.bodyB = primitiveB.getBody();
+        this.colliderA = colliderA;
+        this.colliderB = colliderB;
+        this.bodyA = colliderA.getBody();
+        this.bodyB = colliderB.getBody();
         contactToWorld = new Matrix3f();
         worldToContact = new Matrix3f();
         contactVelocity = new Vector3f();
@@ -116,9 +116,9 @@ public class Contact {
         bodyA = bodyB;
         bodyB = bodyC;
 
-        CollisionPrimitive primitiveC = primitiveA;
-        primitiveA = primitiveB;
-        primitiveA = primitiveC;
+        Collider primitiveC = colliderA;
+        colliderA = colliderB;
+        colliderA = primitiveC;
     }
 
     public void calcData(float dt) {
@@ -393,11 +393,11 @@ public class Contact {
         return friction;
     }
 
-    public CollisionPrimitive getPrimitive(int index) {
+    public Collider getPrimitive(int index) {
         if (index == 0)
-            return primitiveA;
+            return colliderA;
         else
-            return primitiveB;
+            return colliderB;
     }
 
     public RigidBody getBody(int index) {

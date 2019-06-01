@@ -7,7 +7,7 @@ import org.joml.Vector3f;
 
 import java.util.List;
 
-public class CollisionBox extends CollisionPrimitive {
+public class CollisionBox extends Collider {
     private Vector3f halfExtents;
 
     public CollisionBox(PhysicsMaterial material, Matrix4f transform, Vector3f halfExtents) {

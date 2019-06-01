@@ -57,12 +57,12 @@ public class TransformComponent {
         transform.setPosition(v);
     }
 
-    public Quaternionf getRotation() {
-        return transform.getRotation();
+    public Quaternionf getOrientation() {
+        return transform.getOrientation();
     }
 
-    public void setRotation(Quaternionf q) {
-        transform.setRotation(q);
+    public void setOrientation(Quaternionf q) {
+        transform.setOrientation(q);
     }
 
     public float getScale() {

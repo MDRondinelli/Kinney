@@ -1,19 +1,19 @@
 package me.marlon.physics;
 
 public class PotentialContact {
-    private RigidBody bodyA;
-    private RigidBody bodyB;
+    private Collider colliderA;
+    private Collider colliderB;
 
-    public PotentialContact(RigidBody bodyA, RigidBody bodyB) {
-        this.bodyA = bodyA;
-        this.bodyB = bodyB;
+    public PotentialContact(Collider colliderA, Collider colliderB) {
+        this.colliderA = colliderA;
+        this.colliderB = colliderB;
     }
 
-    public RigidBody getBodyA() {
-        return bodyA;
+    public Collider getColliderA() {
+        return colliderA;
     }
 
-    public RigidBody getBodyB() {
-        return bodyB;
+    public Collider getColliderB() {
+        return colliderB;
     }
 }

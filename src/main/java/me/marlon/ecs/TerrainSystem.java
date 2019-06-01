@@ -2,23 +2,37 @@ package me.marlon.ecs;
 
 import me.marlon.gfx.Renderer;
 
-public class TerrainSystem {
+import java.util.HashSet;
+import java.util.Set;
+
+public class TerrainSystem implements IComponentListener {
     private static final short BITS = EntityManager.TERRAIN_BIT;
 
     private EntityManager entities;
     private Renderer renderer;
 
+    private Set<Integer> ids;
+
     public TerrainSystem(EntityManager entities, Renderer renderer) {
         this.entities = entities;
         this.renderer = renderer;
+        ids = new HashSet<>();
+    }
+
+    @Override
+    public void onComponentAdded(int entity) {
+        if (entities.match(entity, BITS))
+            ids.add(entity);
+    }
+
+    @Override
+    public void onComponentRemoved(int entity) {
+        if (!entities.match(entity, BITS))
+            ids.remove(entity);
     }
 
     public void onUpdate() {
-        for (int i = 0; i < EntityManager.MAX_ENTITIES; ++i) {
-            if (!entities.match(i, BITS))
-                continue;
-
-            renderer.setTerrainMesh(entities.getTerrain(i).getMesh());
-        }
+        for (int id : ids)
+            renderer.setTerrainMesh(entities.getTerrain(id).getMesh());
     }
 }

@@ -6,7 +6,7 @@ import org.joml.Vector3f;
 
 import java.util.List;
 
-public abstract class CollisionPrimitive {
+public abstract class Collider {
     private PhysicsMaterial material;
     private RigidBody body;
     private Matrix4f transform;
@@ -15,7 +15,7 @@ public abstract class CollisionPrimitive {
     private AABBf aabb;
     private AABBf worldAabb;
 
-    public CollisionPrimitive(PhysicsMaterial material, Matrix4f transform, AABBf aabb) {
+    public Collider(PhysicsMaterial material, Matrix4f transform, AABBf aabb) {
         this.material = material;
         this.transform = transform == null ? new Matrix4f() : new Matrix4f(transform);
         this.aabb = aabb;
@@ -29,7 +29,6 @@ public abstract class CollisionPrimitive {
         worldTransform.transformAab(min, max, min, max);
         worldAabb.setMin(min);
         worldAabb.setMax(max);
-        updateDerivedData();
     }
 
     protected void collideWith(CollisionSphere other, List<Contact> contacts) {
@@ -44,7 +43,7 @@ public abstract class CollisionPrimitive {
     protected void collideWith(CollisionTerrain other, List<Contact> contacts) {
     }
 
-    public void collideWith(CollisionPrimitive other, List<Contact> contacts) { // replace with other.collideWIth(this) in each child. That way, the type of this is known
+    public void collideWith(Collider other, List<Contact> contacts) { // replace with other.collideWIth(this) in each child. That way, the type of this is known
         if (other instanceof CollisionSphere)
             collideWith((CollisionSphere) other, contacts);
         else if (other instanceof CollisionPlane)
@@ -71,7 +70,7 @@ public abstract class CollisionPrimitive {
         return false;
     }
 
-    public boolean collideWith(CollisionPrimitive other) {
+    public boolean collideWith(Collider other) {
         if (other instanceof CollisionSphere)
             return collideWith((CollisionSphere) other);
         else if (other instanceof CollisionPlane)
@@ -85,14 +84,9 @@ public abstract class CollisionPrimitive {
 
     public abstract Float rayCast(Vector3f o, Vector3f d);
 
-    public void updateDerivedData() {
-        if (body == null) {
-            worldTransform.set(transform);
-            worldTransformInv.set(worldTransform).invertAffine();
-        } else  {
-            worldTransform.set(body.getTransform()).mul(transform);
-            worldTransformInv.set(worldTransform).invertAffine();
-        }
+    public void updateDerivedData(Matrix4f newTransform) {
+        worldTransform.set(newTransform).mul(transform);
+        worldTransformInv.set(worldTransform).invertAffine();
 
         Vector3f min = new Vector3f(aabb.minX, aabb.minY, aabb.minZ);
         Vector3f max = new Vector3f(aabb.maxX, aabb.maxY, aabb.maxZ);

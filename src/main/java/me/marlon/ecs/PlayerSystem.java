@@ -11,21 +11,23 @@ import org.joml.*;
 
 import java.io.IOException;
 import java.lang.Math;
+import java.util.HashSet;
+import java.util.Set;
 
-public class PlayerSystem implements IKeyListener, IMouseListener {
+public class PlayerSystem implements IComponentListener, IKeyListener, IMouseListener {
     private static final short BITS = EntityManager.PLAYER_BIT | EntityManager.RIGID_BODY_BIT | EntityManager.TRANSFORM_BIT;
 
     private EntityManager entities;
     private PhysicsSystem physics;
-    private float deltaTime;
 
     private Mesh ballMesh;
     private Mesh boxMesh;
 
-    public PlayerSystem(EntityManager entities, PhysicsSystem physics, float deltaTime) {
+    private Set<Integer> ids;
+
+    public PlayerSystem(EntityManager entities, PhysicsSystem physics) {
         this.entities = entities;
         this.physics = physics;
-        this.deltaTime = deltaTime;
 
         try {
             ballMesh = new Mesh(new Primitive("res/meshes/ball.obj", new Vector3f(1.0f, 0.0f, 0.0f)));
@@ -33,14 +35,26 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        ids = new HashSet<>();
     }
 
-    public void onKeyPressed(int key) {
-        for (int i = 0; i < EntityManager.MAX_ENTITIES; ++i) {
-            if (!entities.match(i, BITS))
-                continue;
+    @Override
+    public void onComponentAdded(int entity) {
+        if (entities.match(entity, BITS))
+            ids.add(entity);
+    }
 
-             Player player = entities.getPlayer(i);
+    @Override
+    public void onComponentRemoved(int entity) {
+        if (!entities.match(entity, BITS))
+            ids.remove(entity);
+    }
+
+    @Override
+    public void onKeyPressed(int key) {
+        for (int id : ids) {
+             Player player = entities.getPlayer(id);
 
              switch (key) {
                  case GLFW_KEY_A:
@@ -65,12 +79,10 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
         }
     }
 
+    @Override
     public void onKeyReleased(int key) {
-        for (int i = 0; i < EntityManager.MAX_ENTITIES; ++i) {
-            if (!entities.match(i, BITS))
-                continue;
-
-            Player player = entities.getPlayer(i);
+        for (int id : ids) {
+            Player player = entities.getPlayer(id);
 
             switch (key) {
                 case GLFW_KEY_A:
@@ -92,15 +104,13 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
         }
     }
 
+    @Override
     public void onButtonPressed(int button) {
-        for (int i = 0; i < EntityManager.MAX_ENTITIES; ++i) {
-            if (!entities.match(i, BITS))
-                continue;
-
-            TransformComponent transform = entities.getTransform(i);
+        for (int id : ids) {
+            TransformComponent transform = entities.getTransform(id);
 
             Vector3f playerPosition = new Vector3f(transform.getPosition());
-            Vector3f playerDirection = new Vector3f(0.0f, 0.0f, -1.0f).rotate(transform.getRotation());
+            Vector3f playerDirection = new Vector3f(0.0f, 0.0f, -1.0f).rotate(transform.getOrientation());
 
             float t = physics.rayCast(playerPosition, playerDirection) - 0.01f;
 
@@ -109,25 +119,26 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
                 float y = (float) Math.floor(playerPosition.y + playerDirection.y * t) + 0.5f;
                 float z = (float) Math.floor(playerPosition.z + playerDirection.z * t) + 0.5f;
 
-                RigidBody blockBody = RigidBody.createCuboid(PhysicsMaterial.CONCRETE, new Vector3f(0.5f), 0.0f, new Vector3f(x, y, z));
-                if (!blockBody.getCollider().collideWith(entities.getRigidBody(i).getCollider())) {
+                CollisionBox blockCollider = new CollisionBox(PhysicsMaterial.CONCRETE, new Matrix4f(), new Vector3f(0.5f));
+                blockCollider.updateDerivedData(new Matrix4f().translate(x, y, z));
+
+                if (!blockCollider.collideWith(entities.getRigidBody(id).getCollider())) {
                     int block = entities.create();
                     entities.add(block, boxMesh);
-                    entities.add(block, new TransformComponent()).scale(0.5f);
-                    entities.add(block, blockBody);
+                    entities.add(block, new TransformComponent()).translate(new Vector3f(x, y, z));
+                    entities.add(block, blockCollider);
                 }
             }
         }
     }
 
+    @Override
     public void onButtonReleased(int button) {}
 
+    @Override
     public void onMouseMoved(Vector2f position, Vector2f velocity) {
-        for (int i = 0; i < EntityManager.MAX_ENTITIES; ++i) {
-            if (!entities.match(i, BITS))
-                continue;
-
-            Player player = entities.getPlayer(i);
+        for (int id : ids) {
+            Player player = entities.getPlayer(id);
             player.angleX += velocity.y * -0.001f;
             player.angleY += velocity.x * -0.001f;
 
@@ -139,12 +150,9 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
     }
 
     public void onUpdate() {
-        for (int i = 0; i < EntityManager.MAX_ENTITIES; ++i) {
-            if (!entities.match(i, BITS))
-                continue;
-
-            Player player = entities.getPlayer(i);
-            RigidBody body = entities.getRigidBody(i);
+        for (int id : ids) {
+            Player player = entities.getPlayer(id);
+            RigidBody body = entities.getRigidBody(id);
             body.setAwake(true);
 
             float altitude = Float.MAX_VALUE;
@@ -171,10 +179,9 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
 
             if (altitude < 0.15f) {
                 Vector3f movement = new Vector3f(player.direction);
-                if (movement.lengthSquared() != 0.0f) {
+                movement.rotateY(player.angleY);
+                if (movement.lengthSquared() != 0.0f)
                     movement.normalize(player.speed);
-                    movement.rotateY(player.angleY);
-                }
 
                 Vector3f velocity = new Vector3f(body.getVelocity()).lerp(movement, 0.2f);
 
@@ -185,10 +192,9 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
                     body.getVelocity().y = 4.75f;
             } else {
                 Vector3f movement = new Vector3f(player.direction);
-                if (movement.lengthSquared() != 0.0f) {
+                movement.rotateY(player.angleY);
+                if (movement.lengthSquared() != 0.0f)
                     movement.normalize(player.speed);
-                    movement.rotateY(player.angleY);
-                }
 
                 Vector3f velocity = new Vector3f(body.getVelocity()).lerp(movement, 0.02f);
 
@@ -203,7 +209,7 @@ public class PlayerSystem implements IKeyListener, IMouseListener {
             orientation.mul(new Quaternionf(new AxisAngle4f(player.angleY, 0.0f, 1.0f, 0.0f)));
             orientation.mul(new Quaternionf(new AxisAngle4f(player.angleX, 1.0f, 0.0f, 0.0f)));
 
-            entities.getTransform(i).getRotation().set(orientation);
+            entities.getTransform(id).getOrientation().set(orientation);
         }
     }
 }

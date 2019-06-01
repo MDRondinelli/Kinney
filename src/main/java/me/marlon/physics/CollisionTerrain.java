@@ -8,7 +8,7 @@ import org.joml.Vector3f;
 
 import java.util.List;
 
-public class CollisionTerrain extends CollisionPrimitive {
+public class CollisionTerrain extends Collider {
     private int size; // in tiles
     private Vector3f[] data; // every 3 vec3s is a tri - every 2 tris is a quad - every size quads is a column
 

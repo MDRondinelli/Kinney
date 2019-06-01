@@ -61,7 +61,7 @@ float calcShadow(vec3 p) {
 
         for (float x = -1.0; x <= 1.0; x += 1.0) {
             for (float y = -1.0; y <= 1.0; y += 1.0) {
-                float bias = length(vec2(x, y)) * -0.001;
+                float bias = length(vec2(x, y)) * -0.002;
                 ret += texture(dLightCascade0, p + vec3(rotation * vec2(x, y) * texelSize, bias)).r;
             }
         }
