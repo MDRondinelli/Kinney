@@ -1,6 +1,6 @@
 #version 450 core
 
-const vec3 WATER_ALBEDO = vec3(0.03, 0.33, 0.66);
+const vec3 WATER_ALBEDO = vec3(0.025, 0.25, 0.5);
 
 in Vertex {
     vec3 position;

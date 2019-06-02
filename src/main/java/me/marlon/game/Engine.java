@@ -30,6 +30,8 @@ public class Engine implements AutoCloseable {
         this.deltaTime = deltaTime;
         entities = new EntityManager(deltaTime, window, renderer);
 
+        gui.add(new GuiComponent(GuiOrigin.MID, new Vector2f(), new Vector2f(8.0f), new Vector4f(1.0f)));
+
         glfwSetKeyCallback(window.getHandle(), new GLFWKeyCallback() {
             public void invoke(long window, int key, int scancode, int action, int mods) {
                 switch (action) {

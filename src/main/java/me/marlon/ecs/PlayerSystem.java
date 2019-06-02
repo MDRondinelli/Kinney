@@ -129,9 +129,8 @@ public class PlayerSystem implements IComponentListener, IKeyListener, IMouseLis
                     int z = (int) (playerPosition.z + playerDirection.z * t);
 
                     int blockEnt = blocks.getBlock(x, y, z);
-                    if (blockEnt != 0xffffffff) {
+                    if (blockEnt != 0xffffffff)
                         entities.destroy(blockEnt);
-                    }
                 }
 
                 if (button == GLFW_MOUSE_BUTTON_RIGHT) {

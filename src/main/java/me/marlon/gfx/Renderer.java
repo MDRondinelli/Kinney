@@ -62,7 +62,7 @@ public class Renderer implements AutoCloseable {
 
         guiBuffer = new Framebuffer(gui.getWidth(), gui.getHeight(), new int[] { GL_RGBA8 });
         gbuffer = new Framebuffer(gui.getWidth(), gui.getHeight(), new int[] { GL_RGBA8, GL_RGBA8 });
-        pbuffer = new Framebuffer(gui.getHeight(), gui.getHeight(), new int[] { GL_RGBA16F });
+        pbuffer = new Framebuffer(gui.getWidth(), gui.getHeight(), new int[] { GL_RGBA16F });
 
         try (MemoryStack stack = stackPush()) {
             FloatBuffer vertices = stack.mallocFloat(3 * 6);
@@ -378,10 +378,7 @@ public class Renderer implements AutoCloseable {
 
     private void drawWater() {
         if (waterMesh != null) {
-            glBlitNamedFramebuffer(gbuffer.getHandle(), pbuffer.getHandle(),
-                    0, 0, gbuffer.getWidth(), gbuffer.getHeight(),
-                    0, 0, pbuffer.getWidth(), pbuffer.getHeight(),
-                    GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+            cameraBlock.bind(0);
 
             waterShader.bind();
             waterMesh.draw();
@@ -393,6 +390,10 @@ public class Renderer implements AutoCloseable {
     }
 
     public void submitDraw() {
+        cameraBlock.bind(0);
+        lightBlock.bind(1);
+        ssaoBlock.bind(2);
+
         gbuffer.bind(GL_FRAMEBUFFER);
         glViewport(0, 0, gbuffer.getWidth(), gbuffer.getHeight());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -407,6 +408,11 @@ public class Renderer implements AutoCloseable {
         glDisable(GL_DEPTH_TEST);
 
         drawLight();
+
+        glBlitNamedFramebuffer(gbuffer.getHandle(), pbuffer.getHandle(),
+                0, 0, gbuffer.getWidth(), gbuffer.getHeight(),
+                0, 0, pbuffer.getWidth(), pbuffer.getHeight(),
+                GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

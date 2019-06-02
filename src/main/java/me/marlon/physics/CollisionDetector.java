@@ -497,8 +497,6 @@ public class CollisionDetector {
     }
 
     public static boolean collide(CollisionBox one, CollisionBox two) {
-        System.out.println('t');
-
         Vector3f[] axes = new Vector3f[15];
 
         axes[0] = one.getWorldTransform().getColumn(0, new Vector3f());
