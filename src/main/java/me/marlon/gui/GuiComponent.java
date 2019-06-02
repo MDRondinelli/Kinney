@@ -1,10 +1,11 @@
 package me.marlon.gui;
 
+import me.marlon.game.IKeyListener;
 import me.marlon.game.IMouseListener;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
 
-public class GuiComponent implements IMouseListener {
+public class GuiComponent implements IKeyListener, IMouseListener {
     private GuiOrigin origin;
     private Vector2f position;
     private Vector2f size;
@@ -15,6 +16,14 @@ public class GuiComponent implements IMouseListener {
         this.position = position;
         this.size = size;
         this.color = color;
+    }
+
+    @Override
+    public void onKeyPressed(int key) {
+    }
+
+    @Override
+    public void onKeyReleased(int key) {
     }
 
     protected void onButtonPressedImpl(int button, Vector2f position) {

@@ -3,26 +3,27 @@ package me.marlon.ecs;
 import me.marlon.game.IKeyListener;
 import me.marlon.game.IMouseListener;
 import me.marlon.gfx.*;
+import me.marlon.gui.GuiManager;
 import me.marlon.physics.Collider;
 import me.marlon.physics.RigidBody;
-import org.joml.Vector2f;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class EntityManager implements IUpdateListener, IKeyListener, IMouseListener {
-    public static final int MAX_ENTITIES = 2048;
+public class EntityManager {
+    private static final int MAX_ENTITIES = 2048;
 
     public static final int BLOCK_BIT       = 0x00000001;
     public static final int CAMERA_BIT      = 0x00000002;
     public static final int COLLIDER_BIT    = 0x00000004;
     public static final int DLIGHT_BIT      = 0x00000008;
-    public static final int MESH_BIT        = 0x00000010;
-    public static final int PLAYER_BIT      = 0x00000020;
-    public static final int RIGID_BODY_BIT  = 0x00000040;
-    public static final int TERRAIN_BIT     = 0x00000080;
-    public static final int TRANSFORM_BIT   = 0x00000100;
-    public static final int WATER_MESH_BIT  = 0x00000200;
+    public static final int INVENTORY_BIT   = 0x00000010;
+    public static final int MESH_BIT        = 0x00000020;
+    public static final int PLAYER_BIT      = 0x00000040;
+    public static final int RIGID_BODY_BIT  = 0x00000080;
+    public static final int TERRAIN_BIT     = 0x00000100;
+    public static final int TRANSFORM_BIT   = 0x00000200;
+    public static final int WATER_MESH_BIT  = 0x00000400;
 
     private ArrayList<Integer> freeList;
 
@@ -32,6 +33,7 @@ public class EntityManager implements IUpdateListener, IKeyListener, IMouseListe
     private Camera[] cameras;
     private Collider[] colliders;
     private DirectionalLight[] dLights;
+    private Inventory[] inventories;
     private Mesh[] meshes;
     private Player[] players;
     private RigidBody[] rigidBodies;
@@ -39,12 +41,9 @@ public class EntityManager implements IUpdateListener, IKeyListener, IMouseListe
     private TransformComponent[] transforms;
     private WaterMesh[] waterMeshes;
 
-    private List<IKeyListener> keyListeners;
-    private List<IMouseListener> mouseListeners;
     private List<IComponentListener> componentListeners;
-    private List<IUpdateListener> updateListeners;
 
-    public EntityManager(float dt, Window window, Renderer renderer) {
+    public EntityManager() {
         freeList = new ArrayList<>(MAX_ENTITIES);
         for (int i = 0; i < MAX_ENTITIES; ++i)
             freeList.add(MAX_ENTITIES - 1 - i);
@@ -54,6 +53,7 @@ public class EntityManager implements IUpdateListener, IKeyListener, IMouseListe
         cameras = new Camera[MAX_ENTITIES];
         colliders = new Collider[MAX_ENTITIES];
         dLights = new DirectionalLight[MAX_ENTITIES];
+        inventories = new Inventory[MAX_ENTITIES];
         meshes = new Mesh[MAX_ENTITIES];
         players = new Player[MAX_ENTITIES];
         rigidBodies = new RigidBody[MAX_ENTITIES];
@@ -61,76 +61,11 @@ public class EntityManager implements IUpdateListener, IKeyListener, IMouseListe
         transforms = new TransformComponent[MAX_ENTITIES];
         waterMeshes = new WaterMesh[MAX_ENTITIES];
 
-        keyListeners = new ArrayList<>();
-        mouseListeners = new ArrayList<>();
         componentListeners = new ArrayList<>();
-        updateListeners = new ArrayList<>();
-
-        BlockSystem blockSystem = new BlockSystem(this, 400, 100, 400);
-        CameraSystem cameraSystem = new CameraSystem(this, renderer);
-        MeshSystem meshSystem = new MeshSystem(this, renderer);
-        PhysicsSystem physicsSystem = new PhysicsSystem(this, dt);
-        PlayerSystem playerSystem = new PlayerSystem(this, blockSystem, physicsSystem, window);
-        SunSystem sunSystem = new SunSystem(this, renderer);
-        TerrainSystem terrainSystem = new TerrainSystem(this, renderer);
-        WaterSystem waterSystem = new WaterSystem(this, renderer);
-
-        keyListeners.add(playerSystem);
-        mouseListeners.add(playerSystem);
-
-        componentListeners.add(blockSystem);
-        componentListeners.add(cameraSystem);
-        componentListeners.add(meshSystem);
-        componentListeners.add(physicsSystem);
-        componentListeners.add(playerSystem);
-        componentListeners.add(sunSystem);
-        componentListeners.add(terrainSystem);
-        componentListeners.add(waterSystem);
-
-        updateListeners.add(blockSystem);
-        updateListeners.add(physicsSystem);
-        updateListeners.add(playerSystem);
-        updateListeners.add(cameraSystem);
-        updateListeners.add(sunSystem);
-        updateListeners.add(meshSystem);
-        updateListeners.add(terrainSystem);
-        updateListeners.add(waterSystem);
     }
 
-    @Override
-    public void onKeyPressed(int key) {
-        for (IKeyListener listener : keyListeners)
-            listener.onKeyPressed(key);
-    }
-
-    @Override
-    public void onKeyReleased(int key) {
-        for (IKeyListener listener : keyListeners)
-            listener.onKeyReleased(key);
-    }
-
-    @Override
-    public void onButtonPressed(int button, Vector2f position) {
-        for (IMouseListener listener : mouseListeners)
-            listener.onButtonPressed(button, position);
-    }
-
-    @Override
-    public void onButtonReleased(int button, Vector2f position) {
-        for (IMouseListener listener : mouseListeners)
-            listener.onButtonReleased(button, position);
-    }
-
-    @Override
-    public void onMouseMoved(Vector2f position, Vector2f velocity) {
-        for (IMouseListener listener : mouseListeners)
-            listener.onMouseMoved(position, velocity);
-    }
-
-    @Override
-    public void onUpdate() {
-        for (IUpdateListener listener : updateListeners)
-            listener.onUpdate();
+    public void addComponentListener(IComponentListener listener) {
+        componentListeners.add(listener);
     }
 
     public int create() {
@@ -211,6 +146,20 @@ public class EntityManager implements IUpdateListener, IKeyListener, IMouseListe
 
     public DirectionalLight getDLight(int i) {
         return dLights[i];
+    }
+
+    public Inventory add(int i, Inventory component) {
+        inventories[i] = component;
+        entities[i] |= INVENTORY_BIT;
+
+        for (IComponentListener listener : componentListeners)
+            listener.onComponentAdded(i);
+
+        return component;
+    }
+
+    public Inventory getInventory(int i) {
+        return inventories[i];
     }
 
     public Mesh add(int i, Mesh component) {

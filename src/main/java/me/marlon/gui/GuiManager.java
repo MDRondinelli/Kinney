@@ -1,5 +1,6 @@
 package me.marlon.gui;
 
+import me.marlon.game.IKeyListener;
 import me.marlon.game.IMouseListener;
 import me.marlon.gfx.Shader;
 import me.marlon.gfx.Texture;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.lwjgl.opengl.GL45.*;
 
-public class GuiManager implements AutoCloseable, IMouseListener {
+public class GuiManager implements AutoCloseable, IKeyListener, IMouseListener {
     private static final int FONT_GLYPH_SIZE = 8;
     private static final int FONT_ATLAS_SIZE = 128;
     private static final int GLYPHS_PER_ROW = FONT_ATLAS_SIZE / FONT_GLYPH_SIZE;
@@ -109,6 +110,18 @@ public class GuiManager implements AutoCloseable, IMouseListener {
     }
 
     @Override
+    public void onKeyPressed(int key) {
+        for (GuiComponent component : components)
+            component.onKeyPressed(key);
+    }
+
+    @Override
+    public void onKeyReleased(int key) {
+        for (GuiComponent component : components)
+            component.onKeyReleased(key);
+    }
+
+    @Override
     public void onButtonPressed(int button, Vector2f position) {
         if (window.isMouseGrabbed())
             return;
@@ -188,7 +201,7 @@ public class GuiManager implements AutoCloseable, IMouseListener {
                 if (idx == -1)
                     continue;
 
-                textShader.set("translation", new Vector2f(corner).add(j * scale, i * scale));
+                textShader.set("translation", new Vector2f(corner).add(j * scale * 0.75f, i * scale));
                 int texCoordOffsetX = idx % GLYPHS_PER_ROW;
                 int texCoordOffsetY = idx / GLYPHS_PER_ROW;
                 textShader.set("texcoordOffset", new Vector2f(texCoordOffsetX, texCoordOffsetY));
@@ -204,6 +217,10 @@ public class GuiManager implements AutoCloseable, IMouseListener {
 
     public void add(GuiComponent component) {
         components.add(component);
+    }
+
+    public void remove(GuiComponent component) {
+        components.remove(component);
     }
 
     public int getWidth() {

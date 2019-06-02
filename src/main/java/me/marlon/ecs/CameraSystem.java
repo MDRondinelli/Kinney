@@ -49,7 +49,7 @@ public class CameraSystem implements IComponentListener, IUpdateListener {
             }
 
             Vector3f position = matrix.getTranslation(new Vector3f());
-            camera.position.lerp(position, 0.5f);
+            camera.position.lerp(position, 0.25f);
             Matrix4f viewInv = matrix.setTranslation(camera.position);
             Matrix4f view = new Matrix4f(viewInv).invert();
 

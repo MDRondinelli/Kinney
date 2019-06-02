@@ -6,12 +6,26 @@ import me.marlon.physics.PhysicsMaterial;
 import me.marlon.physics.RigidBody;
 import org.joml.Vector3f;
 
+import java.io.IOException;
+
 public class Main {
     public static void main(String[] args) {
         Engine engine = new Engine(1280, 720, "Kinney", 1.0f / 60.0f);
         engine.getWindow().setMouseGrabbed(true);
 
+        Mesh blockMesh = null;
+
+        try {
+            blockMesh = new Mesh(new Primitive("res/meshes/box.obj", new Vector3f(0.0f, 1.0f, 0.0f)));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         EntityManager entities = engine.getEntities();
+        ItemManager items = engine.getItems();
+        items.add(new Item("Item A"));
+        items.add(new Item("Item B"));
+        items.add(new ItemBlock("Structural Block", entities, engine.getPhysicsSystem(), blockMesh));
 
         int terrainEntity = entities.create();
         Terrain terrain = entities.add(terrainEntity, new Terrain(400));
@@ -19,7 +33,15 @@ public class Main {
         entities.add(terrainEntity, new TransformComponent());
 
         int player = entities.create();
-        entities.add(player, new Camera((float) Math.toRadians(55.0f), 16.0f / 9.0f, 0.15f, 120.0f));
+        entities.add(player, new Camera((float) Math.toRadians(55.0f), 16.0f / 9.0f, 0.2f, 120.0f));
+
+        Inventory playerInventory = new Inventory();
+        playerInventory.add(items.get("Item A"), 420);
+        playerInventory.add(items.get("Item A"), 69);
+        playerInventory.add(items.get("Item B"), 21);
+        playerInventory.add(items.get("Structural Block"), 64);
+        entities.add(player, playerInventory);
+
         entities.add(player, new Player(4.0f));
 
         Vector3f playerPos = new Vector3f(200.0f, 0.0f, 200.0f);

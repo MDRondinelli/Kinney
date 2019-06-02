@@ -2,7 +2,7 @@ package me.marlon.game;
 
 import static org.lwjgl.glfw.GLFW.*;
 
-import me.marlon.ecs.EntityManager;
+import me.marlon.ecs.*;
 import me.marlon.gfx.Renderer;
 import me.marlon.gfx.Window;
 import me.marlon.gui.*;
@@ -14,6 +14,8 @@ import org.lwjgl.glfw.GLFWMouseButtonCallback;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.DoubleBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Engine implements AutoCloseable {
     private Window window;
@@ -22,13 +24,65 @@ public class Engine implements AutoCloseable {
 
     private float deltaTime;
     private EntityManager entities;
+    private ItemManager items;
+
+    private List<IUpdateListener> updateListeners;
+    private List<IKeyListener> keyListeners;
+    private List<IMouseListener> mouseListeners;
+
+    private BlockSystem blockSystem;
+    private CameraSystem cameraSystem;
+    private MeshSystem meshSystem;
+    private PhysicsSystem physicsSystem;
+    private PlayerSystem playerSystem;
+    private SunSystem sunSystem;
+    private TerrainSystem terrainSystem;
+    private WaterSystem waterSystem;
 
     public Engine(int width, int height, String title, float deltaTime) {
         this.window = new Window(width, height, title);
         this.gui = new GuiManager(window);
         this.renderer = new Renderer(gui);
         this.deltaTime = deltaTime;
-        entities = new EntityManager(deltaTime, window, renderer);
+        entities = new EntityManager();
+        items = new ItemManager();
+
+        updateListeners = new ArrayList<>();
+        keyListeners = new ArrayList<>();
+        mouseListeners = new ArrayList<>();
+
+        keyListeners.add(gui);
+        mouseListeners.add(gui);
+
+        blockSystem = new BlockSystem(entities, 400, 100, 400);
+        cameraSystem = new CameraSystem(entities, renderer);
+        meshSystem = new MeshSystem(entities, renderer);
+        physicsSystem = new PhysicsSystem(entities, deltaTime);
+        playerSystem = new PlayerSystem(entities, blockSystem, physicsSystem, window, gui);
+        sunSystem = new SunSystem(entities, renderer);
+        terrainSystem = new TerrainSystem(entities, renderer);
+        waterSystem = new WaterSystem(entities, renderer);
+
+        entities.addComponentListener(blockSystem);
+        entities.addComponentListener(cameraSystem);
+        entities.addComponentListener(meshSystem);
+        entities.addComponentListener(physicsSystem);
+        entities.addComponentListener(playerSystem);
+        entities.addComponentListener(sunSystem);
+        entities.addComponentListener(terrainSystem);
+        entities.addComponentListener(waterSystem);
+
+        updateListeners.add(blockSystem);
+        updateListeners.add(cameraSystem);
+        updateListeners.add(meshSystem);
+        updateListeners.add(physicsSystem);
+        updateListeners.add(playerSystem);
+        updateListeners.add(sunSystem);
+        updateListeners.add(terrainSystem);
+        updateListeners.add(waterSystem);
+
+        keyListeners.add(playerSystem);
+        mouseListeners.add(playerSystem);
 
         gui.add(new GuiComponent(GuiOrigin.MID, new Vector2f(), new Vector2f(8.0f), new Vector4f(1.0f)));
 
@@ -36,10 +90,12 @@ public class Engine implements AutoCloseable {
             public void invoke(long window, int key, int scancode, int action, int mods) {
                 switch (action) {
                     case GLFW_PRESS:
-                        entities.onKeyPressed(key);
+                        for (IKeyListener listener : keyListeners)
+                            listener.onKeyPressed(key);
                         break;
                     case GLFW_RELEASE:
-                        entities.onKeyReleased(key);
+                        for (IKeyListener listener : keyListeners)
+                            listener.onKeyReleased(key);
                         break;
                 }
             }
@@ -59,12 +115,12 @@ public class Engine implements AutoCloseable {
 
                 switch (action) {
                     case GLFW_PRESS:
-                        gui.onButtonPressed(button, position);
-                        entities.onButtonPressed(button, position);
+                        for (IMouseListener listener : mouseListeners)
+                            listener.onButtonPressed(button, position);
                         break;
                     case GLFW_RELEASE:
-                        gui.onButtonReleased(button, position);
-                        entities.onButtonReleased(button, position);
+                        for (IMouseListener listener : mouseListeners)
+                            listener.onButtonReleased(button, position);
                         break;
                 }
             }
@@ -90,15 +146,18 @@ public class Engine implements AutoCloseable {
                 Vector2f position = new Vector2f(x, height - y);
                 Vector2f velocity = new Vector2f(dx, -dy);
 
-                gui.onMouseMoved(position, velocity);
-                entities.onMouseMoved(position, velocity);
+                for (IMouseListener listener : mouseListeners)
+                    listener.onMouseMoved(position, velocity);
             }
         });
     }
 
     public void update() {
         renderer.clear();
-        entities.onUpdate();
+
+        for (IUpdateListener listener : updateListeners)
+            listener.onUpdate();
+
         renderer.submitData();
     }
 
@@ -139,8 +198,9 @@ public class Engine implements AutoCloseable {
     }
 
     public void close() {
-        window.close();
         renderer.close();
+        gui.close();
+        window.close();
     }
 
     public Window getWindow() {
@@ -157,5 +217,41 @@ public class Engine implements AutoCloseable {
 
     public EntityManager getEntities() {
         return entities;
+    }
+
+    public ItemManager getItems() {
+        return items;
+    }
+
+    public BlockSystem getBlockSystem() {
+        return blockSystem;
+    }
+
+    public CameraSystem getCameraSystem() {
+        return cameraSystem;
+    }
+
+    public MeshSystem getMeshSystem() {
+        return meshSystem;
+    }
+
+    public PhysicsSystem getPhysicsSystem() {
+        return physicsSystem;
+    }
+
+    public PlayerSystem getPlayerSystem() {
+        return playerSystem;
+    }
+
+    public SunSystem getSunSystem() {
+        return sunSystem;
+    }
+
+    public TerrainSystem getTerrainSystem() {
+        return terrainSystem;
+    }
+
+    public WaterSystem getWaterSystem() {
+        return waterSystem;
     }
 }
