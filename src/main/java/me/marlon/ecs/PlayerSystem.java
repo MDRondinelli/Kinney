@@ -45,8 +45,11 @@ public class PlayerSystem implements IComponentListener, IKeyListener, IMouseLis
 
     @Override
     public void onComponentAdded(int entity) {
-        if (entities.match(entity, BITS))
+        if (entities.match(entity, BITS)) {
             ids.add(entity);
+            guiInventory.setInventory(entities.getInventory(entity));
+            guiInventory.setPlayer(entities.getPlayer(entity));
+        }
     }
 
     @Override
@@ -150,8 +153,9 @@ public class PlayerSystem implements IComponentListener, IKeyListener, IMouseLis
                     }
                 }
             } else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
-                InventorySlot slot = inventory.getSlot(inventory.getSelection());
-                if (slot != null && slot.getItem().use(id))
+                Player player = entities.getPlayer(id);
+                InventorySlot slot = player.activeSlot;
+                if (!slot.isEmpty() && slot.getItem().use(id))
                     slot.remove(1);
             }
         }
@@ -180,13 +184,10 @@ public class PlayerSystem implements IComponentListener, IKeyListener, IMouseLis
     @Override
     public void onUpdate() {
         for (int id : ids) {
-            Inventory inventory = entities.getInventory(id);
-            guiInventory.setInventory(inventory);
-
-            InventorySlot slot = inventory.getSlot(inventory.getSelection());
-            guiHud.setText(slot != null ? slot.getItem().getName() + "-" + slot.getCount() : "");
-
             Player player = entities.getPlayer(id);
+            InventorySlot slot = player.activeSlot;
+            guiHud.setText(slot.isEmpty() ? "" : slot.getItem().getName() + "-" + slot.getCount());
+
             RigidBody body = entities.getRigidBody(id);
             body.setAwake(true);
 

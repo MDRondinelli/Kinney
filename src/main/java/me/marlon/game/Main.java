@@ -35,14 +35,14 @@ public class Main {
         int player = entities.create();
         entities.add(player, new Camera((float) Math.toRadians(55.0f), 16.0f / 9.0f, 0.2f, 120.0f));
 
-        Inventory playerInventory = new Inventory();
+        Inventory playerInventory = new Inventory(19);
         playerInventory.add(items.get("Item A"), 420);
         playerInventory.add(items.get("Item A"), 69);
         playerInventory.add(items.get("Item B"), 21);
         playerInventory.add(items.get("Structural Block"), 64);
         entities.add(player, playerInventory);
 
-        entities.add(player, new Player(4.0f));
+        entities.add(player, new Player(playerInventory.getSlot(0), 4.0f));
 
         Vector3f playerPos = new Vector3f(200.0f, 0.0f, 200.0f);
         playerPos.y = terrain.sample(playerPos.x, playerPos.z) + 2.0f;

@@ -2,16 +2,13 @@ package me.marlon.ecs;
 
 import me.marlon.game.Item;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class Inventory {
-    private List<InventorySlot> slots;
-    private int selection;
+    private InventorySlot[] slots;
 
-    public Inventory() {
-        slots = new ArrayList<>();
-        selection = 0;
+    public Inventory(int numSlots) {
+        slots = new InventorySlot[numSlots];
+        for (int i = 0; i < slots.length; ++i)
+            slots[i] = new InventorySlot(slots, i);
     }
 
     public void add(Item item, int count) {
@@ -22,19 +19,34 @@ public class Inventory {
             }
         }
 
-        slots.add(new InventorySlot(this, item, count));
+        for (InventorySlot slot : slots) {
+            if (slot.isEmpty()) {
+                slot.setItem(item, count);
+                return;
+            }
+        }
     }
 
     public void remove(Item item, int count) {
         // DO NOT REPLACE WITH FOR-EACH: slot.remove() WILL THROW A CONCURRENT MODIFICATION EXCEPTION
-        for (int i = 0; i < slots.size(); ++i) {
-            InventorySlot slot = slots.get(i);
+//        for (int i = 0; i < slots.size(); ++i) {
+//            InventorySlot slot = slots.get(i);
+//
+//            if (slot.getItem() == item) {
+//                slot.remove(count);
+//                return;
+//            }
+//        }
 
+        for (InventorySlot slot : slots) {
             if (slot.getItem() == item) {
                 slot.remove(count);
                 return;
             }
         }
+
+        System.err.println("Cannot remove item that doesn't exist");
+        System.exit(-1);
     }
 
     public int getCount(Item item) {
@@ -45,29 +57,18 @@ public class Inventory {
         return 0;
     }
 
+    public int getNumSlots() {
+        return slots.length;
+    }
+
     public InventorySlot getSlot(int index) {
-        if (index < 0 || index >= slots.size())
+        if (index < 0 || index >= slots.length)
             return null;
         else
-            return slots.get(index);
+            return slots[index];
     }
 
-    public List<InventorySlot> getSlots() {
+    public InventorySlot[] getSlots() {
         return slots;
-    }
-
-    public int getSelection() {
-        return selection;
-    }
-
-    public void setSelection(int selection) {
-        if (slots.size() != 0) {
-            while (selection < 0)
-                selection += slots.size();
-            while (selection >= slots.size())
-                selection -= slots.size();
-
-            this.selection = selection;
-        }
     }
 }

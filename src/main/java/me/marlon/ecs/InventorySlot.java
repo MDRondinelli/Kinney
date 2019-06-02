@@ -3,27 +3,20 @@ package me.marlon.ecs;
 import me.marlon.game.Item;
 
 public class InventorySlot {
-    private Inventory inventory;
+    private InventorySlot[] slots;
+    private int index;
+
     private Item item;
     private int count;
 
-    public InventorySlot(Inventory inventory, Item item, int count/*, boolean selected*/) {
-        this.inventory = inventory;
-        this.item = item;
-        this.count = count;
+    public InventorySlot(InventorySlot[] slots, int index) {
+        this.slots = slots;
+        this.index = index;
     }
 
-    public Item getItem() {
-        return item;
-    }
-
-    public void setItem(Item item, int count) {
-        this.item = item;
-        this.count = count;
-    }
-
-    public int getCount() {
-        return count;
+    public void clear() {
+        item = null;
+        count = 0;
     }
 
     public void add(int count) {
@@ -48,12 +41,38 @@ public class InventorySlot {
 
         this.count -= count;
 
-        if (this.count == 0) {
-            InventorySlot selection = inventory.getSlot(inventory.getSelection());
-            if (selection == this)
-                inventory.setSelection(0);
+        if (this.count == 0)
+            item = null;
+    }
 
-            inventory.getSlots().remove(this);
+    public boolean isEmpty() {
+        return item == null || count == 0;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public Item getItem() {
+        return item;
+    }
+
+    public void setItem(Item item, int count) {
+        if (item == null) {
+            System.out.println("setItem(null, ...)!");
+            System.exit(-1);
         }
+
+        if (count <= 0) {
+            System.out.println("setItem(..., 0)!");
+            System.exit(-1);
+        }
+
+        this.item = item;
+        this.count = count;
+    }
+
+    public int getCount() {
+        return count;
     }
 }
