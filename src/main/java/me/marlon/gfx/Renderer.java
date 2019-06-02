@@ -1,5 +1,6 @@
 package me.marlon.gfx;
 
+import me.marlon.gui.GuiManager;
 import org.joml.*;
 import org.lwjgl.system.MemoryStack;
 
@@ -18,6 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Renderer implements AutoCloseable {
+    private GuiManager gui;
+    private Framebuffer guiBuffer;
     private Framebuffer gbuffer;
     private Framebuffer pbuffer;
     private Primitive screenMesh;
@@ -54,9 +57,12 @@ public class Renderer implements AutoCloseable {
     private DirectionalLight dLight;
     private ShadowCascade dLightShadows;
 
-    public Renderer(int width, int height) {
-        gbuffer = new Framebuffer(width, height, new int[] { GL_RGBA8, GL_RGBA8 });
-        pbuffer = new Framebuffer(width, height, new int[] { GL_RGBA16F });
+    public Renderer(GuiManager gui) {
+        this.gui = gui;
+
+        guiBuffer = new Framebuffer(gui.getWidth(), gui.getHeight(), new int[] { GL_RGBA8 });
+        gbuffer = new Framebuffer(gui.getWidth(), gui.getHeight(), new int[] { GL_RGBA8, GL_RGBA8 });
+        pbuffer = new Framebuffer(gui.getHeight(), gui.getHeight(), new int[] { GL_RGBA16F });
 
         try (MemoryStack stack = stackPush()) {
             FloatBuffer vertices = stack.mallocFloat(3 * 6);
@@ -135,8 +141,8 @@ public class Renderer implements AutoCloseable {
             memFree(noise);
         }
 
-        ssaoTexture0 = new Texture(width / 2, height / 2, GL_R8);
-        ssaoTexture1 = new Texture(width / 2, height / 2, GL_R8);
+        ssaoTexture0 = new Texture(gui.getWidth() / 2, gui.getHeight() / 2, GL_R8);
+        ssaoTexture1 = new Texture(gui.getWidth() / 2, gui.getHeight() / 2, GL_R8);
 
         cameraBlock = new UniformBuffer(256);
         cameraData = memAlloc(cameraBlock.getSize());
@@ -198,7 +204,6 @@ public class Renderer implements AutoCloseable {
 
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_CLAMP);
-        glEnable(GL_DEPTH_TEST);
         glEnable(GL_FRAMEBUFFER_SRGB);
     }
 
@@ -211,6 +216,11 @@ public class Renderer implements AutoCloseable {
 
         lightBlock.close();
         memFree(lightData);
+
+        ssaoBlock.close();
+        ssaoNoise.close();
+        ssaoTexture0.close();
+        ssaoTexture1.close();
 
         meshShader.close();
         terrainShader.close();
@@ -298,12 +308,7 @@ public class Renderer implements AutoCloseable {
         glDisable(GL_POLYGON_OFFSET_FILL);
     }
 
-    public void submitDraw() {
-        gbuffer.bind(GL_FRAMEBUFFER);
-        glViewport(0, 0, gbuffer.getWidth(), gbuffer.getHeight());
-        glEnable(GL_DEPTH_TEST);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+    private void drawMeshes() {
         meshShader.bind();
 
         for (MeshInstance mesh : queue) {
@@ -314,7 +319,9 @@ public class Renderer implements AutoCloseable {
                 primitive.draw();
             }
         }
+    }
 
+    private void drawTerrain() {
         if (terrainMesh != null) {
             terrainShader.bind();
 
@@ -328,7 +335,9 @@ public class Renderer implements AutoCloseable {
                     chunk.draw();
             }
         }
+    }
 
+    private void drawSsao() {
         ssaoShader.bind();
         ssaoTexture0.bindImage(0, GL_WRITE_ONLY, GL_R8);
         gbuffer.bindTexture(0, 0);
@@ -351,11 +360,9 @@ public class Renderer implements AutoCloseable {
         ssaoTexture0.bindImage(1, GL_WRITE_ONLY, GL_R8);
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         glDispatchCompute((ssaoTexture0.getWidth() + 15) / 16, (ssaoTexture0.getHeight() + 15) / 16, 1);
+    }
 
-        pbuffer.bind(GL_FRAMEBUFFER);
-        glViewport(0, 0, pbuffer.getWidth(), pbuffer.getHeight());
-        glDisable(GL_DEPTH_TEST);
-
+    private void drawLight() {
         lightShader.bind();
         gbuffer.bindTexture(0, 0);
         gbuffer.bindTexture(1, 1);
@@ -367,12 +374,10 @@ public class Renderer implements AutoCloseable {
 
         glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT);
         screenMesh.draw();
+    }
 
+    private void drawWater() {
         if (waterMesh != null) {
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glEnable(GL_DEPTH_TEST);
-
             glBlitNamedFramebuffer(gbuffer.getHandle(), pbuffer.getHandle(),
                     0, 0, gbuffer.getWidth(), gbuffer.getHeight(),
                     0, 0, pbuffer.getWidth(), pbuffer.getHeight(),
@@ -380,17 +385,50 @@ public class Renderer implements AutoCloseable {
 
             waterShader.bind();
             waterMesh.draw();
-
-            glDisable(GL_BLEND);
-            glDisable(GL_DEPTH_TEST);
         }
+    }
+
+    private void drawGui() {
+        gui.draw();
+    }
+
+    public void submitDraw() {
+        gbuffer.bind(GL_FRAMEBUFFER);
+        glViewport(0, 0, gbuffer.getWidth(), gbuffer.getHeight());
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glEnable(GL_DEPTH_TEST);
+
+        drawMeshes();
+        drawTerrain();
+        drawSsao();
+
+        pbuffer.bind(GL_FRAMEBUFFER);
+        glViewport(0, 0, pbuffer.getWidth(), pbuffer.getHeight());
+        glDisable(GL_DEPTH_TEST);
+
+        drawLight();
+
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_DEPTH_TEST);
+
+        drawWater();
+
+        guiBuffer.bind(GL_FRAMEBUFFER);
+        glViewport(0, 0, guiBuffer.getWidth(), guiBuffer.getHeight());
+        glClear(GL_COLOR_BUFFER_BIT);
+        glDisable(GL_DEPTH_TEST);
+
+        drawGui();
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glDisable(GL_BLEND);
+        glDisable(GL_DEPTH_TEST);
 
         postProcessShader.bind();
         pbuffer.bindTexture(0, 0);
         pbuffer.bindTexture(1, 1);
-//        ssaoTexture0.bind(1);
+        guiBuffer.bindTexture(1, 2);
         screenMesh.draw();
     }
 

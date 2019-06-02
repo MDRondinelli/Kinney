@@ -29,6 +29,7 @@ layout(std140, binding = 1) uniform LightBlock {
 
 layout(binding = 0) uniform sampler2D depthTexture;
 layout(binding = 1) uniform sampler2D colorTexture;
+layout(binding = 2) uniform sampler2D guiTexture;
 
 vec3 decodePosition(vec2 uv) {
     float z = texture(depthTexture, uv).r * 2.0 - 1.0;
@@ -67,5 +68,8 @@ void main() {
     float fogFactor = smoothstep(FOG_BEGIN, FOG_END, distance);
 
     vec3 color = mix(texture(colorTexture, texcoord).rgb, skyColor, fogFactor);
-    outColor = vec4(tonemap(color), 1.0);
+    color = tonemap(color);
+
+    vec4 gui = texture(guiTexture, texcoord);
+    outColor = vec4(mix(color, gui.rgb, gui.a), 1.0);
 }

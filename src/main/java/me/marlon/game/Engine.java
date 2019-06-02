@@ -5,13 +5,19 @@ import static org.lwjgl.glfw.GLFW.*;
 import me.marlon.ecs.EntityManager;
 import me.marlon.gfx.Renderer;
 import me.marlon.gfx.Window;
+import me.marlon.gui.*;
 import org.joml.Vector2f;
+import org.joml.Vector4f;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWMouseButtonCallback;
+import org.lwjgl.system.MemoryStack;
+
+import java.nio.DoubleBuffer;
 
 public class Engine implements AutoCloseable {
     private Window window;
+    private GuiManager gui;
     private Renderer renderer;
 
     private float deltaTime;
@@ -19,10 +25,10 @@ public class Engine implements AutoCloseable {
 
     public Engine(int width, int height, String title, float deltaTime) {
         this.window = new Window(width, height, title);
-        this.renderer = new Renderer(width, height);
+        this.gui = new GuiManager(window);
+        this.renderer = new Renderer(gui);
         this.deltaTime = deltaTime;
-        entities = new EntityManager(deltaTime, renderer);
-//        this.world = new World(this);
+        entities = new EntityManager(deltaTime, window, renderer);
 
         glfwSetKeyCallback(window.getHandle(), new GLFWKeyCallback() {
             public void invoke(long window, int key, int scancode, int action, int mods) {
@@ -39,12 +45,24 @@ public class Engine implements AutoCloseable {
 
         glfwSetMouseButtonCallback(window.getHandle(), new GLFWMouseButtonCallback() {
             public void invoke(long window, int button, int action, int mods) {
+                Vector2f position = new Vector2f();
+
+                try (MemoryStack stack = MemoryStack.stackPush()) {
+                    DoubleBuffer x = stack.mallocDouble(1);
+                    DoubleBuffer y = stack.mallocDouble(1);
+                    glfwGetCursorPos(window, x, y);
+                    position.x = (float) x.get();
+                    position.y = height - (float) y.get();
+                }
+
                 switch (action) {
                     case GLFW_PRESS:
-                        entities.onButtonPressed(button);
+                        gui.onButtonPressed(button, position);
+                        entities.onButtonPressed(button, position);
                         break;
                     case GLFW_RELEASE:
-                        entities.onButtonReleased(button);
+                        gui.onButtonReleased(button, position);
+                        entities.onButtonReleased(button, position);
                         break;
                 }
             }
@@ -66,7 +84,12 @@ public class Engine implements AutoCloseable {
                 x = (float) xpos;
                 float dy = (float) ypos - y;
                 y = (float) ypos;
-                entities.onMouseMoved(new Vector2f(x, y), new Vector2f(dx, dy));
+
+                Vector2f position = new Vector2f(x, height - y);
+                Vector2f velocity = new Vector2f(dx, -dy);
+
+                gui.onMouseMoved(position, velocity);
+                entities.onMouseMoved(position, velocity);
             }
         });
     }

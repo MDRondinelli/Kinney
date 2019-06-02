@@ -45,6 +45,14 @@ public class Window implements AutoCloseable {
         glfwSetInputMode(window, mode, value);
     }
 
+    public int getInputMode(int mode) {
+        return glfwGetInputMode(window, mode);
+    }
+
+    public boolean isMouseGrabbed() {
+        return getInputMode(GLFW_CURSOR) == GLFW_CURSOR_DISABLED;
+    }
+
     public void setMouseGrabbed(boolean grabbed) {
         setInputMode(GLFW_CURSOR, grabbed ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
     }

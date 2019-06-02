@@ -2,10 +2,7 @@ package me.marlon.ecs;
 
 import me.marlon.game.IKeyListener;
 import me.marlon.game.IMouseListener;
-import me.marlon.gfx.DirectionalLight;
-import me.marlon.gfx.Mesh;
-import me.marlon.gfx.Renderer;
-import me.marlon.gfx.WaterMesh;
+import me.marlon.gfx.*;
 import me.marlon.physics.Collider;
 import me.marlon.physics.RigidBody;
 import org.joml.Vector2f;
@@ -47,7 +44,7 @@ public class EntityManager implements IUpdateListener, IKeyListener, IMouseListe
     private List<IComponentListener> componentListeners;
     private List<IUpdateListener> updateListeners;
 
-    public EntityManager(float dt, Renderer renderer) {
+    public EntityManager(float dt, Window window, Renderer renderer) {
         freeList = new ArrayList<>(MAX_ENTITIES);
         for (int i = 0; i < MAX_ENTITIES; ++i)
             freeList.add(MAX_ENTITIES - 1 - i);
@@ -73,7 +70,7 @@ public class EntityManager implements IUpdateListener, IKeyListener, IMouseListe
         CameraSystem cameraSystem = new CameraSystem(this, renderer);
         MeshSystem meshSystem = new MeshSystem(this, renderer);
         PhysicsSystem physicsSystem = new PhysicsSystem(this, dt);
-        PlayerSystem playerSystem = new PlayerSystem(this, blockSystem, physicsSystem);
+        PlayerSystem playerSystem = new PlayerSystem(this, blockSystem, physicsSystem, window);
         SunSystem sunSystem = new SunSystem(this, renderer);
         TerrainSystem terrainSystem = new TerrainSystem(this, renderer);
         WaterSystem waterSystem = new WaterSystem(this, renderer);
@@ -113,15 +110,15 @@ public class EntityManager implements IUpdateListener, IKeyListener, IMouseListe
     }
 
     @Override
-    public void onButtonPressed(int button) {
+    public void onButtonPressed(int button, Vector2f position) {
         for (IMouseListener listener : mouseListeners)
-            listener.onButtonPressed(button);
+            listener.onButtonPressed(button, position);
     }
 
     @Override
-    public void onButtonReleased(int button) {
+    public void onButtonReleased(int button, Vector2f position) {
         for (IMouseListener listener : mouseListeners)
-            listener.onButtonReleased(button);
+            listener.onButtonReleased(button, position);
     }
 
     @Override

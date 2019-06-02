@@ -6,6 +6,7 @@ import me.marlon.game.IKeyListener;
 import me.marlon.game.IMouseListener;
 import me.marlon.gfx.Mesh;
 import me.marlon.gfx.Primitive;
+import me.marlon.gfx.Window;
 import me.marlon.physics.*;
 import org.joml.*;
 
@@ -20,16 +21,18 @@ public class PlayerSystem implements IComponentListener, IKeyListener, IMouseLis
     private EntityManager entities;
     private BlockSystem blocks;
     private PhysicsSystem physics;
+    private Window window;
 
     private Mesh ballMesh;
     private Mesh boxMesh;
 
     private Set<Integer> ids;
 
-    public PlayerSystem(EntityManager entities, BlockSystem blocks, PhysicsSystem physics) {
+    public PlayerSystem(EntityManager entities, BlockSystem blocks, PhysicsSystem physics, Window window) {
         this.entities = entities;
         this.blocks = blocks;
         this.physics = physics;
+        this.window = window;
 
         try {
             ballMesh = new Mesh(new Primitive("res/meshes/ball.obj", new Vector3f(1.0f, 0.0f, 0.0f)));
@@ -74,6 +77,8 @@ public class PlayerSystem implements IComponentListener, IKeyListener, IMouseLis
                  case GLFW_KEY_SPACE:
                      player.jumping = true;
                      break;
+                case GLFW_KEY_TAB:
+                    window.setMouseGrabbed(!window.isMouseGrabbed());
 //                 case GLFW_KEY_LEFT_SHIFT:
 //                     player.speed += 4.0f;
 //                     break;
@@ -107,7 +112,7 @@ public class PlayerSystem implements IComponentListener, IKeyListener, IMouseLis
     }
 
     @Override
-    public void onButtonPressed(int button) {
+    public void onButtonPressed(int button, Vector2f position) {
         for (int id : ids) {
             TransformComponent transform = entities.getTransform(id);
 
@@ -151,14 +156,17 @@ public class PlayerSystem implements IComponentListener, IKeyListener, IMouseLis
     }
 
     @Override
-    public void onButtonReleased(int button) {}
+    public void onButtonReleased(int button, Vector2f position) {}
 
     @Override
     public void onMouseMoved(Vector2f position, Vector2f velocity) {
+        if (!window.isMouseGrabbed())
+            return;
+
         for (int id : ids) {
             Player player = entities.getPlayer(id);
-            player.angleX += velocity.y * -0.001f;
-            player.angleY += velocity.x * -0.001f;
+            player.angleX += velocity.y * 0.001f;
+            player.angleY -= velocity.x * 0.001f;
 
             if (player.angleX < (float) Math.PI * -0.5f)
                 player.angleX = (float) Math.PI * -0.5f;
