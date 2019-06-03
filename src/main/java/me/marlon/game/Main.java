@@ -42,7 +42,7 @@ public class Main {
         playerInventory.add(items.get("Structural Block"), 64);
         entities.add(player, playerInventory);
 
-        entities.add(player, new Player(playerInventory.getSlot(0), 4.0f));
+        entities.add(player, new Player(playerInventory.getSlot(0), 4.0f, 3.5f));
 
         Vector3f playerPos = new Vector3f(200.0f, 0.0f, 200.0f);
         playerPos.y = terrain.sample(playerPos.x, playerPos.z) + 2.0f;

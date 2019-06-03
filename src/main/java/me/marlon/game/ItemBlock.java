@@ -25,9 +25,10 @@ public class ItemBlock extends Item {
         Vector3f o = new Vector3f(userTransform.getPosition());
         Vector3f d = new Vector3f(0.0f, 0.0f, -1.0f).rotate(userTransform.getOrientation());
 
-        float t = physicsSystem.rayCast(o, d);
+        Player userPlayer = entities.getPlayer(user);
 
-        if (t < 3.5f) {
+        float t = physicsSystem.rayCast(o, d);
+        if (t < userPlayer.reach) {
             t -= 0.01f;
 
             int x = (int) (o.x + d.x * t);

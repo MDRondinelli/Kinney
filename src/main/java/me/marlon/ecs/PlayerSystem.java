@@ -129,17 +129,17 @@ public class PlayerSystem implements IComponentListener, IKeyListener, IMouseLis
             return;
 
         for (int id : ids) {
-            Inventory inventory = entities.getInventory(id);
+            Player player = entities.getPlayer(id);
 
             if (button == GLFW_MOUSE_BUTTON_LEFT) {
+                Inventory inventory = entities.getInventory(id);
                 TransformComponent transform = entities.getTransform(id);
 
                 Vector3f o = new Vector3f(transform.getPosition());
                 Vector3f d = new Vector3f(0.0f, 0.0f, -1.0f).rotate(transform.getOrientation());
 
                 float t = physics.rayCast(o, d);
-
-                if (t < 3.5f) {
+                if (t < player.reach) {
                     t += 0.01f;
                     int x = (int) (o.x + d.x * t);
                     int y = (int) (o.y + d.y * t);
@@ -153,7 +153,6 @@ public class PlayerSystem implements IComponentListener, IKeyListener, IMouseLis
                     }
                 }
             } else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
-                Player player = entities.getPlayer(id);
                 InventorySlot slot = player.activeSlot;
                 if (!slot.isEmpty() && slot.getItem().use(id))
                     slot.remove(1);

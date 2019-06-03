@@ -14,12 +14,13 @@ public class GuiInventory extends GuiComponent {
     private Inventory inventory;
     private Player player;
 
+    private GuiComponent title;
     private List<GuiText> texts;
-    private GuiComponent color;
 
     public GuiInventory(GuiOrigin origin, Vector2f position) {
         super(origin, position, new Vector2f(608.0f), new Vector4f(0.0f, 0.0f, 0.0f, 0.9f));
         texts = new ArrayList<>();
+        title = new GuiText(GuiOrigin.BOT, new Vector2f(0.0f, 10.0f + getSize().y * 0.5f), 32.0f, "Inventory");
     }
 
     @Override
@@ -52,6 +53,8 @@ public class GuiInventory extends GuiComponent {
     public void draw(GuiManager gui) {
         gui.push(this);
         gui.rect(getSize(), getColor());
+
+        title.draw(gui);
 
         for (int i = 0; i < inventory.getNumSlots(); ++i) {
             InventorySlot slot = inventory.getSlot(i);
