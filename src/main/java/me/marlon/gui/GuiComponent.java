@@ -6,12 +6,14 @@ import org.joml.Vector2f;
 import org.joml.Vector4f;
 
 public class GuiComponent implements IKeyListener, IMouseListener {
+    private GuiManager manager;
     private GuiOrigin origin;
     private Vector2f position;
     private Vector2f size;
     private Vector4f color;
 
-    public GuiComponent(GuiOrigin origin, Vector2f position, Vector2f size, Vector4f color) {
+    public GuiComponent(GuiManager manager, GuiOrigin origin, Vector2f position, Vector2f size, Vector4f color) {
+        this.manager = manager;
         this.origin = origin;
         this.position = position;
         this.size = size;
@@ -77,10 +79,14 @@ public class GuiComponent implements IKeyListener, IMouseListener {
         onMouseMovedImpl(position, velocity);
     }
 
-    public void draw(GuiManager gui) {
-        gui.push(this);
-        gui.rect(size, color);
-        gui.pop();
+    public void draw() {
+        manager.push(this);
+        manager.rect(size, color);
+        manager.pop();
+    }
+
+    public GuiManager getManager() {
+        return manager;
     }
 
     public GuiOrigin getOrigin() {

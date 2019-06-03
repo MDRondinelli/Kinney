@@ -4,6 +4,8 @@ import static org.lwjgl.glfw.GLFW.*;
 
 import me.marlon.game.IKeyListener;
 import me.marlon.game.IMouseListener;
+import me.marlon.game.Inventory;
+import me.marlon.game.InventorySlot;
 import me.marlon.gfx.Window;
 import me.marlon.gui.GuiInventory;
 import me.marlon.gui.GuiManager;
@@ -17,7 +19,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class PlayerSystem implements IComponentListener, IKeyListener, IMouseListener, IUpdateListener {
-    private static final int BITS = EntityManager.INVENTORY_BIT | EntityManager.PLAYER_BIT | EntityManager.RIGID_BODY_BIT | EntityManager.TRANSFORM_BIT;
+    private static final int BITS = EntityManager.PLAYER_BIT | EntityManager.RIGID_BODY_BIT | EntityManager.TRANSFORM_BIT;
 
     private EntityManager entities;
     private BlockSystem blocks;
@@ -36,8 +38,8 @@ public class PlayerSystem implements IComponentListener, IKeyListener, IMouseLis
         this.window = window;
         this.gui = gui;
 
-        guiInventory = new GuiInventory(GuiOrigin.MID, new Vector2f(0.0f));
-        guiHud = new GuiText(GuiOrigin.BOT, new Vector2f(0.0f, 10.0f - gui.getHeight() * 0.5f), 32.0f);
+        guiInventory = new GuiInventory(gui, GuiOrigin.MID, new Vector2f(0.0f));
+        guiHud = new GuiText(gui, GuiOrigin.BOT, new Vector2f(0.0f, 10.0f - gui.getHeight() * 0.5f), 32.0f);
         gui.add(guiHud);
 
         ids = new HashSet<>();
@@ -47,7 +49,6 @@ public class PlayerSystem implements IComponentListener, IKeyListener, IMouseLis
     public void onComponentAdded(int entity) {
         if (entities.match(entity, BITS)) {
             ids.add(entity);
-            guiInventory.setInventory(entities.getInventory(entity));
             guiInventory.setPlayer(entities.getPlayer(entity));
         }
     }
@@ -79,21 +80,31 @@ public class PlayerSystem implements IComponentListener, IKeyListener, IMouseLis
                  case GLFW_KEY_SPACE:
                      player.jumping = true;
                      break;
-                case GLFW_KEY_TAB:
-                    if (window.isMouseGrabbed()) {
-                        gui.add(guiInventory);
-                        window.setMouseGrabbed(false);
-                    } else {
-                        gui.remove(guiInventory);
-                        window.setMouseGrabbed(true);
-                    }
+                 case GLFW_KEY_E: {
+                     TransformComponent transform = entities.getTransform(id);
 
-                    break;
-                 case GLFW_KEY_R:
+                     Vector3f o = new Vector3f(transform.getPosition());
+                     Vector3f d = new Vector3f(0.0f, 0.0f, -1.0f).rotate(transform.getOrientation());
+
+                     float t = physics.rayCast(o, d);
+                     if (t < player.reach) {
+                         t += 0.01f;
+                         int x = (int) (o.x + d.x * t);
+                         int y = (int) (o.y + d.y * t);
+                         int z = (int) (o.z + d.z * t);
+
+                         int blockEnt = blocks.getBlock(x, y, z);
+                         if (blockEnt != 0xffffffff) {
+                             Block block = entities.getBlock(blockEnt);
+                             block.onUse(id);
+                         }
+                     }
+
                      break;
-//                 case GLFW_KEY_LEFT_SHIFT:
-//                     player.speed += 4.0f;
-//                     break;
+                 }
+                 case GLFW_KEY_TAB:
+                    gui.toggle(guiInventory);
+                    break;
              }
         }
     }
@@ -116,23 +127,19 @@ public class PlayerSystem implements IComponentListener, IKeyListener, IMouseLis
                 case GLFW_KEY_S:
                     player.direction.z -= 1.0f;
                     break;
-//                case GLFW_KEY_LEFT_SHIFT:
-//                    player.speed -= 4.0f;
-//                    break;
             }
         }
     }
 
     @Override
     public void onButtonPressed(int button, Vector2f position) {
-        if (!window.isMouseGrabbed())
-            return;
+//        if (!window.isMouseGrabbed())
+//            return;
 
         for (int id : ids) {
             Player player = entities.getPlayer(id);
 
             if (button == GLFW_MOUSE_BUTTON_LEFT) {
-                Inventory inventory = entities.getInventory(id);
                 TransformComponent transform = entities.getTransform(id);
 
                 Vector3f o = new Vector3f(transform.getPosition());
@@ -145,10 +152,14 @@ public class PlayerSystem implements IComponentListener, IKeyListener, IMouseLis
                     int y = (int) (o.y + d.y * t);
                     int z = (int) (o.z + d.z * t);
 
+                    int above = blocks.getBlock(x, y + 1, z);
+                    if (above != 0xffffffff && entities.getBlock(above).isFunctional())
+                        return;
+
                     int blockEnt = blocks.getBlock(x, y, z);
                     if (blockEnt != 0xffffffff) {
                         Block block = entities.getBlock(blockEnt);
-                        inventory.add(block.getItem(), 1);
+                        player.inventory.add(block.getItem(), 1);
                         entities.destroy(blockEnt);
                     }
                 }
@@ -165,8 +176,8 @@ public class PlayerSystem implements IComponentListener, IKeyListener, IMouseLis
 
     @Override
     public void onMouseMoved(Vector2f position, Vector2f velocity) {
-        if (!window.isMouseGrabbed())
-            return;
+//        if (!window.isMouseGrabbed())
+//            return;
 
         for (int id : ids) {
             Player player = entities.getPlayer(id);

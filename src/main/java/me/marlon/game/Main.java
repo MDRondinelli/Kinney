@@ -6,43 +6,47 @@ import me.marlon.physics.PhysicsMaterial;
 import me.marlon.physics.RigidBody;
 import org.joml.Vector3f;
 
-import java.io.IOException;
-
 public class Main {
     public static void main(String[] args) {
         Engine engine = new Engine(1280, 720, "Kinney", 1.0f / 60.0f);
         engine.getWindow().setMouseGrabbed(true);
 
-        Mesh blockMesh = null;
-
-        try {
-            blockMesh = new Mesh(new Primitive("res/meshes/box.obj", new Vector3f(0.0f, 1.0f, 0.0f)));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        BlockSystem blocks = engine.getBlockSystem();
+        PhysicsSystem physics = engine.getPhysicsSystem();
 
         EntityManager entities = engine.getEntities();
         ItemManager items = engine.getItems();
         items.add(new Item("Item A"));
         items.add(new Item("Item B"));
-        items.add(new ItemBlock("Structural Block", entities, engine.getPhysicsSystem(), blockMesh));
+
+        items.add(new ItemBlock("Test Block", entities, blocks, physics, "res/meshes/box.obj", new BlockFactory() {
+            public Block create(Item item, int x, int y, int z) {
+                return new Block(item, false, x, y, z);
+            }
+        }));
+
+        items.add(new ItemBlock("Chest", entities, blocks, physics, "res/meshes/chest.obj", new BlockFactory() {
+            public Block create(Item item, int x, int y, int z) {
+                return new BlockChest(item, x, y, z, entities, engine.getGui());
+            }
+        }));
 
         int terrainEntity = entities.create();
         Terrain terrain = entities.add(terrainEntity, new Terrain(400));
         entities.add(terrainEntity, RigidBody.createTerrain(terrain));
         entities.add(terrainEntity, new TransformComponent());
 
-        int player = entities.create();
-        entities.add(player, new Camera((float) Math.toRadians(55.0f), 16.0f / 9.0f, 0.2f, 120.0f));
+        int playerEntity = entities.create();
+        entities.add(playerEntity, new Camera((float) Math.toRadians(55.0f), 16.0f / 9.0f, 0.2f, 120.0f));
 
-        Inventory playerInventory = new Inventory(19);
-        playerInventory.add(items.get("Item A"), 420);
-        playerInventory.add(items.get("Item A"), 69);
-        playerInventory.add(items.get("Item B"), 21);
-        playerInventory.add(items.get("Structural Block"), 64);
-        entities.add(player, playerInventory);
+        Player player = new Player(4.0f, 4.0f);
+        player.inventory.add(items.get("Item A"), 420);
+        player.inventory.add(items.get("Item A"), 69);
+        player.inventory.add(items.get("Item B"), 21);
+        player.inventory.add(items.get("Test Block"), 64);
+        player.inventory.add(items.get("Chest"), 64);
 
-        entities.add(player, new Player(playerInventory.getSlot(0), 4.0f, 3.5f));
+        entities.add(playerEntity, player);
 
         Vector3f playerPos = new Vector3f(200.0f, 0.0f, 200.0f);
         playerPos.y = terrain.sample(playerPos.x, playerPos.z) + 2.0f;
@@ -51,13 +55,8 @@ public class Main {
         playerBody.getInvInertiaTensor().zero();
         playerBody.getAcceleration().y = -10.0f;
 
-        entities.add(player, playerBody);
-        entities.add(player, new TransformComponent());
-
-//        RigidBody playerBody = RigidBody.createCuboid(new Vector3f(0.1f, 1.0f, 0.1f), 1.0f / 200.0f, new Vector3f(200.0f, terrain.sample(200.0f, 200.0f) + 2.0f, 200.0f));
-//        playerBody.getAcceleration().y = -10.0f;
-//        playerBody.getInvInertiaTensor().zero();
-//        entities.add(player, playerBody);
+        entities.add(playerEntity, playerBody);
+        entities.add(playerEntity, new TransformComponent());
 
         int water = entities.create();
         entities.add(water, new WaterMesh(1024));

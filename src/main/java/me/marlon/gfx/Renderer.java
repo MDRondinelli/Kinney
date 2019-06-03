@@ -141,8 +141,8 @@ public class Renderer implements AutoCloseable {
             memFree(noise);
         }
 
-        ssaoTexture0 = new Texture(gui.getWidth() / 2, gui.getHeight() / 2, GL_R8);
-        ssaoTexture1 = new Texture(gui.getWidth() / 2, gui.getHeight() / 2, GL_R8);
+        ssaoTexture0 = new Texture(gui.getWidth(), gui.getHeight(), GL_R8);
+        ssaoTexture1 = new Texture(gui.getWidth(), gui.getHeight(), GL_R8);
 
         cameraBlock = new UniformBuffer(256);
         cameraData = memAlloc(cameraBlock.getSize());
@@ -200,7 +200,7 @@ public class Renderer implements AutoCloseable {
         proj = new Matrix4f();
         projInv = new Matrix4f();
 
-        dLightShadows = new ShadowCascade(new int[] { 2048, 2048, 2048, 2048 });
+        dLightShadows = new ShadowCascade(new int[] { 4096, 4096, 4096, 4096 });
 
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_CLAMP);

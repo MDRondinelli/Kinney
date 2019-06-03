@@ -1,5 +1,6 @@
 package me.marlon.gui;
 
+import me.marlon.ecs.IUpdateListener;
 import me.marlon.game.IKeyListener;
 import me.marlon.game.IMouseListener;
 import me.marlon.gfx.Shader;
@@ -13,11 +14,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.lwjgl.opengl.GL45.*;
 
-public class GuiManager implements AutoCloseable, IKeyListener, IMouseListener {
+public class GuiManager implements AutoCloseable, IKeyListener, IMouseListener, IUpdateListener {
     private static final int FONT_GLYPH_SIZE = 8;
     private static final int FONT_ATLAS_SIZE = 128;
     private static final int GLYPHS_PER_ROW = FONT_ATLAS_SIZE / FONT_GLYPH_SIZE;
@@ -35,7 +38,9 @@ public class GuiManager implements AutoCloseable, IKeyListener, IMouseListener {
     private Texture font;
 
     private List<Vector2f> translations;
-    private List<GuiComponent> components;
+    private Set<GuiComponent> components;
+    private List<GuiComponent> added;
+    private List<GuiComponent> removed;
 
     public GuiManager(Window window) {
         this.window = window;
@@ -95,7 +100,9 @@ public class GuiManager implements AutoCloseable, IKeyListener, IMouseListener {
         font = Texture.fromFile("res/font.png", GL_R8);
 
         translations = new ArrayList<>();
-        components = new ArrayList<>();
+        components = new HashSet<>();
+        added = new ArrayList<>();
+        removed = new ArrayList<>();
     }
 
     @Override
@@ -149,6 +156,14 @@ public class GuiManager implements AutoCloseable, IKeyListener, IMouseListener {
         position = new Vector2f(position).sub(window.getFramebufferWidth() / 2.0f, window.getFramebufferHeight() / 2.0f);
         for (GuiComponent component : components)
             component.onMouseMoved(new Vector2f(position).sub(component.getCenter()), velocity);
+    }
+
+    @Override
+    public void onUpdate() {
+        components.addAll(added);
+        components.removeAll(removed);
+        added.clear();
+        removed.clear();
     }
 
     public void push(GuiComponent component) {
@@ -212,15 +227,22 @@ public class GuiManager implements AutoCloseable, IKeyListener, IMouseListener {
 
     public void draw() {
         for (GuiComponent component : components)
-            component.draw(this);
+            component.draw();
     }
 
     public void add(GuiComponent component) {
-        components.add(component);
+        added.add(component);
     }
 
     public void remove(GuiComponent component) {
-        components.remove(component);
+        removed.add(component);
+    }
+
+    public void toggle(GuiComponent component) {
+        if (components.contains(component))
+            remove(component);
+        else
+            add(component);
     }
 
     public int getWidth() {

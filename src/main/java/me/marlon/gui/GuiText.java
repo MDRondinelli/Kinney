@@ -20,24 +20,24 @@ public class GuiText extends GuiComponent {
     private float scale;
     private String text;
 
-    public GuiText(GuiOrigin origin, Vector2f position, float scale, String text) {
-        super(origin, position, getSize(text).mul(scale), new Vector4f(1.0f));
+    public GuiText(GuiManager manager, GuiOrigin origin, Vector2f position, float scale, String text) {
+        super(manager, origin, position, getSize(text).mul(scale), new Vector4f(1.0f));
         this.scale = scale;
         this.text = text;
     }
 
-    public GuiText(GuiOrigin origin, Vector2f position, float scale) {
-        super(origin, position, new Vector2f(), new Vector4f(1.0f));
+    public GuiText(GuiManager manager, GuiOrigin origin, Vector2f position, float scale) {
+        super(manager, origin, position, new Vector2f(), new Vector4f(1.0f));
         this.scale = scale;
         this.text = "";
     }
 
     @Override
-    public void draw(GuiManager gui) {
+    public void draw() {
         if (!text.isEmpty()) {
-            gui.push(this);
-            gui.text(getSize(), getColor(), text);
-            gui.pop();
+            getManager().push(this);
+            getManager().text(getSize(), getColor(), text);
+            getManager().pop();
         }
     }
 

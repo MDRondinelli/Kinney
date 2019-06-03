@@ -4,12 +4,14 @@ import me.marlon.game.Item;
 
 public class Block implements IUpdateListener {
     private Item item;
+    private boolean functional;
     private int x;
     private int y;
     private int z;
 
-    public Block(Item item, int x, int y, int z) {
+    public Block(Item item, boolean functional, int x, int y, int z) {
         this.item = item;
+        this.functional = functional;
         this.x = x;
         this.y = y;
         this.z = z;
@@ -19,8 +21,15 @@ public class Block implements IUpdateListener {
     public void onUpdate() {
     }
 
+    public void onUse(int user) {
+    }
+
     public Item getItem() {
         return item;
+    }
+
+    public boolean isFunctional() {
+        return functional;
     }
 
     public int getX() {

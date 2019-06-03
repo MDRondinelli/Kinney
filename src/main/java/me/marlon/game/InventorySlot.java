@@ -1,6 +1,4 @@
-package me.marlon.ecs;
-
-import me.marlon.game.Item;
+package me.marlon.game;
 
 public class InventorySlot {
     private InventorySlot[] slots;

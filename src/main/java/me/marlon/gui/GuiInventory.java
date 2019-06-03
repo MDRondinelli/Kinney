@@ -1,7 +1,6 @@
 package me.marlon.gui;
 
-import me.marlon.ecs.Inventory;
-import me.marlon.ecs.InventorySlot;
+import me.marlon.game.InventorySlot;
 import me.marlon.ecs.Player;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
@@ -11,16 +10,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GuiInventory extends GuiComponent {
-    private Inventory inventory;
     private Player player;
 
-    private GuiComponent title;
+    private GuiText title;
     private List<GuiText> texts;
 
-    public GuiInventory(GuiOrigin origin, Vector2f position) {
-        super(origin, position, new Vector2f(608.0f), new Vector4f(0.0f, 0.0f, 0.0f, 0.9f));
+    public GuiInventory(GuiManager manager, GuiOrigin origin, Vector2f position) {
+        super(manager, origin, position, new Vector2f(608.0f), new Vector4f(0.0f, 0.0f, 0.0f, 0.9f));
         texts = new ArrayList<>();
-        title = new GuiText(GuiOrigin.BOT, new Vector2f(0.0f, 10.0f + getSize().y * 0.5f), 32.0f, "Inventory");
+        title = new GuiText(manager, GuiOrigin.BOT, new Vector2f(0.0f, 10.0f + getSize().y * 0.5f), 32.0f, "Inventory");
     }
 
     @Override
@@ -31,64 +29,60 @@ public class GuiInventory extends GuiComponent {
                 int dstSlotIndex = srcSlotIndex - 1;
 
                 if (dstSlotIndex == -1)
-                    dstSlotIndex = inventory.getNumSlots() - 1;
+                    dstSlotIndex = player.inventory.getNumSlots() - 1;
 
-                player.activeSlot = inventory.getSlot(dstSlotIndex);
+                player.activeSlot = player.inventory.getSlot(dstSlotIndex);
                 break;
             }
             case GLFW_KEY_DOWN: {
                 int srcSlotIndex = player.activeSlot.getIndex();
                 int dstSlotIndex = srcSlotIndex + 1;
 
-                if (dstSlotIndex == inventory.getNumSlots())
+                if (dstSlotIndex == player.inventory.getNumSlots())
                     dstSlotIndex = 0;
 
-                player.activeSlot = inventory.getSlot(dstSlotIndex);
+                player.activeSlot = player.inventory.getSlot(dstSlotIndex);
                 break;
             }
         }
     }
 
     @Override
-    public void draw(GuiManager gui) {
-        gui.push(this);
-        gui.rect(getSize(), getColor());
+    public void draw() {
+        getManager().push(this);
+        getManager().rect(getSize(), getColor());
 
-        title.draw(gui);
+        title.draw();
 
-        for (int i = 0; i < inventory.getNumSlots(); ++i) {
-            InventorySlot slot = inventory.getSlot(i);
+        for (int i = 0; i < player.inventory.getNumSlots(); ++i) {
+            InventorySlot slot = player.inventory.getSlot(i);
             GuiText text = texts.get(i);
 
             if (slot == player.activeSlot) {
                 Vector2f position = new Vector2f(0.0f, getSize().y * 0.5f - i * 32.0f);
                 Vector2f size = new Vector2f(getSize().x, 32.0f);
-                new GuiComponent(GuiOrigin.TOP, position, size, new Vector4f(0.0f, 0.0f, 0.0f, 0.9f)).draw(gui);
+                new GuiComponent(getManager(), GuiOrigin.TOP, position, size, new Vector4f(0.0f, 0.0f, 0.0f, 0.9f)).draw();
             }
 
             text.setText(slot.isEmpty() ? "" : slot.getItem().getName() + "-" + slot.getCount());
         }
 
         for (GuiText text : texts)
-            text.draw(gui);
+            text.draw();
 
-        gui.pop();
+        getManager().pop();
     }
 
-    public void setInventory(Inventory inventory) {
-        this.inventory = inventory;
+    public void setPlayer(Player player) {
+        this.player = player;
         texts.clear();
 
         float xOffs = -0.5f * getSize().x + 10.0f;
         float yOffs = 0.5f * getSize().y;
 
-        for (int i = 0; i < inventory.getNumSlots(); ++i) {
-            texts.add(new GuiText(GuiOrigin.TOP_LEFT, new Vector2f(xOffs, yOffs), 32.0f));
+        for (int i = 0; i < player.inventory.getNumSlots(); ++i) {
+            texts.add(new GuiText(getManager(), GuiOrigin.TOP_LEFT, new Vector2f(xOffs, yOffs), 32.0f));
             yOffs -= 32.0f;
         }
-    }
-
-    public void setPlayer(Player player) {
-        this.player = player;
     }
 }

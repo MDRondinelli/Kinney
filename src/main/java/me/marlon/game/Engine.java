@@ -51,6 +51,7 @@ public class Engine implements AutoCloseable {
         keyListeners = new ArrayList<>();
         mouseListeners = new ArrayList<>();
 
+        updateListeners.add(gui);
         keyListeners.add(gui);
         mouseListeners.add(gui);
 
@@ -84,7 +85,8 @@ public class Engine implements AutoCloseable {
         keyListeners.add(playerSystem);
         mouseListeners.add(playerSystem);
 
-        gui.add(new GuiComponent(GuiOrigin.MID, new Vector2f(), new Vector2f(8.0f), new Vector4f(1.0f)));
+        gui.add(new GuiComponent(gui, GuiOrigin.MID, new Vector2f(), new Vector2f(8.0f), new Vector4f(1.0f)));
+//        gui.add(new GuiText(GuiOrigin.TOP, new Vector2f(0.0f, height * 0.5f), 64.0f, "\"my game\" - jeff"));
 
         glfwSetKeyCallback(window.getHandle(), new GLFWKeyCallback() {
             public void invoke(long window, int key, int scancode, int action, int mods) {
@@ -205,6 +207,10 @@ public class Engine implements AutoCloseable {
 
     public Window getWindow() {
         return window;
+    }
+
+    public GuiManager getGui() {
+        return gui;
     }
 
     public Renderer getRenderer() {

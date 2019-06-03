@@ -1,9 +1,7 @@
 package me.marlon.ecs;
 
-import me.marlon.game.IKeyListener;
-import me.marlon.game.IMouseListener;
+import me.marlon.game.Inventory;
 import me.marlon.gfx.*;
-import me.marlon.gui.GuiManager;
 import me.marlon.physics.Collider;
 import me.marlon.physics.RigidBody;
 
@@ -17,13 +15,12 @@ public class EntityManager {
     public static final int CAMERA_BIT      = 0x00000002;
     public static final int COLLIDER_BIT    = 0x00000004;
     public static final int DLIGHT_BIT      = 0x00000008;
-    public static final int INVENTORY_BIT   = 0x00000010;
-    public static final int MESH_BIT        = 0x00000020;
-    public static final int PLAYER_BIT      = 0x00000040;
-    public static final int RIGID_BODY_BIT  = 0x00000080;
-    public static final int TERRAIN_BIT     = 0x00000100;
-    public static final int TRANSFORM_BIT   = 0x00000200;
-    public static final int WATER_MESH_BIT  = 0x00000400;
+    public static final int MESH_BIT        = 0x00000010;
+    public static final int PLAYER_BIT      = 0x00000020;
+    public static final int RIGID_BODY_BIT  = 0x00000040;
+    public static final int TERRAIN_BIT     = 0x00000080;
+    public static final int TRANSFORM_BIT   = 0x00000100;
+    public static final int WATER_MESH_BIT  = 0x00000200;
 
     private ArrayList<Integer> freeList;
 
@@ -33,7 +30,6 @@ public class EntityManager {
     private Camera[] cameras;
     private Collider[] colliders;
     private DirectionalLight[] dLights;
-    private Inventory[] inventories;
     private Mesh[] meshes;
     private Player[] players;
     private RigidBody[] rigidBodies;
@@ -53,7 +49,6 @@ public class EntityManager {
         cameras = new Camera[MAX_ENTITIES];
         colliders = new Collider[MAX_ENTITIES];
         dLights = new DirectionalLight[MAX_ENTITIES];
-        inventories = new Inventory[MAX_ENTITIES];
         meshes = new Mesh[MAX_ENTITIES];
         players = new Player[MAX_ENTITIES];
         rigidBodies = new RigidBody[MAX_ENTITIES];
@@ -146,20 +141,6 @@ public class EntityManager {
 
     public DirectionalLight getDLight(int i) {
         return dLights[i];
-    }
-
-    public Inventory add(int i, Inventory component) {
-        inventories[i] = component;
-        entities[i] |= INVENTORY_BIT;
-
-        for (IComponentListener listener : componentListeners)
-            listener.onComponentAdded(i);
-
-        return component;
-    }
-
-    public Inventory getInventory(int i) {
-        return inventories[i];
     }
 
     public Mesh add(int i, Mesh component) {
