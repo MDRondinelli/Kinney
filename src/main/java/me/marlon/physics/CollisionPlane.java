@@ -37,8 +37,11 @@ public class CollisionPlane extends Collider {
     }
 
     @Override
-    public Float rayCast(Vector3f o, Vector3f d) {
-        return -(o.dot(normal) + offset) / d.dot(normal);
+    public Intersection rayCast(Vector3f o, Vector3f d) {
+        float t = -(o.dot(normal) + offset) / d.dot(normal);
+        Vector3f position = new Vector3f(o).add(d.x * t, d.y * t, d.z * t);
+        Vector3f normal = new Vector3f(this.normal);
+        return new Intersection(t, position, normal);
     }
 
     public Vector3f getNormal() {

@@ -4,6 +4,7 @@ import me.marlon.ecs.*;
 import me.marlon.gfx.Mesh;
 import me.marlon.gfx.Primitive;
 import me.marlon.physics.CollisionBox;
+import me.marlon.physics.Intersection;
 import me.marlon.physics.PhysicsMaterial;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -50,11 +51,11 @@ public class ItemBlock extends Item {
 
         Player userPlayer = entities.getPlayer(user);
 
-        float t = physics.rayCast(o, d);
-        if (t < userPlayer.reach) {
-            int x = (int) (o.x + d.x * (t - 0.01f));
-            int y = (int) (o.y + d.y * (t - 0.01f));
-            int z = (int) (o.z + d.z * (t - 0.01f));
+        Intersection isect = physics.rayCast(o, d);
+        if (isect != null && isect.getT() < userPlayer.reach) {
+            int x = (int) (isect.getPosition().x + isect.getNormal().x * 0.01f);
+            int y = (int) (isect.getPosition().y + isect.getNormal().y * 0.01f);
+            int z = (int) (isect.getPosition().z + isect.getNormal().z * 0.01f);
 
             Block block = factory.create(this, x, y, z);
 

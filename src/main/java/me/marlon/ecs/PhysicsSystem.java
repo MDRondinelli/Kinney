@@ -124,27 +124,39 @@ public class PhysicsSystem implements IComponentListener, IUpdateListener {
         }
     }
 
-    public float rayCast(Vector3f o, Vector3f d) {
-        float tMin = Float.MAX_VALUE;
+    public Intersection rayCast(Vector3f o, Vector3f d) {
+        Intersection ret = null;
 
         for (int id : dynamicIds) {
             if (entities.match(id, EntityManager.PLAYER_BIT))
                 continue;
 
-            Float t = entities.getRigidBody(id).getCollider().rayCast(o, d);
-            if (t != null && 0.0f < t && t < tMin)
-                tMin = t;
+            Intersection isect = entities.getRigidBody(id).getCollider().rayCast(o, d);
+            if (ret == null) {
+                if (isect != null)
+                    ret = isect;
+            } else {
+                if (isect != null && 0.0f < isect.getT() && isect.getT() < ret.getT())
+                    ret = isect;
+            }
+//            if (t != null && 0.0f < t && t < tMin)
+//                tMin = t;
         }
 
         for (int id : staticIds) {
             if (entities.match(id, EntityManager.PLAYER_BIT))
                 continue;
 
-            Float t = entities.getCollider(id).rayCast(o, d);
-            if (t != null && 0.0f < t && t < tMin)
-                tMin = t;
+            Intersection isect = entities.getCollider(id).rayCast(o, d);
+            if (ret == null) {
+                if (isect != null)
+                    ret = isect;
+            } else {
+                if (isect != null && 0.0f < isect.getT() && isect.getT() < ret.getT())
+                    ret = isect;
+            }
         }
 
-        return tMin;
+        return ret;
     }
 }

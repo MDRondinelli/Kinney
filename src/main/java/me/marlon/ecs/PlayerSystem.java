@@ -40,7 +40,7 @@ public class PlayerSystem implements IComponentListener, IKeyListener, IMouseLis
 
         guiInventory = new GuiInventory(gui, GuiOrigin.MID, new Vector2f(0.0f));
         guiHud = new GuiText(gui, GuiOrigin.BOT, new Vector2f(0.0f, 10.0f - gui.getHeight() * 0.5f), 32.0f);
-        gui.add(guiHud);
+        gui.getLayer(0).add(guiHud);
 
         ids = new HashSet<>();
     }
@@ -86,12 +86,11 @@ public class PlayerSystem implements IComponentListener, IKeyListener, IMouseLis
                      Vector3f o = new Vector3f(transform.getPosition());
                      Vector3f d = new Vector3f(0.0f, 0.0f, -1.0f).rotate(transform.getOrientation());
 
-                     float t = physics.rayCast(o, d);
-                     if (t < player.reach) {
-                         t += 0.01f;
-                         int x = (int) (o.x + d.x * t);
-                         int y = (int) (o.y + d.y * t);
-                         int z = (int) (o.z + d.z * t);
+                     Intersection isect = physics.rayCast(o, d);
+                     if (isect != null && isect.getT() < player.reach) {
+                         int x = (int) (isect.getPosition().x - isect.getNormal().x * 0.1f);
+                         int y = (int) (isect.getPosition().y - isect.getNormal().y * 0.1f);
+                         int z = (int) (isect.getPosition().z - isect.getNormal().z * 0.1f);
 
                          int blockEnt = blocks.getBlock(x, y, z);
                          if (blockEnt != 0xffffffff) {
@@ -103,8 +102,8 @@ public class PlayerSystem implements IComponentListener, IKeyListener, IMouseLis
                      break;
                  }
                  case GLFW_KEY_TAB:
-                    gui.toggle(guiInventory);
-                    break;
+                     gui.getLayer(1).toggle(guiInventory);
+                     break;
              }
         }
     }
@@ -145,12 +144,11 @@ public class PlayerSystem implements IComponentListener, IKeyListener, IMouseLis
                 Vector3f o = new Vector3f(transform.getPosition());
                 Vector3f d = new Vector3f(0.0f, 0.0f, -1.0f).rotate(transform.getOrientation());
 
-                float t = physics.rayCast(o, d);
-                if (t < player.reach) {
-                    t += 0.01f;
-                    int x = (int) (o.x + d.x * t);
-                    int y = (int) (o.y + d.y * t);
-                    int z = (int) (o.z + d.z * t);
+                Intersection isect = physics.rayCast(o, d);
+                if (isect != null && isect.getT() < player.reach) {
+                    int x = (int) (isect.getPosition().x - isect.getNormal().x * 0.1f);
+                    int y = (int) (isect.getPosition().y - isect.getNormal().y * 0.1f);
+                    int z = (int) (isect.getPosition().z - isect.getNormal().z * 0.1f);
 
                     int above = blocks.getBlock(x, y + 1, z);
                     if (above != 0xffffffff && entities.getBlock(above).isFunctional())
@@ -203,24 +201,24 @@ public class PlayerSystem implements IComponentListener, IKeyListener, IMouseLis
 
             float altitude = Float.MAX_VALUE;
             {
-                float t = physics.rayCast(new Vector3f(body.getPosition()).add(0.25f, -0.99f, 0.25f), new Vector3f(0.0f, -1.0f, 0.0f));
-                if (altitude > t)
-                    altitude = t;
+                Intersection isect = physics.rayCast(new Vector3f(body.getPosition()).add(0.25f, -0.99f, 0.25f), new Vector3f(0.0f, -1.0f, 0.0f));
+                if (isect != null && isect.getT() < altitude)
+                    altitude = isect.getT();
             }
             {
-                float t = physics.rayCast(new Vector3f(body.getPosition()).add(0.25f, -0.99f, -0.15f), new Vector3f(0.0f, -1.0f, 0.0f));
-                if (altitude > t)
-                    altitude = t;
+                Intersection isect = physics.rayCast(new Vector3f(body.getPosition()).add(0.25f, -0.99f, -0.15f), new Vector3f(0.0f, -1.0f, 0.0f));
+                if (isect != null && isect.getT() < altitude)
+                    altitude = isect.getT();
             }
             {
-                float t = physics.rayCast(new Vector3f(body.getPosition()).add(-0.25f, -0.99f, 0.25f), new Vector3f(0.0f, -1.0f, 0.0f));
-                if (altitude > t)
-                    altitude = t;
+                Intersection isect = physics.rayCast(new Vector3f(body.getPosition()).add(-0.25f, -0.99f, 0.25f), new Vector3f(0.0f, -1.0f, 0.0f));
+                if (isect != null && isect.getT() < altitude)
+                    altitude = isect.getT();
             }
             {
-                float t = physics.rayCast(new Vector3f(body.getPosition()).add(-0.25f, -0.99f, -0.25f), new Vector3f(0.0f, -1.0f, 0.0f));
-                if (altitude > t)
-                    altitude = t;
+                Intersection isect = physics.rayCast(new Vector3f(body.getPosition()).add(-0.25f, -0.99f, -0.25f), new Vector3f(0.0f, -1.0f, 0.0f));
+                if (isect != null && isect.getT() < altitude)
+                    altitude = isect.getT();
             }
 
             if (altitude < 0.15f) {

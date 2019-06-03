@@ -56,7 +56,7 @@ public class CollisionBox extends Collider {
     }
 
     @Override
-    public Float rayCast(Vector3f o, Vector3f d) {
+    public Intersection rayCast(Vector3f o, Vector3f d) {
         Vector3f ro = new Vector3f(o).mulPosition(getWorldTransformInv());
         Vector3f rd = new Vector3f(d).mulDirection(getWorldTransformInv());
 
@@ -66,10 +66,38 @@ public class CollisionBox extends Collider {
 
         Vector2f ts = new Vector2f();
         if (aabb.intersectRay(ro.x, ro.y, ro.z, rd.x, rd.y, rd.z, ts)) {
+            float t;
             if (ts.x > 0.0f)
-                return ts.x;
-            if (ts.y > 0.0f)
-                return ts.y;
+                t = ts.x;
+            else if (ts.y > 0.0f)
+                t = ts.y;
+            else
+                return null;
+
+            Vector3f position = new Vector3f(ro).add(rd.x * t, rd.y * t, rd.z * t);
+            Vector3f unit = new Vector3f(position).absolute().div(halfExtents);
+            Vector3f normal = new Vector3f();
+
+            if (unit.x > unit.y) {
+                if (unit.x > unit.z)
+                    normal.x = 1.0f;
+                else
+                    normal.z = 1.0f;
+            } else {
+                if (unit.y > unit.z)
+                    normal.y = 1.0f;
+                else
+                    normal.z = 1.0f;
+            }
+
+            normal.x *= Math.signum(position.x);
+            normal.y *= Math.signum(position.y);
+            normal.z *= Math.signum(position.z);
+
+            position.mulPosition(getWorldTransform());
+            normal.mulDirection(getWorldTransform());
+
+            return new Intersection(t, position, normal);
         }
 
         return null;

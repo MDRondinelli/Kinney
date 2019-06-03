@@ -101,7 +101,7 @@ public class GuiChest extends GuiComponent {
 
                 break;
             case GLFW_KEY_E:
-                getManager().remove(this);
+                getManager().getLayer(1).remove(this);
                 break;
         }
     }
@@ -119,7 +119,7 @@ public class GuiChest extends GuiComponent {
             if (!side && index == i) {
                 Vector2f position = new Vector2f(leftPane.getCenter().x, leftPane.getCenter().y + leftPane.getSize().y * 0.5f - i * 32.0f);
                 Vector2f size = new Vector2f(leftPane.getSize().x, 32.0f);
-                new GuiComponent(getManager(), GuiOrigin.TOP, position, size, new Vector4f(0.0f, 0.0f, 0.0f, 0.9f)).draw();
+                new GuiComponent(getManager(), GuiOrigin.TOP, position, size, new Vector4f(0.0f, 0.0f, 0.0f, 0.99f)).draw();
             }
         }
 
@@ -138,7 +138,7 @@ public class GuiChest extends GuiComponent {
             if (side && index == i) {
                 Vector2f position = new Vector2f(rightPane.getCenter().x, rightPane.getCenter().y + rightPane.getSize().y * 0.5f - i * 32.0f);
                 Vector2f size = new Vector2f(rightPane.getSize().x, 32.0f);
-                new GuiComponent(getManager(), GuiOrigin.TOP, position, size, new Vector4f(0.0f, 0.0f, 0.0f, 0.9f)).draw();
+                new GuiComponent(getManager(), GuiOrigin.TOP, position, size, new Vector4f(0.0f, 0.0f, 0.0f, 0.99f)).draw();
             }
         }
 

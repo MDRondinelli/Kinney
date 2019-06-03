@@ -55,7 +55,7 @@ public class CollisionSphere extends Collider {
     }
 
     @Override
-    public Float rayCast(Vector3f o, Vector3f d) {
+    public Intersection rayCast(Vector3f o, Vector3f d) {
         Vector3f oc = new Vector3f(o).sub(getWorldTransform().m30(), getWorldTransform().m31(), getWorldTransform().m32());
 
         float b = oc.dot(d);
@@ -69,10 +69,16 @@ public class CollisionSphere extends Collider {
         float tN = -b - h;
         float tF = -b + h;
 
-        if (tN > 0.0f)
-            return tN;
-        else if (tF > 0.0f)
-            return tF;
+        if (tN > 0.0f) {
+            Vector3f position = new Vector3f(o).add(d.x * tN, d.y * tN, d.z * tN);
+            Vector3f normal = new Vector3f(position).sub(getWorldTransform().m30(), getWorldTransform().m31(), getWorldTransform().m32()).normalize();
+            return new Intersection(tN, position, normal);
+        }
+        else if (tF > 0.0f) {
+            Vector3f position = new Vector3f(o).add(d.x * tF, d.y * tF, d.z * tF);
+            Vector3f normal = new Vector3f(position).sub(getWorldTransform().m30(), getWorldTransform().m31(), getWorldTransform().m32()).normalize();
+            return new Intersection(tF, position, normal);
+        }
         else
             return null;
     }

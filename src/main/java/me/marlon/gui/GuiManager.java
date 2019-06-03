@@ -38,9 +38,10 @@ public class GuiManager implements AutoCloseable, IKeyListener, IMouseListener, 
     private Texture font;
 
     private List<Vector2f> translations;
-    private Set<GuiComponent> components;
-    private List<GuiComponent> added;
-    private List<GuiComponent> removed;
+    private List<GuiLayer> layers;
+//    private Set<GuiComponent> components;
+//    private List<GuiComponent> added;
+//    private List<GuiComponent> removed;
 
     public GuiManager(Window window) {
         this.window = window;
@@ -100,9 +101,10 @@ public class GuiManager implements AutoCloseable, IKeyListener, IMouseListener, 
         font = Texture.fromFile("res/font.png", GL_R8);
 
         translations = new ArrayList<>();
-        components = new HashSet<>();
-        added = new ArrayList<>();
-        removed = new ArrayList<>();
+        layers = new ArrayList<>();
+//        components = new HashSet<>();
+//        added = new ArrayList<>();
+//        removed = new ArrayList<>();
     }
 
     @Override
@@ -118,14 +120,14 @@ public class GuiManager implements AutoCloseable, IKeyListener, IMouseListener, 
 
     @Override
     public void onKeyPressed(int key) {
-        for (GuiComponent component : components)
-            component.onKeyPressed(key);
+        for (GuiLayer layer : layers)
+            layer.onKeyPressed(key);
     }
 
     @Override
     public void onKeyReleased(int key) {
-        for (GuiComponent component : components)
-            component.onKeyReleased(key);
+        for (GuiLayer layer : layers)
+            layer.onKeyReleased(key);
     }
 
     @Override
@@ -134,8 +136,8 @@ public class GuiManager implements AutoCloseable, IKeyListener, IMouseListener, 
             return;
 
         position = new Vector2f(position).sub(getWidth() / 2.0f, getHeight() / 2.0f);
-        for (GuiComponent component : components)
-            component.onButtonPressed(button, position);
+        for (GuiLayer layer : layers)
+            layer.onButtonPressed(button, position);
     }
 
     @Override
@@ -144,8 +146,8 @@ public class GuiManager implements AutoCloseable, IKeyListener, IMouseListener, 
             return;
 
         position = new Vector2f(position).sub(getWidth() / 2.0f, getHeight() / 2.0f);
-        for (GuiComponent component : components)
-            component.onButtonReleased(button, position);
+        for (GuiLayer layer : layers)
+            layer.onButtonReleased(button, position);
     }
 
     @Override
@@ -154,16 +156,18 @@ public class GuiManager implements AutoCloseable, IKeyListener, IMouseListener, 
             return;
 
         position = new Vector2f(position).sub(window.getFramebufferWidth() / 2.0f, window.getFramebufferHeight() / 2.0f);
-        for (GuiComponent component : components)
-            component.onMouseMoved(new Vector2f(position).sub(component.getCenter()), velocity);
+        for (GuiLayer layer : layers)
+            layer.onMouseMoved(position, velocity);
     }
 
     @Override
     public void onUpdate() {
-        components.addAll(added);
-        components.removeAll(removed);
-        added.clear();
-        removed.clear();
+        for (GuiLayer layer : layers)
+            layer.onUpdate();
+//        components.addAll(added);
+//        components.removeAll(removed);
+//        added.clear();
+//        removed.clear();
     }
 
     public void push(GuiComponent component) {
@@ -226,23 +230,37 @@ public class GuiManager implements AutoCloseable, IKeyListener, IMouseListener, 
     }
 
     public void draw() {
-        for (GuiComponent component : components)
-            component.draw();
+        for (GuiLayer layer : layers)
+            layer.draw();
     }
 
-    public void add(GuiComponent component) {
-        added.add(component);
+    public GuiLayer addLayer() {
+        GuiLayer layer = new GuiLayer(this, getWidth(), getHeight());
+        layers.add(layer);
+        return layer;
     }
 
-    public void remove(GuiComponent component) {
-        removed.add(component);
+    public GuiLayer getLayer(int index) {
+        return layers.get(index);
     }
 
-    public void toggle(GuiComponent component) {
-        if (components.contains(component))
-            remove(component);
-        else
-            add(component);
+//    public void add(GuiComponent component) {
+//        added.add(component);
+//    }
+//
+//    public void remove(GuiComponent component) {
+//        removed.add(component);
+//    }
+//
+//    public void toggle(GuiComponent component) {
+//        if (components.contains(component))
+//            remove(component);
+//        else
+//            add(component);
+//    }
+
+    public boolean isMouseGrabbed() {
+        return window.isMouseGrabbed();
     }
 
     public int getWidth() {

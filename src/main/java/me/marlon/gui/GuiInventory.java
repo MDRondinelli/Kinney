@@ -44,6 +44,9 @@ public class GuiInventory extends GuiComponent {
                 player.activeSlot = player.inventory.getSlot(dstSlotIndex);
                 break;
             }
+            case GLFW_KEY_TAB:
+                getManager().getLayer(1).remove(this);
+                break;
         }
     }
 

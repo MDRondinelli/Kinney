@@ -27,6 +27,6 @@ public class BlockChest extends Block {
     @Override
     public void onUse(int user) {
         guiChest.setLeftInventory(entities.getPlayer(user).inventory);
-        gui.toggle(guiChest);
+        gui.getLayer(1).toggle(guiChest);
     }
 }

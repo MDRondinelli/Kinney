@@ -7,7 +7,7 @@ import java.util.List;
 
 public class TerrainMesh implements AutoCloseable {
     public static final int TILE_SIZE = 2;
-    public static final int CHUNK_SIZE = 8;
+    public static final int CHUNK_SIZE = 16;
 
     private List<TerrainChunk> chunks;
 

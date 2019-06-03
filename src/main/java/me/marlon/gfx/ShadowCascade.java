@@ -6,7 +6,7 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 public class ShadowCascade implements AutoCloseable {
-    private static final float LAMBDA = 0.5f;
+    private static final float LAMBDA = 0.75f;
     private static final Vector4f[] CORNERS = {
             new Vector4f(-1.0f, -1.0f, -1.0f, 1.0f),
             new Vector4f(1.0f, -1.0f, -1.0f, 1.0f),

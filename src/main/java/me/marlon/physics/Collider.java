@@ -82,7 +82,7 @@ public abstract class Collider {
         return false;
     }
 
-    public abstract Float rayCast(Vector3f o, Vector3f d);
+    public abstract Intersection rayCast(Vector3f o, Vector3f d);
 
     public void updateDerivedData(Matrix4f newTransform) {
         worldTransform.set(newTransform).mul(transform);

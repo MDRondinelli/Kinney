@@ -2,9 +2,14 @@ package me.marlon.game;
 
 import me.marlon.ecs.*;
 import me.marlon.gfx.*;
+import me.marlon.physics.Intersection;
 import me.marlon.physics.PhysicsMaterial;
 import me.marlon.physics.RigidBody;
+import org.joml.AxisAngle4f;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
+
+import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) {
@@ -31,6 +36,12 @@ public class Main {
             }
         }));
 
+        items.add(new ItemBlock("Smelter", entities, blocks, physics, "res/meshes/smelter.obj", new BlockFactory() {
+            public Block create(Item item, int x, int y, int z) {
+                return new BlockChest(item, x, y, z, entities, engine.getGui());
+            }
+        }));
+
         int terrainEntity = entities.create();
         Terrain terrain = entities.add(terrainEntity, new Terrain(400));
         entities.add(terrainEntity, RigidBody.createTerrain(terrain));
@@ -45,6 +56,7 @@ public class Main {
         player.inventory.add(items.get("Item B"), 21);
         player.inventory.add(items.get("Test Block"), 64);
         player.inventory.add(items.get("Chest"), 64);
+        player.inventory.add(items.get("Smelter"), 64);
 
         entities.add(playerEntity, player);
 
@@ -64,6 +76,36 @@ public class Main {
 
         int sun = entities.create();
         entities.add(sun, new DirectionalLight(new Vector3f(1.0f), new Vector3f(1.25f, -1.5f, 1.0f).normalize()));
+
+        Mesh ore = null;
+
+        try {
+            ore = new Mesh(new Primitive("res/meshes/ore.obj", new Vector3f(0.05f)));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        for (int i = 0; i < 256; ++i) {
+            int oreEntity = entities.create();
+            entities.add(oreEntity, ore);
+            float x = (float) Math.random() * 200.0f;
+            float z = (float) Math.random() * 200.0f;
+
+            Intersection isect = physics.rayCast(new Vector3f(x, 50.0f, z), new Vector3f(0.0f, -1.0f, 0.0f));
+            if (isect != null) {
+                Vector3f position = isect.getPosition();
+                Vector3f axis = new Vector3f(isect.getNormal()).cross(0.0f, 1.0f, 0.0f).negate();
+//                float angle = (float) Math.acos(isect.getNormal().dot(0.0f, 1.0f, 0.0f));
+                Quaternionf orientation = new Quaternionf();
+                orientation.x = axis.x;
+                orientation.y = axis.y;
+                orientation.z = axis.z;
+                orientation.w = 1.0f + isect.getNormal().dot(0.0f, 1.0f, 0.0f);
+                orientation.normalize();
+
+                entities.add(oreEntity, new TransformComponent().translate(position).rotate(orientation));
+            }
+        }
 
         engine.run();
         engine.close();

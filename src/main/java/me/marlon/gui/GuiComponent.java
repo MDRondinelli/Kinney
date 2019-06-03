@@ -1,11 +1,12 @@
 package me.marlon.gui;
 
+import me.marlon.ecs.IUpdateListener;
 import me.marlon.game.IKeyListener;
 import me.marlon.game.IMouseListener;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
 
-public class GuiComponent implements IKeyListener, IMouseListener {
+public class GuiComponent implements IKeyListener, IMouseListener, IUpdateListener {
     private GuiManager manager;
     private GuiOrigin origin;
     private Vector2f position;
@@ -77,6 +78,10 @@ public class GuiComponent implements IKeyListener, IMouseListener {
         if (position.y < -0.5f * size.y)
             return;
         onMouseMovedImpl(position, velocity);
+    }
+
+    @Override
+    public void onUpdate() {
     }
 
     public void draw() {

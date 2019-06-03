@@ -42,6 +42,10 @@ public class Engine implements AutoCloseable {
     public Engine(int width, int height, String title, float deltaTime) {
         this.window = new Window(width, height, title);
         this.gui = new GuiManager(window);
+
+        GuiLayer hud = gui.addLayer();
+        gui.addLayer();
+
         this.renderer = new Renderer(gui);
         this.deltaTime = deltaTime;
         entities = new EntityManager();
@@ -85,8 +89,7 @@ public class Engine implements AutoCloseable {
         keyListeners.add(playerSystem);
         mouseListeners.add(playerSystem);
 
-        gui.add(new GuiComponent(gui, GuiOrigin.MID, new Vector2f(), new Vector2f(8.0f), new Vector4f(1.0f)));
-//        gui.add(new GuiText(GuiOrigin.TOP, new Vector2f(0.0f, height * 0.5f), 64.0f, "\"my game\" - jeff"));
+        hud.add(new GuiComponent(gui, GuiOrigin.MID, new Vector2f(), new Vector2f(8.0f), new Vector4f(1.0f)));
 
         glfwSetKeyCallback(window.getHandle(), new GLFWKeyCallback() {
             public void invoke(long window, int key, int scancode, int action, int mods) {
